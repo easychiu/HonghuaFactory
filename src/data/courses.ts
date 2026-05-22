@@ -129,7 +129,7 @@ export const CLASSMATE_EVENTS: Record<string, ClassmateEvent> = {
       if (success) {
         return {
           log: `修辭法學課助教「珊珊」對女兒的聰慧大加讚賞，透露了有關歷史禁區的情報（解鎖隱藏地圖【地下皇家圖書館】通行線索）！智力外加 10。`,
-          changes: { intelligence: 10 }
+          changes: { intelligence: 10, addInventory: 'royal_library_clue' }
         };
       }
       return {

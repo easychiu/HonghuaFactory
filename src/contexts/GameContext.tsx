@@ -217,7 +217,7 @@ export const ACTIVITIES: Activity[] = [
 ];
 
 // Slay the Spire 風格地圖生成器
-export const generateAdventureMap = (dad: FatherBackground, _charId: CharacterId): AdventureMapNode[] => {
+export const generateAdventureMap = (dad: FatherBackground, _charId: CharacterId, inventory: string[] = []): AdventureMapNode[] => {
   const nodes: AdventureMapNode[] = [];
   
   // Layer 0: 起點
@@ -267,7 +267,7 @@ export const generateAdventureMap = (dad: FatherBackground, _charId: CharacterId
   if (dad === 'knight') {
     layer2HiddenType = 'hidden';
     layer2HiddenName = '🛡️ 隱密要塞';
-  } else if (dad === 'scholar') {
+  } else if (dad === 'scholar' || inventory.includes('royal_library_clue')) {
     layer2HiddenType = 'hidden';
     layer2HiddenName = '📚 地下皇家圖書館';
   } else if (dad === 'merchant') {
@@ -608,6 +608,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const newDaughter = { ...state.daughter };
     const newLogs = [...state.logs];
+    const newInventory = [...state.inventory];
     const logId = Math.random().toString();
 
     // 1. 檢驗金幣
@@ -744,6 +745,9 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
             const ev = CLASSMATE_EVENTS.shanshan.effect(newDaughter);
             newLogs.push({ id: Math.random().toString(), year: state.time.year, month: state.time.month, period: currentPeriod, text: ev.log, type: 'event' });
             applyEventStatChanges(newDaughter, ev.changes);
+            if (ev.changes.addInventory) {
+              newInventory.push(ev.changes.addInventory);
+            }
             eventTriggered = true;
           }
           // 自然科學 -> 雪舞
@@ -752,7 +756,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
             newLogs.push({ id: Math.random().toString(), year: state.time.year, month: state.time.month, period: currentPeriod, text: ev.log, type: 'event' });
             applyEventStatChanges(newDaughter, ev.changes);
             if (ev.changes.addInventory) {
-              state.inventory.push(ev.changes.addInventory);
+              newInventory.push(ev.changes.addInventory);
             }
           }
         }
@@ -786,7 +790,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }
           // 教堂清潔 -> 塞特私房聖水
           if (activity.id === 'church_clean' && Math.random() < 0.20) {
-            state.inventory.push('holy_water');
+            newInventory.push('holy_water');
             newLogs.push({
               id: Math.random().toString(),
               year: state.time.year,
@@ -800,7 +804,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
           if (activity.id === 'woodshop') {
             const woodJobsCount = state.logs.filter(l => l.text.includes('木工作坊') && !l.text.includes('金幣不足')).length + 1;
             if (woodJobsCount === 10) {
-              state.inventory.push('giant_hammer');
+              newInventory.push('giant_hammer');
               newLogs.push({
                 id: Math.random().toString(),
                 year: state.time.year,
@@ -845,6 +849,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
       ...prev,
       daughter: newDaughter,
       logs: newLogs,
+      inventory: newInventory,
       time: { ...prev.time, period: nextPeriod }
     }));
 
@@ -1058,7 +1063,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const isEmilia = state.daughter.characterId === 'emilia';
     
     // 初始化 Slay the Spire 地圖
-    const mapNodes = generateAdventureMap(state.daughter.fatherBackground, state.daughter.characterId);
+    const mapNodes = generateAdventureMap(state.daughter.fatherBackground, state.daughter.characterId, state.inventory);
     
     let partyData = undefined;
     if (isEmilia) {
