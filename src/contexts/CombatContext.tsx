@@ -411,7 +411,10 @@ export const CombatProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
     const targetObj: any = (nextState.party as any)[targetKey];
     if (targetObj) {
-      const monsterDmg = Math.max(3, Math.round(monster.attack * (0.8 + Math.random() * 0.4)));
+      let patternMultiplier = 1;
+      if (monster.behaviorPattern === 'aggressive') patternMultiplier = 1.2;
+      if (monster.behaviorPattern === 'boss') patternMultiplier = 1.12;
+      const monsterDmg = Math.max(3, Math.round(monster.attack * patternMultiplier * (0.8 + Math.random() * 0.4)));
       
       const isTargetDaughter = targetKey === 'solo' || targetKey === 'emilia';
       if (isTargetDaughter) {
@@ -426,6 +429,9 @@ export const CombatProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           def += 10;
           satiatedReduction = 10;
         }
+        if (monster.behaviorPattern === 'boss') {
+          def = Math.max(0, def - 5);
+        }
         
         const finalDmg = Math.max(3, monsterDmg - def);
         targetObj.hp = Math.max(0, targetObj.hp - finalDmg);
@@ -438,10 +444,19 @@ export const CombatProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         if (nextState.satiated) {
           defDetail += ` + 🍱 特級米糕飽腹效果額外防禦 +10，減免傷害！`;
         }
+        if (monster.behaviorPattern === 'boss') {
+          defDetail += `（首領威壓穿甲，額外削弱 5 點防禦）`;
+        }
         logEntries.push(defDetail);
       } else {
         targetObj.hp = Math.max(0, targetObj.hp - monsterDmg);
         logEntries.push(`👿 ${monster.name} 發動反擊，對 ${targetObj.name} 造成了 ${monsterDmg} 點傷害！`);
+      }
+
+      if (monster.behaviorPattern === 'aggressive' && targetObj.hp > 0 && Math.random() < 0.25) {
+        const extraDmg = Math.max(2, Math.round(monster.attack * 0.35));
+        targetObj.hp = Math.max(0, targetObj.hp - extraDmg);
+        logEntries.push(`💢 ${monster.name} 進入狂暴節奏，追加追擊造成 ${extraDmg} 點傷害！`);
       }
       
       // 檢查隊員是否倒下

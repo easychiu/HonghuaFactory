@@ -135,9 +135,14 @@ export interface PartyMember {
   maxMp: number;
 }
 
+export type AdventureAreaId = 'betel_forest' | 'naval_border' | 'royal_ruins';
+
 // 冒險修行狀態
 export interface AdventureState {
+  areaId: AdventureAreaId;
   areaName: string;
+  highLayerDebuffName: string;
+  highLayerDebuffDescription: string;
   nodes: AdventureMapNode[];
   currentNodeId: string;
   daughterHp: number;

@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import type { GameState, Daughter, CharacterId, FatherBackground, Activity, Item, AdventureMapNode, PeriodType, Monster } from '../types';
+import type { GameState, Daughter, CharacterId, FatherBackground, Activity, Item, AdventureMapNode, PeriodType, Monster, AdventureAreaId } from '../types';
 import { COURSES } from '../data/courses';
 import { AVG_EVENTS } from '../data/events';
 import { determineEnding } from '../data/endings';
@@ -251,8 +251,70 @@ export const ACTIVITIES: Activity[] = [
 ];
 
 // Slay the Spire 風格地圖生成器
-export const generateAdventureMap = (dad: FatherBackground, _charId: CharacterId, inventory: string[] = []): AdventureMapNode[] => {
+const AREA_CONFIG: Record<AdventureAreaId, { name: string; debuffName: string; debuffDescription: string; battleMonstersL1: Monster[]; battleMonstersL2: Monster[]; bossScale: { hp: number; attack: number; defense: number } }> = {
+  betel_forest: {
+    name: '荖葉林',
+    debuffName: '迷霧侵蝕',
+    debuffDescription: '高層地帶的濕冷迷霧會侵蝕體力：進入第 4 層以上戰鬥節點時，HP -10。',
+    battleMonstersL1: [
+      { name: '迷霧幽靈', hp: 70, maxHp: 70, attack: 12, defense: 5, goldReward: 60, expReward: 18, behaviorPattern: 'aggressive' },
+      { name: '林地史萊姆', hp: 60, maxHp: 60, attack: 10, defense: 4, goldReward: 50, expReward: 15, behaviorPattern: 'standard' },
+      { name: '荖葉巨蛛', hp: 75, maxHp: 75, attack: 11, defense: 6, goldReward: 58, expReward: 18, behaviorPattern: 'standard' }
+    ],
+    battleMonstersL2: [
+      { name: '迷霧幽靈群首', hp: 105, maxHp: 105, attack: 19, defense: 7, goldReward: 95, expReward: 30, behaviorPattern: 'aggressive' },
+      { name: '荖葉林掠食獸', hp: 110, maxHp: 110, attack: 18, defense: 8, goldReward: 90, expReward: 30, behaviorPattern: 'standard' }
+    ],
+    bossScale: { hp: 0.95, attack: 1.0, defense: 0.95 }
+  },
+  naval_border: {
+    name: '海軍邊境',
+    debuffName: '砲火威壓',
+    debuffDescription: '高層戰區砲火與海風壓制施法：進入第 4 層以上戰鬥節點時，MP -8。',
+    battleMonstersL1: [
+      { name: '黑市保鏢', hp: 68, maxHp: 68, attack: 13, defense: 5, goldReward: 62, expReward: 18, behaviorPattern: 'aggressive' },
+      { name: '港灣巡邏兵', hp: 64, maxHp: 64, attack: 12, defense: 6, goldReward: 55, expReward: 16, behaviorPattern: 'standard' },
+      { name: '走私刀手', hp: 72, maxHp: 72, attack: 14, defense: 4, goldReward: 64, expReward: 19, behaviorPattern: 'aggressive' }
+    ],
+    battleMonstersL2: [
+      { name: '邊境砲兵隊長', hp: 108, maxHp: 108, attack: 20, defense: 7, goldReward: 96, expReward: 30, behaviorPattern: 'aggressive' },
+      { name: '黑潮突擊隊', hp: 112, maxHp: 112, attack: 19, defense: 8, goldReward: 94, expReward: 30, behaviorPattern: 'standard' }
+    ],
+    bossScale: { hp: 1.0, attack: 1.08, defense: 1.0 }
+  },
+  royal_ruins: {
+    name: '皇家遺跡',
+    debuffName: '古咒纏身',
+    debuffDescription: '遺跡高層殘留詛咒擾亂精神：進入第 4 層以上戰鬥節點時，疲勞 +10。',
+    battleMonstersL1: [
+      { name: '偽王親衛隊', hp: 72, maxHp: 72, attack: 13, defense: 6, goldReward: 64, expReward: 20, behaviorPattern: 'boss' },
+      { name: '遺跡魔像', hp: 80, maxHp: 80, attack: 11, defense: 8, goldReward: 66, expReward: 20, behaviorPattern: 'standard' },
+      { name: '詛咒學徒', hp: 66, maxHp: 66, attack: 14, defense: 5, goldReward: 60, expReward: 19, behaviorPattern: 'aggressive' }
+    ],
+    battleMonstersL2: [
+      { name: '偽王禁衛長', hp: 116, maxHp: 116, attack: 20, defense: 9, goldReward: 98, expReward: 32, behaviorPattern: 'boss' },
+      { name: '深層遺跡魔像', hp: 122, maxHp: 122, attack: 18, defense: 10, goldReward: 100, expReward: 32, behaviorPattern: 'standard' }
+    ],
+    bossScale: { hp: 1.08, attack: 1.03, defense: 1.08 }
+  }
+};
+
+const pickRandom = <T,>(list: T[]): T => list[Math.floor(Math.random() * list.length)];
+const withLayerDifficulty = (monster: Monster, layerMultiplier: number): Monster => ({
+  ...monster,
+  hp: Math.round(monster.hp * layerMultiplier),
+  maxHp: Math.round(monster.maxHp * layerMultiplier),
+  attack: Math.round(monster.attack * layerMultiplier),
+  defense: Math.round(monster.defense * layerMultiplier),
+  goldReward: Math.round(monster.goldReward * (1 + (layerMultiplier - 1) * 0.6)),
+  expReward: Math.round(monster.expReward * (1 + (layerMultiplier - 1) * 0.8))
+});
+
+export const generateAdventureMap = (areaId: AdventureAreaId, dad: FatherBackground, _charId: CharacterId, inventory: string[] = []): AdventureMapNode[] => {
   const nodes: AdventureMapNode[] = [];
+  const areaCfg = AREA_CONFIG[areaId];
+  const layer1Monster = withLayerDifficulty(pickRandom(areaCfg.battleMonstersL1), 1.0);
+  const layer2Monster = withLayerDifficulty(pickRandom(areaCfg.battleMonstersL2), 1.15);
   
   // Layer 0: 起點
   nodes.push({
@@ -271,10 +333,10 @@ export const generateAdventureMap = (dad: FatherBackground, _charId: CharacterId
     layer: 1,
     index: 0,
     type: 'battle',
-    name: '史萊姆聚落',
+    name: `${layer1Monster.name} 巢穴`,
     cleared: false,
     connectedTo: ['2_0', '2_1'],
-    monster: { name: '林地史萊姆', hp: 60, maxHp: 60, attack: 10, defense: 4, goldReward: 50, expReward: 15 }
+    monster: layer1Monster
   });
   nodes.push({
     id: '1_1',
@@ -317,10 +379,10 @@ export const generateAdventureMap = (dad: FatherBackground, _charId: CharacterId
     layer: 2,
     index: 0,
     type: 'battle',
-    name: '哥布林哨所',
+    name: `${layer2Monster.name} 防線`,
     cleared: false,
     connectedTo: ['3_0'],
-    monster: { name: '哥布林斥候', hp: 90, maxHp: 90, attack: 16, defense: 6, goldReward: 80, expReward: 25 }
+    monster: layer2Monster
   });
   nodes.push({
     id: '2_1',
@@ -432,10 +494,10 @@ export const generateAdventureMap = (dad: FatherBackground, _charId: CharacterId
     connectedTo: [],
     monster: {
       name: '海軍少校 傑克斯',
-      hp: 420,
-      maxHp: 420,
-      attack: 38,
-      defense: 20,
+      hp: Math.round(420 * areaCfg.bossScale.hp),
+      maxHp: Math.round(420 * areaCfg.bossScale.hp),
+      attack: Math.round(38 * areaCfg.bossScale.attack),
+      defense: Math.round(20 * areaCfg.bossScale.defense),
       goldReward: 600,
       expReward: 150,
       behaviorPattern: 'boss'
@@ -1247,9 +1309,12 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // --- 冒險修行核心方法 ---
   const startAdventure = () => {
     const isEmilia = state.daughter.characterId === 'emilia';
+    const areaOrder: AdventureAreaId[] = ['betel_forest', 'naval_border', 'royal_ruins'];
+    const areaId = areaOrder[state.time.month % areaOrder.length];
+    const areaCfg = AREA_CONFIG[areaId];
     
     // 初始化 Slay the Spire 地圖
-    const mapNodes = generateAdventureMap(state.daughter.fatherBackground, state.daughter.characterId, state.inventory);
+    const mapNodes = generateAdventureMap(areaId, state.daughter.fatherBackground, state.daughter.characterId, state.inventory);
     
     let partyData = undefined;
     if (isEmilia) {
@@ -1263,13 +1328,16 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
       ...prev,
       activeScreen: 'adventure',
       adventure: {
-        areaName: '蔚藍邊境森林',
+        areaId,
+        areaName: areaCfg.name,
+        highLayerDebuffName: areaCfg.debuffName,
+        highLayerDebuffDescription: areaCfg.debuffDescription,
         nodes: mapNodes,
         currentNodeId: '0_0',
         daughterHp: prev.daughter.combatHp,
         daughterMaxHp: prev.daughter.attributes.stamina,
         party: partyData,
-        combatLog: ['進入森林，林間清新的海風撲面而來，開始探索吧！'],
+        combatLog: [`進入「${areaCfg.name}」，準備迎戰區域魔物。高層區域效果：${areaCfg.debuffName}。`],
         status: 'exploring'
       }
     }));
@@ -1292,6 +1360,20 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     nextAdv.currentNodeId = nodeId;
     targetNode.cleared = true;
     nextAdv.combatLog.push(`🐾 前往 [${targetNode.name}] 耗費了 ${focusCost} 點專注度。`);
+
+    if (targetNode.layer >= 4 && (targetNode.type === 'battle' || targetNode.type === 'boss')) {
+      if (nextAdv.areaId === 'betel_forest') {
+        newDaughter.combatHp = Math.max(1, newDaughter.combatHp - 10);
+        nextAdv.daughterHp = Math.max(1, nextAdv.daughterHp - 10);
+        nextAdv.combatLog.push(`🌫️【${nextAdv.highLayerDebuffName}】迷霧侵蝕體力，進入戰鬥前 HP -10。`);
+      } else if (nextAdv.areaId === 'naval_border') {
+        newDaughter.combatMp = Math.max(0, newDaughter.combatMp - 8);
+        nextAdv.combatLog.push(`🌊【${nextAdv.highLayerDebuffName}】砲火威壓壓制施法，進入戰鬥前 MP -8。`);
+      } else if (nextAdv.areaId === 'royal_ruins') {
+        newDaughter.attributes.stress = Math.max(0, newDaughter.attributes.stress + 10);
+        nextAdv.combatLog.push(`🕯️【${nextAdv.highLayerDebuffName}】古咒纏身，進入戰鬥前疲勞 +10。`);
+      }
+    }
 
     // 處理節點類型
     if (targetNode.type === 'boss' && targetNode.name.includes('少校')) {
@@ -1795,7 +1877,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
           year: prev.time.year,
           month: prev.time.month,
           period: prev.time.period,
-          text: `👑 討伐首領成功！順利完成「蔚藍邊境森林」修行！獲得金幣 300！`,
+          text: `👑 討伐首領成功！順利完成「${prev.adventure.areaName}」修行！獲得金幣 300！`,
           type: 'info'
         });
         newDaughter.gold += 300;
