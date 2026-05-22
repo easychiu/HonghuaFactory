@@ -126,6 +126,81 @@ export const StatPanel: React.FC<StatPanelProps> = ({ daughter }) => {
           })}
         </div>
       </div>
+
+      {/* 同窗好友羈絆 Section */}
+      <div className="flex flex-col gap-3.5 pt-4 border-t border-[rgba(255,255,255,0.08)] mt-2">
+        <span className="text-xs font-bold uppercase tracking-wider text-slate-400 border-l-2 border-[#d4af37] pl-2 mb-1">
+          同窗好友羈絆
+        </span>
+        
+        <div className="flex flex-col gap-3">
+          {/* Clover (四葉草) */}
+          <div className="space-y-1">
+            <div className="flex items-center justify-between text-xs">
+              <span className="flex items-center gap-1.5 text-slate-300">
+                <span className="text-emerald-400 font-bold">🍀 四葉草</span>
+                <span className="text-[10px] text-slate-500">
+                  {daughter.bonds?.clover >= 100 ? '【幸運被動解鎖】' : '滿級加成: 大成功率 +20%'}
+                </span>
+              </span>
+              <span className="font-bold text-slate-300">{daughter.bonds?.clover || 0} / 100</span>
+            </div>
+            <div className="w-full h-2 bg-slate-900/80 rounded-full overflow-hidden border border-slate-800/40 p-[1px]">
+              <div 
+                className="h-full rounded-full transition-all duration-500 ease-out bg-emerald-500" 
+                style={{ 
+                  width: `${Math.min(100, daughter.bonds?.clover || 0)}%`,
+                  boxShadow: (daughter.bonds?.clover || 0) >= 100 ? '0 0 8px rgba(16, 185, 129, 0.6)' : 'none'
+                }}
+              />
+            </div>
+          </div>
+
+          {/* Shanshan (珊珊) */}
+          <div className="space-y-1">
+            <div className="flex items-center justify-between text-xs">
+              <span className="flex items-center gap-1.5 text-slate-300">
+                <span className="text-pink-400 font-bold">🌸 珊珊</span>
+                <span className="text-[10px] text-slate-500">
+                  {daughter.bonds?.shanshan >= 100 ? '【極致默契】' : '大於 120 智力解鎖圖書館線索'}
+                </span>
+              </span>
+              <span className="font-bold text-slate-300">{daughter.bonds?.shanshan || 0} / 100</span>
+            </div>
+            <div className="w-full h-2 bg-slate-900/80 rounded-full overflow-hidden border border-slate-800/40 p-[1px]">
+              <div 
+                className="h-full rounded-full transition-all duration-500 ease-out bg-pink-500" 
+                style={{ 
+                  width: `${Math.min(100, daughter.bonds?.shanshan || 0)}%`,
+                  boxShadow: (daughter.bonds?.shanshan || 0) >= 100 ? '0 0 8px rgba(236, 72, 153, 0.6)' : 'none'
+                }}
+              />
+            </div>
+          </div>
+
+          {/* Xuewu (雪舞) */}
+          <div className="space-y-1">
+            <div className="flex items-center justify-between text-xs">
+              <span className="flex items-center gap-1.5 text-slate-300">
+                <span className="text-cyan-400 font-bold">❄️ 雪舞</span>
+                <span className="text-[10px] text-slate-500">
+                  {daughter.bonds?.xuewu >= 100 ? '【天才指引解鎖】' : '滿級加成: 屬性成長 +15%'}
+                </span>
+              </span>
+              <span className="font-bold text-slate-300">{daughter.bonds?.xuewu || 0} / 100</span>
+            </div>
+            <div className="w-full h-2 bg-slate-900/80 rounded-full overflow-hidden border border-slate-800/40 p-[1px]">
+              <div 
+                className="h-full rounded-full transition-all duration-500 ease-out bg-cyan-500" 
+                style={{ 
+                  width: `${Math.min(100, daughter.bonds?.xuewu || 0)}%`,
+                  boxShadow: (daughter.bonds?.xuewu || 0) >= 100 ? '0 0 8px rgba(6, 182, 212, 0.6)' : 'none'
+                }}
+              />
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

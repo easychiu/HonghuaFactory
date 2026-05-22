@@ -44,9 +44,11 @@ export const useScheduleLoop = () => {
     }
   }, [currentSlot, activeActivityId, activity]);
 
+  const hasEvent = !!state.currentEvent;
+
   // Handle Autoplay timer
   useEffect(() => {
-    if (isAutoPlay && !isFinished) {
+    if (isAutoPlay && !isFinished && !hasEvent) {
       timerRef.current = setInterval(() => {
         handleStep();
       }, 2000);
@@ -57,7 +59,7 @@ export const useScheduleLoop = () => {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [isAutoPlay, currentSlot, isFinished, activity]);
+  }, [isAutoPlay, currentSlot, isFinished, activity, hasEvent]);
 
   // Spawn floating stat indicator texts
   const spawnFloatingStats = (changes: Record<string, number>) => {

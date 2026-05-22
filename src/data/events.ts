@@ -334,53 +334,216 @@ export const AVG_EVENTS: Record<string, AVGEvent> = {
   },
   tactics_test: {
     id: 'tactics_test',
-    title: '青梅竹馬的默契考驗',
+    title: '遺跡巨石障礙',
     startNodeId: 'start',
     nodes: {
       start: {
         speaker: '青梅竹馬 yv',
-        text: '艾蜜莉亞，前方的遺跡巨石封路，還有魔法陷阱。jumbo 你這肌肉腦能把巨石砸碎嗎？我來解析魔法。',
+        text: '前方的遺跡被巨石封路，還有魔法陷阱。jumbo 你這肌肉腦能把巨石砸碎嗎？我來解析魔法。若是有大鐵錘，就能直接破開了。',
         choices: [
           {
-            text: '🤝 讓 jumbo 砸石，yv 解析魔法（需要艾蜜莉亞主角且擁有30cm鐵鎚）',
+            text: '🤝 讓 jumbo 砸石，yv 解析魔法（擁有【三十公分的錘子】直接打破）',
             effect: (state) => {
-              const isEmilia = state.daughter.characterId === 'emilia';
               const hasHammer = state.inventory.includes('giant_hammer');
-              if (!isEmilia) {
+              if (hasHammer) {
                 return {
-                  log: '這項考驗需要由艾蜜莉亞與她的青梅竹馬小隊共同完成！',
-                  nextDialogId: undefined
+                  log: '裝備「三十公分的錘子」發揮奇效，直接將巨石砸得粉碎！yv 順利解開魔力核心，完美通關！獲得王國線索與大招解鎖！',
+                  nextDialogId: 'tactics_success',
+                  rewards: { addInventory: 'royal_crest', combatSkill: 30, addTacticsUnlock: true }
                 };
               }
-              if (!hasHammer) {
+              // 否則進行力量與智力判定 (120 閾值)
+              const strength = state.daughter.attributes.strength || 0;
+              const intelligence = state.daughter.attributes.intelligence || 0;
+              if (strength >= 120 && intelligence >= 120) {
                 return {
-                  log: 'jumbo 撓了撓頭：「沒有趁手的錘子，這頑石我也砸不開啊！」',
-                  nextDialogId: 'jumbo_no_hammer'
+                  log: '女兒與同伴配合無間，憑藉過人的力量與智慧（雙屬性 >= 120）成功尋得巨石機關受力點擊碎！',
+                  nextDialogId: 'tactics_success',
+                  rewards: { addInventory: 'royal_crest', combatSkill: 30, addTacticsUnlock: true }
+                };
+              } else {
+                return {
+                  log: '判定失敗！巨石倒塌砸傷了女兒，且消耗了大量專注度（HP -15，Focus -15）。',
+                  nextDialogId: 'jumbo_no_hammer',
+                  rewards: { hp: -15, focus: -15 }
                 };
               }
-              return {
-                log: 'jumbo 揮舞 30cm 鐵錘直接將巨石砸得粉碎！yv 揮動法杖解開魔法核心。完美通過！獲得終極招式與王國線索！',
-                nextDialogId: 'tactics_success',
-                rewards: { addInventory: 'royal_crest', addCombatSkill: 30, addTacticsUnlock: true }
-              };
             }
           },
           {
-            text: '退回',
+            text: '↩️ 繞路退回',
             effect: (_state) => {
-              return { log: '小隊無奈只得繞路。' };
+              return { log: '小隊選擇繞路前行。' };
             }
           }
         ]
       },
       jumbo_no_hammer: {
         speaker: '青梅竹馬 jumbo',
-        text: '要是老胡木工坊的「三十公分錘子」在手就好了，我肯定一錘砸個稀巴爛！我們還是退回吧。',
+        text: '可惡，我的力量不夠，或是沒有老胡木工坊的「三十公分錘子」，根本敲不動啊！',
         nextId: undefined
       },
       tactics_success: {
         speaker: '青梅竹馬 yv',
-        text: '合作無間！艾蜜莉亞，我們領悟的「青梅竹馬友情大連擊」在接下來的戰鬥中一定能派上大用場！',
+        text: '做得好！我們領悟的「青梅竹馬友情大連擊」在接下來的戰鬥中一定能派上大用場！',
+        nextId: undefined
+      }
+    }
+  },
+  clover_encounter: {
+    id: 'clover_encounter',
+    title: '同窗好友：四葉草的雙馬尾與劍道',
+    startNodeId: 'start',
+    nodes: {
+      start: {
+        speaker: '同窗好友 四葉草',
+        text: '哼，聽說妳最近在學習上很風光嘛！但在劍道與宮廷禮儀上，我是絕對不會輸給妳的！要不要來切磋一下？',
+        choices: [
+          {
+            text: '💬 真誠直球（誇獎她的努力與雙馬尾）',
+            effect: (_state) => {
+              return {
+                log: '女兒真誠地誇獎了四葉草的雙馬尾和劍術，四葉草面紅耳赤地接受了。好感度 +20，名望 +10。',
+                nextDialogId: 'clover_gentle',
+                rewards: { cloverBond: 20, reputation: 10 }
+              };
+            }
+          },
+          {
+            text: '⚔️ 良性競爭（全力切磋劍術）',
+            effect: (_state) => {
+              return {
+                log: '兩人進行了激烈的劍術切磋，雙方都有所領悟！好感度 +15，戰鬥技術 +5，體力 -5。',
+                nextDialogId: 'clover_compete',
+                rewards: { cloverBond: 15, combatSkill: 5, stamina: -5 }
+              };
+            }
+          },
+          {
+            text: '💬 打壓 PUA（嘲笑她的雙馬尾）',
+            effect: (_state) => {
+              return {
+                log: '女兒嘲笑了四葉草的雙馬尾，四葉草氣得大哭跑開了。好感度 -30，疲勞 +15。',
+                nextDialogId: 'clover_pua',
+                rewards: { cloverBond: -30, stress: 15 }
+              };
+            }
+          }
+        ]
+      },
+      clover_gentle: {
+        speaker: '同窗好友 四葉草',
+        text: '哼、哼，既然妳這麼有眼光，那我就勉強承認妳是個合格的對手吧！',
+        nextId: undefined
+      },
+      clover_compete: {
+        speaker: '同窗好友 四葉草',
+        text: '痛快！今天就先打到這裡，下次我一定會堂堂正正擊敗妳的！',
+        nextId: undefined
+      },
+      clover_pua: {
+        speaker: '同窗好友 四葉草',
+        text: '妳、妳這個無禮之徒！我再也不理妳了！嗚嗚嗚……',
+        nextId: undefined
+      }
+    }
+  },
+  shanshan_encounter: {
+    id: 'shanshan_encounter',
+    title: '同窗好友：珊珊的古籍研讀',
+    startNodeId: 'start',
+    nodes: {
+      start: {
+        speaker: '同窗好友 珊珊',
+        text: '殿下，我最近在修辭和歷史古籍中發現了一些奇妙的記載，妳有興趣一起討論研究嗎？',
+        choices: [
+          {
+            text: '📚 一起研究討論（智力 >= 120 時有特殊收穫）',
+            effect: (state) => {
+              const hasIntel = (state.daughter.attributes.intelligence || 0) >= 120;
+              if (hasIntel) {
+                return {
+                  log: '女兒與珊珊深入探討，珊珊非常佩服，悄悄透露了地下皇家圖書館的線索！好感度 +15，智力 +5，獲得圖書館線索。',
+                  nextDialogId: 'shanshan_library',
+                  rewards: { shanshanBond: 15, intelligence: 5, addInventory: 'royal_library_clue' }
+                };
+              } else {
+                return {
+                  log: '女兒與珊珊研讀了古籍，獲益匪淺。好感度 +15，智力 +5。',
+                  nextDialogId: 'shanshan_study',
+                  rewards: { shanshanBond: 15, intelligence: 5 }
+                };
+              }
+            }
+          },
+          {
+            text: '💤 藉口累了推辭休息',
+            effect: (_state) => {
+              return {
+                log: '女兒藉口疲累推辭了。珊珊有些失望，但女兒得到了休息。好感度 +5，疲勞 -10。',
+                nextDialogId: 'shanshan_rest',
+                rewards: { shanshanBond: 5, stress: -10 }
+              };
+            }
+          }
+        ]
+      },
+      shanshan_library: {
+        speaker: '同窗好友 珊珊',
+        text: '殿下果然博學！這份關於皇家地下圖書館的古老地圖碎片，對妳的冒險一定有幫助。',
+        nextId: undefined
+      },
+      shanshan_study: {
+        speaker: '同窗好友 珊珊',
+        text: '跟殿下一起讀書真開心，下次我們再來討論其他的書籍吧。',
+        nextId: undefined
+      },
+      shanshan_rest: {
+        speaker: '同窗好友 珊珊',
+        text: '這樣啊……殿下請多保重身體，課業的事情下次再聊吧。',
+        nextId: undefined
+      }
+    }
+  },
+  xuewu_encounter: {
+    id: 'xuewu_encounter',
+    title: '同窗好友：雪舞與自然科學的奧秘',
+    startNodeId: 'start',
+    nodes: {
+      start: {
+        speaker: '同窗好友 雪舞',
+        text: '（打了個哈欠）自然科學太奇妙了，但我昨晚看書太晚好睏喔……殿下要不要一起去後山吹吹風、散散步？',
+        choices: [
+          {
+            text: '🌸 陪伴她去後山散步（獲特級桶仔米糕）',
+            effect: (_state) => {
+              return {
+                log: '兩人去後山享受清風與陽光，雪舞高興地送給女兒一桶野餐米糕。好感度 +20，疲勞 -15，獲得【桶仔米糕】。',
+                nextDialogId: 'xuewu_walk',
+                rewards: { xuewuBond: 20, stress: -15, addInventory: 'barrel_rice_cake' }
+              };
+            }
+          },
+          {
+            text: '⏰ 叫醒她認真聽課（增加道德）',
+            effect: (_state) => {
+              return {
+                log: '女兒嚴肅地督促雪舞認真上課。雪舞有些委屈，但懂得了課堂紀律。好感度 -5，道德 +5。',
+                nextDialogId: 'xuewu_wake',
+                rewards: { xuewuBond: -5, morality: 5 }
+              };
+            }
+          }
+        ]
+      },
+      xuewu_walk: {
+        speaker: '同窗好友 雪舞',
+        text: '後山的海風真舒服！這是我親手做的特級桶仔米糕，在野外探險吃能大大恢復體力喔！',
+        nextId: undefined
+      },
+      xuewu_wake: {
+        speaker: '同窗好友 雪舞',
+        text: '嗚嗚，殿下好嚴厲喔……那、那我就再撐一下，不睡覺了……',
         nextId: undefined
       }
     }

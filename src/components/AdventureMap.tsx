@@ -5,7 +5,7 @@ import { useAdventure } from '../hooks/useAdventure';
 import { Swords, Heart, LogOut, Backpack, AlertCircle } from 'lucide-react';
 
 export const AdventureMap: React.FC = () => {
-  const { state, resolveCombatVictory, resolveCombatDefeat } = useGame();
+  const { state, resolveCombatVictory, resolveCombatDefeat, eatRiceCake } = useGame();
   const { combatState, startCombat, executePlayerAction, resolveEnemyTurn, endCombat, failFleeAttempt } = useCombat();
   const { daughter, inventory } = state;
   
@@ -33,10 +33,10 @@ export const AdventureMap: React.FC = () => {
     if (adventure && adventure.status === 'fighting' && !combatState.isActive) {
       const activeNode = adventure.nodes.find(n => n.id === adventure.currentNodeId);
       if (activeNode && activeNode.monster) {
-        startCombat(activeNode.monster, daughter);
+        startCombat(activeNode.monster, daughter, adventure.satiated || false, inventory);
       }
     }
-  }, [adventure?.status, adventure?.currentNodeId, combatState.isActive]);
+  }, [adventure?.status, adventure?.currentNodeId, combatState.isActive, adventure?.satiated, inventory, daughter, startCombat]);
 
   // Auto resolve enemy turn after a delay
   useEffect(() => {
@@ -159,6 +159,11 @@ export const AdventureMap: React.FC = () => {
             <div className="flex justify-between items-center text-xs">
               <span className="font-semibold text-slate-300 flex items-center gap-1">
                 <Heart size={12} className="text-red-400" /> 女兒生命值
+                {adventure.satiated && (
+                  <span className="text-[10px] text-emerald-400 font-bold bg-emerald-950/30 px-1.5 py-0.5 rounded border border-emerald-500/20">
+                    🍖 飽腹
+                  </span>
+                )}
               </span>
               <span className="font-bold">{adventure.daughterHp} / {adventure.daughterMaxHp}</span>
             </div>
@@ -170,6 +175,15 @@ export const AdventureMap: React.FC = () => {
             </div>
           </div>
           
+          {adventure.status === 'exploring' && inventory.includes('barrel_rice_cake') && !adventure.satiated && (
+            <button 
+              onClick={() => eatRiceCake()}
+              className="btn-fantasy border-emerald-500/40 text-emerald-300 hover:bg-emerald-950/20 text-xs py-2 px-3 flex items-center gap-1.5 animate-pulse"
+            >
+              🍱 食用桶仔米糕
+            </button>
+          )}
+
           {adventure.status === 'exploring' && (
             <button 
               onClick={() => endAdventure(false)}

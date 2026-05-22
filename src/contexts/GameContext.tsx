@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import type { GameState, Daughter, CharacterId, FatherBackground, Activity, Item, AdventureMapNode, PeriodType } from '../types';
-import { COURSES, CLASSMATE_EVENTS } from '../data/courses';
+import { COURSES } from '../data/courses';
 import { AVG_EVENTS } from '../data/events';
 import { determineEnding } from '../data/endings';
 
@@ -61,9 +61,17 @@ export const ITEMS: Item[] = [
     id: 'future_gp125',
     name: '未來摩托車 Gp125',
     description: '行商老爸開局載具，或百萬售價神裝。使野外修行移動消耗僅需 1 專注度！',
-    price: 9999,
+    price: 1000000,
     type: 'food',
     statChanges: { stamina: 10 }
+  },
+  {
+    id: 'giant_hammer',
+    name: '三十公分的錘子',
+    description: '木工作坊滿 10 次贈送的限定武器。加強攻擊 30，增加暴擊率 15%。若為艾蜜莉亞由 jumbo 裝備。',
+    price: 999999,
+    type: 'weapon',
+    statChanges: {}
   },
   // 檳榔與藥物
   {
@@ -424,6 +432,7 @@ interface GameContextProps {
   resolveCombatVictory: (remainingHp: number, goldReward: number) => void;
   resolveCombatDefeat: () => void;
   unlockAllProtagonists: () => void;
+  eatRiceCake: () => void;
 }
 
 const GameContext = createContext<GameContextProps | undefined>(undefined);
@@ -440,6 +449,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const local = localStorage.getItem('honghua_factory_ng');
     const unlocked = local ? JSON.parse(local).unlockedCharacters : ['honghua'];
     const completed = local ? JSON.parse(local).completedEndings : [];
+    const achievements = local ? (JSON.parse(local).unlockedAchievements || []) : [];
     
     return {
       daughter: {
@@ -457,7 +467,12 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
         maxFocus: 100,
         avatarUrl: '',
         characterId: 'honghua',
-        fatherBackground: 'knight'
+        fatherBackground: 'knight',
+        bonds: {
+          clover: 0,
+          shanshan: 0,
+          xuewu: 0
+        }
       },
       time: { year: 1, month: 5, period: 'early' },
       schedule: null,
@@ -469,17 +484,19 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
       adventure: null,
       cheatMode: false,
       unlockedCharacters: unlocked,
-      completedEndings: completed
+      completedEndings: completed,
+      unlockedAchievements: achievements
     };
   });
 
-  // 當週目解鎖更新時寫入 LocalStorage
+  // 當週目解鎖與成就更新時寫入 LocalStorage
   useEffect(() => {
     localStorage.setItem('honghua_factory_ng', JSON.stringify({
       unlockedCharacters: state.unlockedCharacters,
-      completedEndings: state.completedEndings
+      completedEndings: state.completedEndings,
+      unlockedAchievements: state.unlockedAchievements
     }));
-  }, [state.unlockedCharacters, state.completedEndings]);
+  }, [state.unlockedCharacters, state.completedEndings, state.unlockedAchievements]);
 
   const setScreen = (screen: GameState['activeScreen']) => {
     setState((prev) => ({ ...prev, activeScreen: screen }));
@@ -512,7 +529,12 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
       maxFocus: 100,
       avatarUrl: defaultAvatar,
       characterId,
-      fatherBackground
+      fatherBackground,
+      bonds: {
+        clover: 0,
+        shanshan: 0,
+        xuewu: 0
+      }
     };
 
     const startingInventory: string[] = [];
@@ -567,7 +589,8 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
       currentEvent: null,
       currentEventStep: null,
       adventure: null,
-      cheatMode: false
+      cheatMode: false,
+      unlockedAchievements: prev.unlockedAchievements || []
     }));
   };
 
@@ -586,7 +609,9 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // 執行下一旬日程
   const executeNextPeriod = (): boolean => {
+    if (state.currentEvent) return false;
     if (!state.schedule) return true;
+    let triggeredAVGEvent: string | null = null;
     const currentPeriod = state.time.period;
     let activityId = '';
     
@@ -610,6 +635,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const newLogs = [...state.logs];
     const newInventory = [...state.inventory];
     const logId = Math.random().toString();
+    let restGain = 0;
 
     // 1. 檢驗金幣
     let cost = activity.cost;
@@ -632,6 +658,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
       const rest = ACTIVITIES.find(a => a.id === 'rest_home')!;
       newDaughter.attributes.stress = Math.max(0, newDaughter.attributes.stress + (rest.statChanges.stress || 0));
+      restGain = 5;
     } else {
       // 扣除學費，給予工作獎勵
       let finalGoldReward = activity.reward;
@@ -658,11 +685,16 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
         });
         const rest = ACTIVITIES.find(a => a.id === 'rest_home')!;
         newDaughter.attributes.stress = Math.max(0, newDaughter.attributes.stress + (rest.statChanges.stress || 0));
+        restGain = 5;
       } else {
         // --- 判定成敗 ---
-        // 艾莉卡強運 (30% 大成功)
+        // 大成功判定：艾莉卡基礎 30%，四葉草滿級 (clover >= 100) 額外 +20%
         const isErica = newDaughter.characterId === 'erica';
-        const isLuckySuccess = isErica && Math.random() < 0.30;
+        let luckyChance = isErica ? 0.30 : 0.00;
+        if (newDaughter.bonds && newDaughter.bonds.clover >= 100) {
+          luckyChance += 0.20;
+        }
+        const isLuckySuccess = Math.random() < luckyChance;
         
         let finalStatChanges = { ...activity.statChanges };
         let isSuccess = true;
@@ -709,6 +741,10 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
           logText = `完成 ${activity.name}：${activity.effectDescription}`;
         }
 
+        if (activity.type === 'rest') {
+          restGain = activity.id === 'rest_vacation' ? 10 : 5;
+        }
+
         newDaughter.gold = Math.max(0, newDaughter.gold - cost + finalGoldReward);
         
         // 增減屬性
@@ -717,7 +753,12 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
           if (attrKey === 'stress') {
             newDaughter.attributes.stress = Math.max(0, newDaughter.attributes.stress + (val || 0));
           } else {
-            newDaughter.attributes[attrKey] = Math.max(0, newDaughter.attributes[attrKey] + (val || 0));
+            let increment = val || 0;
+            // 雪舞滿級加成：上課所獲得的正面屬性增長率永久 +15%
+            if (activity.type === 'study' && increment > 0 && newDaughter.bonds && newDaughter.bonds.xuewu >= 100) {
+              increment = Math.round(increment * 1.15);
+            }
+            newDaughter.attributes[attrKey] = Math.max(0, newDaughter.attributes[attrKey] + increment);
           }
         });
 
@@ -730,34 +771,16 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
           type: isSuccess ? 'stat_up' : 'stat_down'
         });
 
-        // --- 同窗亂入事件 (上課限定) ---
-        if (activity.type === 'study' && isSuccess && !isLuckySuccess) {
-          let eventTriggered = false;
-          // 劍術/禮儀 -> 四葉草
-          if (['swordplay', 'etiquette'].includes(activity.id) && Math.random() < 0.25) {
-            const ev = CLASSMATE_EVENTS.clover.effect(newDaughter);
-            newLogs.push({ id: Math.random().toString(), year: state.time.year, month: state.time.month, period: currentPeriod, text: ev.log, type: 'event' });
-            applyEventStatChanges(newDaughter, ev.changes);
-            eventTriggered = true;
+        // --- 同窗亂入事件 (上課限定，非大成功時 25% 機率觸發 AVG 事件) ---
+        if (activity.type === 'study' && isSuccess && !isLuckySuccess && Math.random() < 0.25) {
+          if (['swordplay', 'etiquette'].includes(activity.id)) {
+            triggeredAVGEvent = 'clover_encounter';
           }
-          // 修辭與歷史 -> 珊珊
-          if (['rhetoric', 'history'].includes(activity.id) && !eventTriggered && Math.random() < 0.25) {
-            const ev = CLASSMATE_EVENTS.shanshan.effect(newDaughter);
-            newLogs.push({ id: Math.random().toString(), year: state.time.year, month: state.time.month, period: currentPeriod, text: ev.log, type: 'event' });
-            applyEventStatChanges(newDaughter, ev.changes);
-            if (ev.changes.addInventory) {
-              newInventory.push(ev.changes.addInventory);
-            }
-            eventTriggered = true;
+          else if (['rhetoric', 'history'].includes(activity.id)) {
+            triggeredAVGEvent = 'shanshan_encounter';
           }
-          // 自然科學 -> 雪舞
-          if (activity.id === 'science_class' && !eventTriggered && Math.random() < 0.25) {
-            const ev = CLASSMATE_EVENTS.xuewu.effect(newDaughter);
-            newLogs.push({ id: Math.random().toString(), year: state.time.year, month: state.time.month, period: currentPeriod, text: ev.log, type: 'event' });
-            applyEventStatChanges(newDaughter, ev.changes);
-            if (ev.changes.addInventory) {
-              newInventory.push(ev.changes.addInventory);
-            }
+          else if (activity.id === 'science_class') {
+            triggeredAVGEvent = 'xuewu_encounter';
           }
         }
 
@@ -819,6 +842,14 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     }
 
+    // 雪舞好感度累積 (休息/度假)
+    if (restGain > 0) {
+      if (!newDaughter.bonds) {
+        newDaughter.bonds = { clover: 0, shanshan: 0, xuewu: 0 };
+      }
+      newDaughter.bonds.xuewu = Math.min(100, (newDaughter.bonds.xuewu || 0) + restGain);
+    }
+
     // 2. 壓力生病檢查
     if (newDaughter.attributes.stress > newDaughter.attributes.stamina) {
       newDaughter.attributes.stress = Math.round(newDaughter.attributes.stress * 0.4);
@@ -845,25 +876,35 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     newDaughter.combatHp = newDaughter.attributes.stamina;
     newDaughter.combatMp = newDaughter.attributes.magicSkill * 2 + 10;
 
-    setState(prev => ({
-      ...prev,
-      daughter: newDaughter,
-      logs: newLogs,
-      inventory: newInventory,
-      time: { ...prev.time, period: nextPeriod }
-    }));
+    setState(prev => {
+      const newUnlocked = [...(prev.unlockedAchievements || [])];
+      if (newDaughter.bonds && newDaughter.bonds.xuewu >= 100 && !newUnlocked.includes('永遠的學院生')) {
+        newUnlocked.push('永遠的學院生');
+        newLogs.push({
+          id: Math.random().toString(),
+          year: prev.time.year,
+          month: prev.time.month,
+          period: currentPeriod,
+          text: `🏆 解鎖成就：【永遠的學院生】（與雪舞好感度達到 100）！`,
+          type: 'event'
+        });
+      }
+      return {
+        ...prev,
+        daughter: newDaughter,
+        logs: newLogs,
+        inventory: newInventory,
+        time: { ...prev.time, period: nextPeriod },
+        currentEvent: triggeredAVGEvent ? AVG_EVENTS[triggeredAVGEvent] : prev.currentEvent,
+        currentEventStep: triggeredAVGEvent ? 'start' : prev.currentEventStep,
+        unlockedAchievements: newUnlocked
+      };
+    });
 
     return monthFinished;
   };
 
-  const applyEventStatChanges = (daughter: Daughter, changes: any) => {
-    Object.entries(changes).forEach(([key, val]) => {
-      const attrKey = key as keyof typeof daughter.attributes;
-      if (attrKey in daughter.attributes) {
-        daughter.attributes[attrKey] = Math.max(0, daughter.attributes[attrKey] + (val as number));
-      }
-    });
-  };
+
 
   // 結束一月日程
   const finishExecution = () => {
@@ -1225,29 +1266,66 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const newInventory = [...prev.inventory];
       let newScreen = prev.activeScreen;
       let nextStep: string | null = choice.nextId || null;
+      let updatedAdventure = prev.adventure ? { ...prev.adventure } : null;
 
       if (result.rewards) {
         const rew = result.rewards;
         if (rew.gold) newDaughter.gold = Math.max(0, newDaughter.gold + rew.gold);
-        if (rew.stress) newDaughter.attributes.stress = Math.max(0, newDaughter.attributes.stress + rew.stress);
         if (rew.focus) newDaughter.focus = Math.max(0, newDaughter.focus + rew.focus);
-        if (rew.hp) newDaughter.combatHp = Math.max(0, newDaughter.combatHp + rew.hp);
+        
+        // 增減屬性
+        Object.entries(rew).forEach(([key, val]) => {
+          if (key in newDaughter.attributes && typeof val === 'number') {
+            const attrKey = key as keyof typeof newDaughter.attributes;
+            if (attrKey === 'stress') {
+              newDaughter.attributes.stress = Math.max(0, newDaughter.attributes.stress + val);
+            } else {
+              newDaughter.attributes[attrKey] = Math.max(0, newDaughter.attributes[attrKey] + val);
+            }
+          }
+        });
+
+        // 增減好感度
+        if (!newDaughter.bonds) {
+          newDaughter.bonds = { clover: 0, shanshan: 0, xuewu: 0 };
+        }
+        if (rew.cloverBond) {
+          newDaughter.bonds.clover = Math.min(100, Math.max(0, (newDaughter.bonds.clover || 0) + rew.cloverBond));
+        }
+        if (rew.shanshanBond) {
+          newDaughter.bonds.shanshan = Math.min(100, Math.max(0, (newDaughter.bonds.shanshan || 0) + rew.shanshanBond));
+        }
+        if (rew.xuewuBond) {
+          newDaughter.bonds.xuewu = Math.min(100, Math.max(0, (newDaughter.bonds.xuewu || 0) + rew.xuewuBond));
+        }
+
+        if (rew.hp) {
+          newDaughter.combatHp = Math.max(0, newDaughter.combatHp + rew.hp);
+          if (updatedAdventure) {
+            updatedAdventure.daughterHp = Math.max(0, updatedAdventure.daughterHp + rew.hp);
+          }
+        }
         if (rew.addInventory) newInventory.push(rew.addInventory);
         if (rew.removeInventory) {
           const idx = newInventory.indexOf(rew.removeInventory);
           if (idx > -1) newInventory.splice(idx, 1);
         }
-        if (rew.hpRestoreMax) newDaughter.combatHp = newDaughter.attributes.stamina;
+        if (rew.hpRestoreMax) {
+          newDaughter.combatHp = newDaughter.attributes.stamina;
+          if (updatedAdventure) {
+            updatedAdventure.daughterHp = updatedAdventure.daughterMaxHp;
+          }
+        }
         if (rew.magicSkill) newDaughter.attributes.magicSkill += rew.magicSkill;
         if (rew.addTacticsUnlock) {
           newInventory.push('jumbo_combo_unlocked');
         }
 
         // 觸發戰鬥
-        if (rew.triggerCombat && prev.adventure) {
+        if (rew.triggerCombat && updatedAdventure) {
           // 將當前戰鬥載入 AdventureState 狀態
-          prev.adventure.status = 'fighting';
-          prev.adventure.nodes.find(n => n.id === prev.adventure!.currentNodeId)!.monster = rew.triggerCombat;
+          updatedAdventure.status = 'fighting';
+          updatedAdventure.nodes.find(n => n.id === updatedAdventure!.currentNodeId)!.monster = rew.triggerCombat;
           newScreen = 'adventure';
         }
       }
@@ -1272,6 +1350,33 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // 檢查是否結束對話
       const isEnd = !nextStep || !prev.currentEvent!.nodes[nextStep];
 
+      // 檢查並解鎖好感度成就
+      const newUnlockedAchievements = [...(prev.unlockedAchievements || [])];
+      if (newDaughter.bonds) {
+        if (newDaughter.bonds.clover >= 100 && !newUnlockedAchievements.includes('良師友誼')) {
+          newUnlockedAchievements.push('良師友誼');
+          updatedLogs.push({
+            id: Math.random().toString(),
+            year: prev.time.year,
+            month: prev.time.month,
+            period: prev.time.period,
+            text: `🏆 解鎖成就：【良師友誼】（與四葉草好感度達到 100）！`,
+            type: 'event'
+          });
+        }
+        if (newDaughter.bonds.xuewu >= 100 && !newUnlockedAchievements.includes('永遠的學院生')) {
+          newUnlockedAchievements.push('永遠的學院生');
+          updatedLogs.push({
+            id: Math.random().toString(),
+            year: prev.time.year,
+            month: prev.time.month,
+            period: prev.time.period,
+            text: `🏆 解鎖成就：【永遠的學院生】（與雪舞好感度達到 100）！`,
+            type: 'event'
+          });
+        }
+      }
+
       return {
         ...prev,
         daughter: newDaughter,
@@ -1279,7 +1384,9 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
         activeScreen: newScreen,
         logs: updatedLogs,
         currentEvent: isEnd ? null : prev.currentEvent,
-        currentEventStep: isEnd ? null : nextStep
+        currentEventStep: isEnd ? null : nextStep,
+        unlockedAchievements: newUnlockedAchievements,
+        adventure: updatedAdventure
       };
     });
   };
@@ -1320,6 +1427,50 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
       ...prev,
       unlockedCharacters: ['honghua', 'erica', 'emilia']
     }));
+  };
+
+  const eatRiceCake = () => {
+    setState((prev) => {
+      if (!prev.inventory.includes('barrel_rice_cake')) return prev;
+      
+      const newDaughter = { ...prev.daughter };
+      const hpRecover = Math.round(newDaughter.attributes.stamina * 0.5);
+      newDaughter.combatHp = Math.min(newDaughter.attributes.stamina, newDaughter.combatHp + hpRecover);
+      newDaughter.focus = Math.min(newDaughter.maxFocus, newDaughter.focus + 50);
+
+      const newInventory = [...prev.inventory];
+      const idx = newInventory.indexOf('barrel_rice_cake');
+      if (idx > -1) {
+        newInventory.splice(idx, 1);
+      }
+
+      let updatedAdventure = null;
+      if (prev.adventure) {
+        updatedAdventure = {
+          ...prev.adventure,
+          daughterHp: Math.min(prev.adventure.daughterMaxHp, prev.adventure.daughterHp + hpRecover),
+          satiated: true,
+          combatLog: [...prev.adventure.combatLog, `🍱 女兒食用了「特級桶仔米糕」，回復了 ${hpRecover} 點 HP 與 50 點專注度，並獲得飽腹 Buff（防禦 +10，受擊傷害減免）！`]
+        };
+      }
+
+      const newLogs = [...prev.logs, {
+        id: Math.random().toString(),
+        year: prev.time.year,
+        month: prev.time.month,
+        period: prev.time.period,
+        text: `🍱 女兒食用了「特級桶仔米糕」，感覺體力充沛。`,
+        type: 'info' as const
+      }];
+
+      return {
+        ...prev,
+        daughter: newDaughter,
+        inventory: newInventory,
+        adventure: updatedAdventure,
+        logs: newLogs
+      };
+    });
   };
 
   // 重玩 / 重啟週目 (NG+)
@@ -1488,7 +1639,8 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
         performStreetPerformance,
         resolveCombatVictory,
         resolveCombatDefeat,
-        unlockAllProtagonists
+        unlockAllProtagonists,
+        eatRiceCake
       }}
     >
       {children}

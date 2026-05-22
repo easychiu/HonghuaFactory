@@ -36,6 +36,11 @@ export interface Daughter {
   avatarUrl: string; // 頭像路徑
   characterId: CharacterId; // 主角ID
   fatherBackground: FatherBackground; // 老爸背景
+  bonds: {
+    clover: number;
+    shanshan: number;
+    xuewu: number;
+  };
 }
 
 export type PeriodType = 'early' | 'mid' | 'late';
@@ -144,6 +149,7 @@ export interface AdventureState {
   status: 'exploring' | 'fighting' | 'chest' | 'defeat' | 'victory';
   // 記錄是否已打破巨石障礙等冒險暫存狀態
   boulderBroken?: boolean;
+  satiated?: boolean;
 }
 
 export interface GameState {
@@ -159,4 +165,5 @@ export interface GameState {
   cheatMode: boolean;
   unlockedCharacters: CharacterId[]; // 已解鎖角色列表（NG+ 用）
   completedEndings: string[]; // 已達成結局列表
+  unlockedAchievements: string[]; // 已解鎖成就
 }

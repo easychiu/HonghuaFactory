@@ -17,11 +17,13 @@ export interface CombatState {
   jumboTauntTurns: number; // jumbo 嘲諷剩餘回合
   doubleAttackTurns: number; // 雙子星檳榔連擊剩餘回合
   frozenTurns: number; // 怪物結冰剩餘回合
+  satiated: boolean; // 飽腹狀態
+  inventory: string[]; // 當前背包備份，用於判定武器加成
 }
 
 interface CombatContextProps {
   combatState: CombatState;
-  startCombat: (monster: Monster, daughter: Daughter) => void;
+  startCombat: (monster: Monster, daughter: Daughter, satiated?: boolean, inventory?: string[]) => void;
   executePlayerAction: (
     actor: 'solo' | 'emilia' | 'yv' | 'jumbo',
     action: 'attack' | 'skill_slash' | 'skill_combo' | 'skill_heal' | 'skill_fire' | 'skill_taunt' | 'skill_smash' | 'item_binlang_ice' | 'item_binlang_twin' | 'item_binlang_normal' | 'flee',
@@ -49,13 +51,15 @@ const INITIAL_COMBAT_STATE: CombatState = {
   party: {},
   jumboTauntTurns: 0,
   doubleAttackTurns: 0,
-  frozenTurns: 0
+  frozenTurns: 0,
+  satiated: false,
+  inventory: []
 };
 
 export const CombatProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [combatState, setCombatState] = useState<CombatState>(INITIAL_COMBAT_STATE);
 
-  const startCombat = (monster: Monster, daughter: Daughter) => {
+  const startCombat = (monster: Monster, daughter: Daughter, satiated: boolean = false, inventory: string[] = []) => {
     const isEmilia = daughter.characterId === 'emilia';
     
     const partyData: CombatState['party'] = {};
@@ -76,7 +80,9 @@ export const CombatProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       party: partyData,
       jumboTauntTurns: 0,
       doubleAttackTurns: 0,
-      frozenTurns: 0
+      frozenTurns: 0,
+      satiated,
+      inventory
     });
   };
 
@@ -119,8 +125,16 @@ export const CombatProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     if (action === 'attack') {
       // 普通攻擊
       let baseDmg = actor === 'yv' ? 10 : actor === 'jumbo' ? 22 : 18;
+      let critRate = 0.15;
+
+      const hasHammer = nextState.inventory && nextState.inventory.includes('giant_hammer');
+      if (hasHammer && (actor === 'solo' || actor === 'jumbo')) {
+        baseDmg += 30;
+        critRate = 0.30;
+      }
+
       // 暴擊判定
-      const isCrit = Math.random() < 0.15;
+      const isCrit = Math.random() < critRate;
       damage = Math.max(5, Math.round(baseDmg * (isCrit ? 1.5 : 1) - monster.defense * 0.5));
       
       // 連擊 Buff 判定
@@ -130,6 +144,9 @@ export const CombatProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       }
       
       logEntries.push(`⚔️ ${actorObj.name} 攻擊 ${monster.name}，造成 ${damage} 點傷害！${isCrit ? '（關鍵一擊！）' : ''}`);
+      if (hasHammer && (actor === 'solo' || actor === 'jumbo')) {
+        logEntries.push(`🔨 裝備「三十公分的錘子」加持：額外 +30 傷害，暴擊率提升至 30%！`);
+      }
       nextState.monsterHp = Math.max(0, nextState.monsterHp - damage);
     } 
     
@@ -307,8 +324,37 @@ export const CombatProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     const targetObj: any = (nextState.party as any)[targetKey];
     if (targetObj) {
       const monsterDmg = Math.max(3, Math.round(monster.attack * (0.8 + Math.random() * 0.4)));
-      targetObj.hp = Math.max(0, targetObj.hp - monsterDmg);
-      logEntries.push(`👿 ${monster.name} 發動反擊，對 ${targetObj.name} 造成了 ${monsterDmg} 點傷害！`);
+      
+      const isTargetDaughter = targetKey === 'solo' || targetKey === 'emilia';
+      if (isTargetDaughter) {
+        const { strength, combatSkill } = daughter.attributes;
+        let def = Math.round(strength * 0.05 + combatSkill * 0.05);
+        if (daughter.fatherBackground === 'knight') {
+          def += 5;
+        }
+        
+        let satiatedReduction = 0;
+        if (nextState.satiated) {
+          def += 10;
+          satiatedReduction = 10;
+        }
+        
+        const finalDmg = Math.max(3, monsterDmg - def);
+        targetObj.hp = Math.max(0, targetObj.hp - finalDmg);
+        logEntries.push(`👿 ${monster.name} 發動反擊，對 ${targetObj.name} 造成了 ${finalDmg} 點傷害！`);
+        
+        let defDetail = `🛡️ 女兒防禦護甲發揮作用（基礎防禦減免: ${def - satiatedReduction} 點傷害）`;
+        if (daughter.fatherBackground === 'knight') {
+          defDetail += `（騎士老爸額外 +5 防禦）`;
+        }
+        if (nextState.satiated) {
+          defDetail += ` + 🍱 特級米糕飽腹效果額外防禦 +10，減免傷害！`;
+        }
+        logEntries.push(defDetail);
+      } else {
+        targetObj.hp = Math.max(0, targetObj.hp - monsterDmg);
+        logEntries.push(`👿 ${monster.name} 發動反擊，對 ${targetObj.name} 造成了 ${monsterDmg} 點傷害！`);
+      }
       
       // 檢查隊員是否倒下
       if (targetObj.hp <= 0) {
