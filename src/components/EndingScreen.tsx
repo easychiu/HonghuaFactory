@@ -52,6 +52,12 @@ export const EndingScreen: React.FC = () => {
         return { color: '#1d3557', badge: '👥🕶️🏛️', glow: 'rgba(29, 53, 87, 0.45)', bg: 'radial-gradient(circle, #0b132b 0%, #010204 100%)' };
       case 'phantom_thief_triplets':
         return { color: '#f72585', badge: '💎🎩🎵', glow: 'rgba(247, 37, 133, 0.45)', bg: 'radial-gradient(circle, #3c0c27 0%, #0f0209 100%)' };
+      case 'clover_mercenary':
+        return { color: '#22c55e', badge: '🍀⚔️🛡️', glow: 'rgba(34, 197, 94, 0.45)', bg: 'radial-gradient(circle, #11311f 0%, #030b05 100%)' };
+      case 'shanshan_court_aide':
+        return { color: '#f472b6', badge: '🌸📜🏛️', glow: 'rgba(244, 114, 182, 0.45)', bg: 'radial-gradient(circle, #371125 0%, #10030a 100%)' };
+      case 'xuewu_magic_tower':
+        return { color: '#38bdf8', badge: '❄️🔮🗼', glow: 'rgba(56, 189, 248, 0.45)', bg: 'radial-gradient(circle, #102d3f 0%, #030b11 100%)' };
       case 'royal_return':
         return { color: '#ffd700', badge: '👑👸✨', glow: 'rgba(255, 215, 0, 0.45)', bg: 'radial-gradient(circle, #3a2e05 0%, #0d0a01 100%)' };
       case 'three_revolution':

@@ -1082,13 +1082,46 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
         };
       }
 
-      // 隨機 AVG 事件觸發 (25% 機率)
-      let triggeredEvent: any = null;
+      // 月結算優先觸發：同窗好感階段事件
+      let triggeredEvent: (typeof AVG_EVENTS)[string] | null = null;
       let eventStep: string | null = null;
+
+      const bondStoryCandidates: Array<{ key: string; cond: boolean }> = [
+        {
+          key: 'bond_story_clover_30',
+          cond: (updatedDaughter.bonds?.clover || 0) >= 30 && !newInventory.includes('bond_story_clover_30_done')
+        },
+        {
+          key: 'bond_story_clover_60',
+          cond: (updatedDaughter.bonds?.clover || 0) >= 60 && !newInventory.includes('bond_story_clover_60_done')
+        },
+        {
+          key: 'bond_story_shanshan_30',
+          cond: (updatedDaughter.bonds?.shanshan || 0) >= 30 && !newInventory.includes('bond_story_shanshan_30_done')
+        },
+        {
+          key: 'bond_story_shanshan_60',
+          cond: (updatedDaughter.bonds?.shanshan || 0) >= 60 && !newInventory.includes('bond_story_shanshan_60_done')
+        },
+        {
+          key: 'bond_story_xuewu_30',
+          cond: (updatedDaughter.bonds?.xuewu || 0) >= 30 && !newInventory.includes('bond_story_xuewu_30_done')
+        },
+        {
+          key: 'bond_story_xuewu_60',
+          cond: (updatedDaughter.bonds?.xuewu || 0) >= 60 && !newInventory.includes('bond_story_xuewu_60_done')
+        }
+      ];
+      const firstBondStory = bondStoryCandidates.find(candidate => candidate.cond);
+      if (firstBondStory) {
+        triggeredEvent = AVG_EVENTS[firstBondStory.key];
+        eventStep = triggeredEvent?.startNodeId || null;
+      }
       
-      if (Math.random() < 0.25) {
+      // 隨機 AVG 事件觸發 (25% 機率)
+      if (!triggeredEvent && Math.random() < 0.25) {
         // 從隨機庫隨機挑選
-        const eventKeys = Object.keys(AVG_EVENTS);
+        const eventKeys = Object.keys(AVG_EVENTS).filter(key => !key.startsWith('bond_story_'));
         const randomKey = eventKeys[Math.floor(Math.random() * eventKeys.length)];
         const rawEvent = AVG_EVENTS[randomKey];
         if (rawEvent) {

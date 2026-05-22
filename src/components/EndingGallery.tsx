@@ -9,6 +9,9 @@ const ALL_ENDINGS = [
   { id: 'lucky_lay_flat', name: '天選的躺平女王', title: '強運登基者', description: '艾莉卡什麼都沒學，整天躺平。然而，偽王突然在吃骨頭時噎死，敵軍首領行軍時被雷劈死，保皇黨與叛軍內鬥瓦解。在眾人的驚嘆聲與跪迎下，艾莉卡一臉懵逼地戴上了皇冠。' },
   { id: 'shadow_cabinet', name: '第五季的影子內閣', title: '幕後支配者', description: '艾蜜莉亞藉由文臣父親的人脈與自身絕頂的智慧，扶植了一位傀儡國王，自己與青梅竹馬 yv、jumbo 組成核心特務與影子軍政內閣，在黑暗中絕對支配著國家的命脈。' },
   { id: 'phantom_thief_triplets', name: '暗夜的蔚藍三連星', title: '義賊怪盜三胞胎', description: '三姊妹在吟遊詩人爸爸的藝術熏陶下重聚，放棄了沉重的復國大任，化身為怪盜團。她們專偷當年瓜分王國的無良貴族，讓優雅的魯特琴樂章成為夜空中權貴們的噩夢。' },
+  { id: 'clover_mercenary', name: '與四葉草的傭兵誓約', title: '蔚藍傭兵團雙劍團長', description: '妳與四葉草在一次次課後切磋與實戰中建立了無可取代的信任，最終共同創立傭兵團。兩把劍、同一面旗，妳們成為王國邊境最令人安心的傳奇搭檔。' },
+  { id: 'shanshan_court_aide', name: '珊珊的宮廷助手', title: '王都智囊院首席策士', description: '妳與珊珊以過人的學識與辯證能力共同進入宮廷決策核心。從法典修訂到外事談判，妳們成為左右朝局的黃金雙腦，寫下了王都政治史的新篇章。' },
+  { id: 'xuewu_magic_tower', name: '與雪舞的魔法塔歲月', title: '星海塔隱居魔導師', description: '在動盪時代落幕後，妳與雪舞選擇遠離權力中心，於海霧深處的魔法塔共研自然奧術。妳們留下的筆記成為後世魔法學派的經典，傳說至今仍被吟誦。' },
   { id: 'royal_return', name: '王女的回歸', title: '蔚藍海岸王國女王', description: '三胞胎公主團結一致，以無可挑剔的帝王學識與優雅姿態重登王位。她們共同治理國家，洗刷了內亂的分裂，使蔚藍海岸王國重新迎來了繁榮與復興。' },
   { id: 'three_revolution', name: '三女的革命', title: '蔚藍共和國執政官', description: '三姊妹聯手發起轟轟烈烈的大革命，用武力推翻了腐敗的封建王權。她們宣布廢除舊體制，建立了歐陸第一個由平民與姊妹共同執政的「蔚藍共和國」。' },
   { id: 'three_shelter', name: '三女的結義', title: '蔚藍庇護所創始人', description: '她們決定放下王室血海深仇，以博愛與慈悲之心，在蔚藍海岸邊建立了一座收容所有因戰火流離失所之孤兒的「蔚藍庇護所」，成為大陸上最溫暖的傳說。' },
@@ -37,6 +40,12 @@ const getEndingVisuals = (id: string) => {
       return { color: '#1d3557', badge: '👥🕶️🏛️', glow: 'rgba(29, 53, 87, 0.45)', bg: 'radial-gradient(circle, #0b132b 0%, #010204 100%)' };
     case 'phantom_thief_triplets':
       return { color: '#f72585', badge: '💎🎩🎵', glow: 'rgba(247, 37, 133, 0.45)', bg: 'radial-gradient(circle, #3c0c27 0%, #0f0209 100%)' };
+    case 'clover_mercenary':
+      return { color: '#22c55e', badge: '🍀⚔️🛡️', glow: 'rgba(34, 197, 94, 0.45)', bg: 'radial-gradient(circle, #11311f 0%, #030b05 100%)' };
+    case 'shanshan_court_aide':
+      return { color: '#f472b6', badge: '🌸📜🏛️', glow: 'rgba(244, 114, 182, 0.45)', bg: 'radial-gradient(circle, #371125 0%, #10030a 100%)' };
+    case 'xuewu_magic_tower':
+      return { color: '#38bdf8', badge: '❄️🔮🗼', glow: 'rgba(56, 189, 248, 0.45)', bg: 'radial-gradient(circle, #102d3f 0%, #030b11 100%)' };
     case 'royal_return':
       return { color: '#ffd700', badge: '👑👸✨', glow: 'rgba(255, 215, 0, 0.45)', bg: 'radial-gradient(circle, #3a2e05 0%, #0d0a01 100%)' };
     case 'three_revolution':
