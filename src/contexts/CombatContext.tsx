@@ -30,7 +30,7 @@ interface CombatContextProps {
   startCombat: (monster: Monster, daughter: Daughter, satiated?: boolean, inventory?: string[]) => void;
   executePlayerAction: (
     actor: 'solo' | 'emilia' | 'yv' | 'jumbo',
-    action: 'attack' | 'skill_slash' | 'skill_combo' | 'skill_heal' | 'skill_fire' | 'skill_taunt' | 'skill_smash' | 'skill_ice_juice' | 'item_binlang_ice' | 'item_binlang_twin' | 'item_binlang_normal' | 'flee' | 'observe',
+    action: 'attack' | 'skill_slash' | 'skill_combo' | 'skill_heal' | 'skill_fire' | 'skill_taunt' | 'skill_smash' | 'skill_ice_juice' | 'item_binlang_ice' | 'item_binlang_twin' | 'item_binlang_normal' | 'item_rice_cake' | 'flee' | 'observe',
     targetMember?: 'emilia' | 'yv' | 'jumbo' | 'solo'
   ) => void;
   resolveEnemyTurn: (daughter: Daughter) => void;
@@ -100,7 +100,7 @@ export const CombatProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const executePlayerAction = (
     actor: 'solo' | 'emilia' | 'yv' | 'jumbo',
-    action: 'attack' | 'skill_slash' | 'skill_combo' | 'skill_heal' | 'skill_fire' | 'skill_taunt' | 'skill_smash' | 'skill_ice_juice' | 'item_binlang_ice' | 'item_binlang_twin' | 'item_binlang_normal' | 'flee' | 'observe',
+    action: 'attack' | 'skill_slash' | 'skill_combo' | 'skill_heal' | 'skill_fire' | 'skill_taunt' | 'skill_smash' | 'skill_ice_juice' | 'item_binlang_ice' | 'item_binlang_twin' | 'item_binlang_normal' | 'item_rice_cake' | 'flee' | 'observe',
     targetMember?: 'emilia' | 'yv' | 'jumbo' | 'solo'
   ) => {
     if (!combatState.isActive || !combatState.monster) return;
@@ -325,6 +325,19 @@ export const CombatProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     else if (action === 'item_binlang_normal') {
       actorObj.hp = Math.min(actorObj.maxHp, actorObj.hp + 40);
       logEntries.push(`💚 女兒嚼了【包葉檳榔】，回復 40 點生命值，並感到神清氣爽！`);
+    }
+
+    else if (action === 'item_rice_cake') {
+      const beforeHp = actorObj.hp;
+      const hpRecover = Math.round(actorObj.maxHp * 0.5);
+      actorObj.hp = Math.min(actorObj.maxHp, actorObj.hp + hpRecover);
+      nextState.satiated = true;
+      const idx = nextState.inventory.indexOf('barrel_rice_cake');
+      if (idx > -1) {
+        nextState.inventory.splice(idx, 1);
+      }
+      const actualRecover = actorObj.hp - beforeHp;
+      logEntries.push(`🍱 女兒在戰鬥中吃下【特級桶仔米糕】，回復 ${actualRecover} 點生命值，並進入飽腹狀態（防禦 +10）！`);
     }
 
     // --- 檢查怪物死亡 ---

@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { useGame } from '../contexts/GameContext';
 import { StatPanel } from './StatPanel';
+import { SaveLoadPanel } from './SaveLoadPanel';
 import { getAvatarPath } from '../utils/avatar';
 import { 
-  Sparkles, Calendar, Coins, Save, FolderOpen, RefreshCw, 
+  Sparkles, Calendar, Coins, Save, RefreshCw, 
   MessageSquare, ShoppingCart, Compass, ToggleLeft, ToggleRight, 
   History, Crown, Lock, Check
 } from 'lucide-react';
@@ -29,8 +30,6 @@ export const MainPanel: React.FC = () => {
     talkToDaughter,
     startAdventure,
     toggleCheatMode,
-    saveGame,
-    loadGame,
     restartGame,
     changeOutfit,
     performStreetPerformance
@@ -38,6 +37,7 @@ export const MainPanel: React.FC = () => {
 
   const { daughter, time, logs, cheatMode } = state;
   const [isClosetOpen, setIsClosetOpen] = useState(false);
+  const [isSavePanelOpen, setIsSavePanelOpen] = useState(false);
 
   const getAvatarStyle = (charId: string) => {
     if (charId === 'emilia') {
@@ -86,18 +86,11 @@ export const MainPanel: React.FC = () => {
           {/* Save/Load / Reset Buttons */}
           <div className="flex items-center gap-2">
             <button 
-              onClick={saveGame} 
-              title="儲存進度" 
+              onClick={() => setIsSavePanelOpen(true)} 
+              title="存檔管理" 
               className="p-2 rounded bg-[rgba(255,255,255,0.05)] border border-slate-700 hover:border-[#d4af37] hover:text-[#d4af37] transition-all"
             >
               <Save size={16} />
-            </button>
-            <button 
-              onClick={loadGame} 
-              title="讀取進度" 
-              className="p-2 rounded bg-[rgba(255,255,255,0.05)] border border-slate-700 hover:border-[#d4af37] hover:text-[#d4af37] transition-all"
-            >
-              <FolderOpen size={16} />
             </button>
             <button 
               onClick={() => {
@@ -471,6 +464,9 @@ export const MainPanel: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Save/Load Panel Modal */}
+      {isSavePanelOpen && <SaveLoadPanel onClose={() => setIsSavePanelOpen(false)} />}
     </div>
   );
 };

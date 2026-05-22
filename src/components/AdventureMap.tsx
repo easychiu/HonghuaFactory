@@ -737,12 +737,29 @@ export const AdventureMap: React.FC = () => {
                     </div>
                   )}
 
-                  {/* shared Items panel (Binlangs) */}
+                  {/* shared Items panel */}
                   <div className="mt-3 pt-3 border-t border-slate-850">
                     <h5 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1">
-                      <Backpack size={10} /> 戰鬥補給檳榔 (背包持有數)
+                      <Backpack size={10} /> 戰鬥背包補給 (背包持有數)
                     </h5>
-                    <div className="flex gap-3">
+                    <div className="flex gap-3 flex-wrap">
+                      {inventory.includes('barrel_rice_cake') && !combatState.satiated ? (
+                        <button
+                          onClick={() => {
+                            const actor = daughter.characterId === 'emilia' ? 'emilia' : 'solo';
+                            executePlayerAction(actor, 'item_rice_cake');
+                            eatRiceCake();
+                          }}
+                          className="btn-fantasy-sec text-[10px] py-1.5 px-3 border-emerald-500/40 text-emerald-300 flex items-center gap-1"
+                        >
+                          🍱 特級桶仔米糕
+                        </button>
+                      ) : (
+                        <span className="text-[10px] text-slate-600 line-through">
+                          特級桶仔米糕 {combatState.satiated ? '(已飽腹)' : '(缺)'}
+                        </span>
+                      )}
+
                       {inventory.includes('binlang_ice') ? (
                         <button
                           onClick={() => {
