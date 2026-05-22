@@ -4,7 +4,7 @@ import { Sparkles, Calendar, User, Shield, BookOpen, Coins, Music, Lock } from '
 import type { CharacterId, FatherBackground } from '../types';
 
 export const StartScreen: React.FC = () => {
-  const { state, initGame } = useGame();
+  const { state, initGame, unlockAllProtagonists } = useGame();
   const { unlockedCharacters = ['honghua'] } = state;
 
   const [name, setName] = useState('');
@@ -37,13 +37,23 @@ export const StartScreen: React.FC = () => {
       <div className="glass-panel w-full p-6 md:p-10 animate-slide-up border-2 border-[#d4af37]/35 shadow-[0_0_35px_rgba(212,175,55,0.2)]">
         
         {/* Game Title */}
-        <div className="text-center mb-8">
+        <div className="text-center mb-8 relative">
           <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-[#ffd700] via-[#ffb703] to-[#e9c46a] bg-clip-text text-transparent drop-shadow-md">
             《蔚藍海岸的王女們》
           </h1>
           <p className="text-xs font-semibold tracking-widest text-[#a855f7] uppercase mt-2">
             Multi-Protagonist (NG+) Princess Maker Web Simulation
           </p>
+          <button
+            type="button"
+            onClick={() => {
+              unlockAllProtagonists();
+              alert('已解鎖全部王女！現在可以點選艾莉卡或艾蜜莉亞進行遊戲！');
+            }}
+            className="absolute top-0 right-0 text-[10px] text-[#a855f7] hover:text-[#c084fc] border border-[#a855f7]/30 hover:border-[#c084fc]/50 bg-[#a855f7]/5 hover:bg-[#a855f7]/10 px-2.5 py-1 rounded transition-all flex items-center gap-1 font-mono uppercase"
+          >
+            🔓 Debug Unlock
+          </button>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-8">

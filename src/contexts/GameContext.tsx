@@ -423,6 +423,7 @@ interface GameContextProps {
   performStreetPerformance: () => void;
   resolveCombatVictory: (remainingHp: number, goldReward: number) => void;
   resolveCombatDefeat: () => void;
+  unlockAllProtagonists: () => void;
 }
 
 const GameContext = createContext<GameContextProps | undefined>(undefined);
@@ -1309,6 +1310,13 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
   };
 
+  const unlockAllProtagonists = () => {
+    setState((prev) => ({
+      ...prev,
+      unlockedCharacters: ['honghua', 'erica', 'emilia']
+    }));
+  };
+
   // 重玩 / 重啟週目 (NG+)
   const restartGame = () => {
     setState(prev => ({
@@ -1474,7 +1482,8 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
         loadGame,
         performStreetPerformance,
         resolveCombatVictory,
-        resolveCombatDefeat
+        resolveCombatDefeat,
+        unlockAllProtagonists
       }}
     >
       {children}
