@@ -113,6 +113,32 @@ export const ITEMS: Item[] = [
     price: 200,
     type: 'food',
     statChanges: { stress: -40 }
+  },
+  // 黑市走私道具
+  {
+    id: 'bm_dark_armor',
+    name: '【黑市】夜行密探半身甲',
+    description: '【黑市】夜行密探半身甲 (600金，+60 體力，+30 戰技，-15 禮儀)',
+    price: 600,
+    type: 'armor',
+    statChanges: { stamina: 60, combatSkill: 30, elegance: -15 },
+    outfitChange: 'armor'
+  },
+  {
+    id: 'bm_poison_dagger',
+    name: '【黑市】暗影淬毒雙短刃',
+    description: '【黑市】暗影淬毒雙短刃 (500金，+40 戰技，+20 罪孽)',
+    price: 500,
+    type: 'weapon',
+    statChanges: { combatSkill: 40, sin: 20 }
+  },
+  {
+    id: 'bm_cheap_gp125',
+    name: '【黑市】二手未來摩托車 Gp125',
+    description: '【黑市】二手未來摩托車 Gp125 (1500金，+10 體力，移動消耗減至 1)',
+    price: 1500,
+    type: 'food',
+    statChanges: { stamina: 10 }
   }
 ];
 
@@ -964,18 +990,70 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
         });
       }
 
+      const currentMonth = prev.time.month;
+      const isQuarterEnd = [3, 6, 9, 12].includes(currentMonth);
+      const newInventory = [...prev.inventory];
+      const updatedDaughter = {
+        ...prev.daughter,
+        age: newAge,
+        combatHp: prev.daughter.attributes.stamina,
+        combatMp: prev.daughter.attributes.magicSkill * 2 + 10
+      };
+
+      if (isQuarterEnd) {
+        const fundIndex = newInventory.findIndex(item => item.startsWith('fortress_fund_'));
+        if (fundIndex > -1) {
+          const fundItem = newInventory[fundIndex];
+          const remainingQuarters = parseInt(fundItem.split('_')[2], 10);
+          updatedDaughter.gold += 500;
+          newInventory.splice(fundIndex, 1);
+          if (remainingQuarters > 1) {
+            newInventory.push(`fortress_fund_${remainingQuarters - 1}`);
+            newLogs.push({
+              id: Math.random().toString(),
+              year: prev.time.year,
+              month: currentMonth,
+              period: 'late',
+              text: `🪙 女兒收到了來自隱密要塞的本季軍餉資助 500 金幣！(剩餘 ${remainingQuarters - 1} 季)`,
+              type: 'info'
+            });
+          } else {
+            newLogs.push({
+              id: Math.random().toString(),
+              year: prev.time.year,
+              month: currentMonth,
+              period: 'late',
+              text: `🪙 女兒收到了來自隱密要塞的最後一季軍餉資助 500 金幣！資助合約已滿。`,
+              type: 'info'
+            });
+          }
+        }
+        
+        if (newInventory.includes('casino_property')) {
+          updatedDaughter.gold += 1000;
+          newLogs.push({
+            id: Math.random().toString(),
+            year: prev.time.year,
+            month: currentMonth,
+            period: 'late',
+            text: `🪙 女兒收到了來自黑鑽賭場的本季股權分紅 1000 金幣！`,
+            type: 'info'
+          });
+        }
+      }
+
       // 18歲大結局
       if (newAge >= 18) {
         // 計算結局
-        const finalClues = prev.inventory.filter(i => i.includes('crest') || i.includes('saber')).length;
+        const finalClues = newInventory.filter(i => i.includes('crest') || i.includes('saber')).length;
         
         // 收集認親姊妹
         const sisters: string[] = [];
-        if (prev.inventory.includes('erica_reunited')) sisters.push('erica');
-        if (prev.inventory.includes('emilia_reunited')) sisters.push('emilia');
-        if (prev.inventory.includes('honghua_reunited')) sisters.push('honghua');
+        if (newInventory.includes('erica_reunited')) sisters.push('erica');
+        if (newInventory.includes('emilia_reunited')) sisters.push('emilia');
+        if (newInventory.includes('honghua_reunited')) sisters.push('honghua');
 
-        const end = determineEnding(prev.daughter, prev.completedEndings.length, finalClues, sisters);
+        const end = determineEnding(updatedDaughter, prev.completedEndings.length, finalClues, sisters);
         
         // 保存解鎖與結局
         const newCompleted = [...prev.completedEndings];
@@ -992,6 +1070,8 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // 回傳大結局狀態
         return {
           ...prev,
+          daughter: updatedDaughter,
+          inventory: newInventory,
           time: { year: nextYear, month: nextMonth, period: 'early' },
           activeScreen: 'ending',
           schedule: null,
@@ -1000,13 +1080,6 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
           unlockedCharacters: newUnlocked
         };
       }
-
-      const updatedDaughter = {
-        ...prev.daughter,
-        age: newAge,
-        combatHp: prev.daughter.attributes.stamina,
-        combatMp: prev.daughter.attributes.magicSkill * 2 + 10
-      };
 
       // 隨機 AVG 事件觸發 (25% 機率)
       let triggeredEvent: any = null;
@@ -1026,6 +1099,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return {
         ...prev,
         daughter: updatedDaughter,
+        inventory: newInventory,
         time: { year: nextYear, month: nextMonth, period: 'early' },
         currentEvent: nextMonth === 10 ? null : triggeredEvent,
         currentEventStep: nextMonth === 10 ? null : eventStep,
@@ -1041,8 +1115,11 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const item = ITEMS.find(i => i.id === itemId);
     if (!item) return { success: false, message: '找不到商品' };
     
-    // 行商老爸享 8 折優惠
-    const discount = state.daughter.fatherBackground === 'merchant' ? 0.8 : 1;
+    // 行商老爸享 8 折優惠；黑市解鎖後檳榔 5 折
+    let discount = state.daughter.fatherBackground === 'merchant' ? 0.8 : 1;
+    if (itemId.startsWith('binlang_') && state.inventory.includes('black_market_unlocked')) {
+      discount = 0.5;
+    }
     const finalPrice = Math.round(item.price * discount);
 
     if (state.daughter.gold < finalPrice) return { success: false, message: '金幣不足' };
@@ -1170,9 +1247,10 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const targetNode = nextAdv.nodes.find(n => n.id === nodeId);
     if (!targetNode) return;
 
-    // 計算專注度扣除。有未來摩托車則消耗 1，否則消耗 4
-    const hasMotorcycle = state.inventory.includes('future_gp125');
-    const focusCost = hasMotorcycle ? 1 : 4;
+    // 計算專注度扣除。未來摩托車 / 黑市摩托車使基礎消耗為 1；精靈祝福使非摩托車的消耗減半為 2。
+    const hasMotorcycle = state.inventory.includes('future_gp125') || state.inventory.includes('bm_cheap_gp125');
+    const hasBlessing = state.inventory.includes('fairy_blessing');
+    const focusCost = hasMotorcycle ? 1 : (hasBlessing ? 2 : 4);
     
     const newDaughter = { ...state.daughter };
     newDaughter.focus = Math.max(0, newDaughter.focus - focusCost);
@@ -1182,7 +1260,20 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     nextAdv.combatLog.push(`🐾 前往 [${targetNode.name}] 耗費了 ${focusCost} 點專注度。`);
 
     // 處理節點類型
-    if (targetNode.type === 'battle' || targetNode.type === 'boss') {
+    if (targetNode.type === 'boss' && targetNode.name.includes('少校')) {
+      // 攔截傑克斯少校，不直接戰鬥，而是開啟 AVG 事件
+      const rawEvent = AVG_EVENTS.jaks_patrol;
+      setState(prev => ({
+        ...prev,
+        daughter: newDaughter,
+        adventure: nextAdv,
+        currentEvent: rawEvent,
+        currentEventStep: rawEvent.startNodeId
+      }));
+      return;
+    }
+    
+    else if (targetNode.type === 'battle' || targetNode.type === 'boss') {
       nextAdv.status = 'fighting';
     } 
     
@@ -1199,6 +1290,17 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } 
     
     else if (targetNode.type === 'shop') {
+      if (state.daughter.characterId === 'erica' && state.daughter.focus < 15 && !state.inventory.includes('casino_property')) {
+        const rawEvent = AVG_EVENTS.casino_event;
+        setState(prev => ({
+          ...prev,
+          daughter: newDaughter,
+          adventure: nextAdv,
+          currentEvent: rawEvent,
+          currentEventStep: rawEvent.startNodeId
+        }));
+        return;
+      }
       // 驛站，直接跳轉 store 面板
       setState(prev => ({
         ...prev,
@@ -1209,13 +1311,44 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return;
     } 
     
-    else if (targetNode.type === 'event' || targetNode.type === 'hidden') {
-      // 觸發隨機事件
-      let evKey = 'Noble Crest';
-      if (targetNode.name.includes('圖書館')) evKey = 'Noble Crest'; // 可以觸發特殊圖書
-      else if (targetNode.name.includes('診所')) evKey = 'doctor_axxia';
-      else if (targetNode.name.includes('盲盒')) evKey = 'blackmarket_box';
-      else if (targetNode.name.includes('少校')) evKey = 'jaks_patrol';
+    else if (targetNode.type === 'hidden') {
+      let evKey = 'hidden_fortress';
+      if (targetNode.name.includes('要塞')) evKey = 'hidden_fortress';
+      else if (targetNode.name.includes('圖書館')) evKey = 'hidden_library';
+      else if (targetNode.name.includes('黑市')) evKey = 'hidden_blackmarket';
+      else if (targetNode.name.includes('妖精') || targetNode.name.includes('精靈')) evKey = 'hidden_fairy';
+      
+      const rawEvent = AVG_EVENTS[evKey] || AVG_EVENTS.hidden_fortress;
+      setState(prev => ({
+        ...prev,
+        daughter: newDaughter,
+        adventure: nextAdv,
+        currentEvent: rawEvent,
+        currentEventStep: rawEvent.startNodeId
+      }));
+      return;
+    }
+    
+    else if (targetNode.type === 'event') {
+      let evKey = '';
+      if (targetNode.name.includes('診所')) {
+        evKey = 'doctor_axxia';
+      } else if (targetNode.name.includes('盲盒')) {
+        evKey = 'blackmarket_box';
+      } else if (targetNode.name.includes('少校')) {
+        evKey = 'jaks_patrol';
+      } else {
+        // 一般隨機事件節點
+        const isHonghua = state.daughter.characterId === 'honghua';
+        const hasBinlang = state.inventory.some(item => item.startsWith('binlang_'));
+        if (isHonghua && hasBinlang && Math.random() < 0.5) {
+          evKey = 'temple_event';
+        } else {
+          const sum = nodeId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+          const choices = ['noble_crest', 'mist_forest', 'tactics_test'];
+          evKey = choices[sum % 3];
+        }
+      }
       
       const rawEvent = AVG_EVENTS[evKey] || AVG_EVENTS.noble_crest;
       
@@ -1340,6 +1473,9 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }
         }
         if (rew.addInventory) newInventory.push(rew.addInventory);
+        if (rew.addInventories) {
+          rew.addInventories.forEach((item: string) => newInventory.push(item));
+        }
         if (rew.removeInventory) {
           const idx = newInventory.indexOf(rew.removeInventory);
           if (idx > -1) newInventory.splice(idx, 1);
@@ -1383,6 +1519,22 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       // 檢查是否結束對話
       const isEnd = !nextStep || !prev.currentEvent!.nodes[nextStep];
+
+      if (isEnd && prev.currentEvent && prev.currentEvent.id === 'jaks_patrol' && updatedAdventure && updatedAdventure.status === 'exploring') {
+        newDaughter.gold += 300;
+        newDaughter.focus = 100;
+        newDaughter.combatHp = newDaughter.attributes.stamina;
+        newScreen = 'main';
+        updatedAdventure = null;
+        updatedLogs.push({
+          id: Math.random().toString(),
+          year: prev.time.year,
+          month: prev.time.month,
+          period: prev.time.period,
+          text: `🏆 冒險成功！藉由智慧與高雅氣質說服了傑克斯少校，成功探索蔚藍林地，獲得獎勵金幣 300！`,
+          type: 'info' as const
+        });
+      }
 
       // 檢查並解鎖好感度成就
       const newUnlockedAchievements = [...(prev.unlockedAchievements || [])];

@@ -566,8 +566,17 @@ export const AdventureMap: React.FC = () => {
                         disabled={combatState.party.solo.mp < 10}
                         className="btn-fantasy-sec py-3 text-xs disabled:opacity-40"
                       >
-                        🔥 皇家斬擊 (10 MP)
+                        {inventory.includes('royal_sword_cross') ? '⚔️ 十字斬 (10 MP)' : '🔥 皇家斬擊 (10 MP)'}
                       </button>
+                      {inventory.includes('temple_ice_juice') && (
+                        <button
+                          onClick={() => executePlayerAction('solo', 'skill_ice_juice')}
+                          disabled={combatState.party.solo.mp < 12}
+                          className="btn-fantasy py-3 text-xs border-cyan-500/50 text-cyan-300 hover:bg-cyan-950/15 disabled:opacity-40"
+                        >
+                          ❄️ 極凍檳榔汁 (12 MP)
+                        </button>
+                      )}
                       {combatState.monster?.sisterId && (
                         <button 
                           onClick={() => executePlayerAction('solo', 'observe')}
@@ -605,7 +614,7 @@ export const AdventureMap: React.FC = () => {
                               disabled={combatState.party.emilia.mp < 10}
                               className="btn-fantasy-sec text-[10px] py-2 disabled:opacity-40"
                             >
-                              🗡️ 皇家斬擊 (10)
+                              {inventory.includes('royal_sword_cross') ? '⚔️ 十字斬 (10)' : '🗡️ 皇家斬擊 (10)'}
                             </button>
                             {combatState.monster?.sisterId ? (
                               <button 

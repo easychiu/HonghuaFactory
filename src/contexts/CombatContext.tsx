@@ -30,7 +30,7 @@ interface CombatContextProps {
   startCombat: (monster: Monster, daughter: Daughter, satiated?: boolean, inventory?: string[]) => void;
   executePlayerAction: (
     actor: 'solo' | 'emilia' | 'yv' | 'jumbo',
-    action: 'attack' | 'skill_slash' | 'skill_combo' | 'skill_heal' | 'skill_fire' | 'skill_taunt' | 'skill_smash' | 'item_binlang_ice' | 'item_binlang_twin' | 'item_binlang_normal' | 'flee' | 'observe',
+    action: 'attack' | 'skill_slash' | 'skill_combo' | 'skill_heal' | 'skill_fire' | 'skill_taunt' | 'skill_smash' | 'skill_ice_juice' | 'item_binlang_ice' | 'item_binlang_twin' | 'item_binlang_normal' | 'flee' | 'observe',
     targetMember?: 'emilia' | 'yv' | 'jumbo' | 'solo'
   ) => void;
   resolveEnemyTurn: (daughter: Daughter) => void;
@@ -100,7 +100,7 @@ export const CombatProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const executePlayerAction = (
     actor: 'solo' | 'emilia' | 'yv' | 'jumbo',
-    action: 'attack' | 'skill_slash' | 'skill_combo' | 'skill_heal' | 'skill_fire' | 'skill_taunt' | 'skill_smash' | 'item_binlang_ice' | 'item_binlang_twin' | 'item_binlang_normal' | 'flee' | 'observe',
+    action: 'attack' | 'skill_slash' | 'skill_combo' | 'skill_heal' | 'skill_fire' | 'skill_taunt' | 'skill_smash' | 'skill_ice_juice' | 'item_binlang_ice' | 'item_binlang_twin' | 'item_binlang_normal' | 'flee' | 'observe',
     targetMember?: 'emilia' | 'yv' | 'jumbo' | 'solo'
   ) => {
     if (!combatState.isActive || !combatState.monster) return;
@@ -120,7 +120,7 @@ export const CombatProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     if (!actorObj || actorObj.hp <= 0) return;
 
     // 攻擊與傷害技能會重置觀察計數
-    const isOffensive = ['attack', 'skill_slash', 'skill_combo', 'skill_fire', 'skill_smash'].includes(action);
+    const isOffensive = ['attack', 'skill_slash', 'skill_combo', 'skill_fire', 'skill_smash', 'skill_ice_juice'].includes(action);
     if (isOffensive) {
       nextState.observeCount = 0;
     }
@@ -183,6 +183,11 @@ export const CombatProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         critRate = 0.30;
       }
 
+      // 神廟獻祭暴擊加成判定
+      if ((actor === 'solo' || actor === 'emilia') && nextState.inventory && nextState.inventory.includes('temple_double_rate')) {
+        critRate += 0.10;
+      }
+
       // 暴擊判定
       const isCrit = Math.random() < critRate;
       damage = Math.max(5, Math.round(baseDmg * (isCrit ? 1.5 : 1) - monster.defense * 0.5));
@@ -208,8 +213,14 @@ export const CombatProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         return;
       }
       actorObj.mp -= 10;
-      damage = Math.max(10, Math.round(28 - monster.defense * 0.5));
-      logEntries.push(`🔥 ${actorObj.name} 消耗 10 MP 施展皇家斬擊！造成 ${damage} 點傷害！`);
+      const hasCross = nextState.inventory && nextState.inventory.includes('royal_sword_cross');
+      if (hasCross) {
+        damage = Math.max(25, Math.round(56 - monster.defense * 0.5));
+        logEntries.push(`⚔️ ${actorObj.name} 消耗 10 MP 施展皇家奧義「十字斬」！造成 ${damage} 點傷害！`);
+      } else {
+        damage = Math.max(10, Math.round(28 - monster.defense * 0.5));
+        logEntries.push(`🔥 ${actorObj.name} 消耗 10 MP 施展皇家斬擊！造成 ${damage} 點傷害！`);
+      }
       nextState.monsterHp = Math.max(0, nextState.monsterHp - damage);
     } 
     
@@ -283,6 +294,20 @@ export const CombatProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       actorObj.mp -= 15;
       damage = Math.max(15, Math.round(35 - monster.defense * 0.4));
       logEntries.push(`🔨 jumbo 重擊地面，碎石橫飛！對 ${monster.name} 造成 ${damage} 點碎甲傷害！`);
+      nextState.monsterHp = Math.max(0, nextState.monsterHp - damage);
+    }
+
+    else if (action === 'skill_ice_juice') {
+      // 極凍檳榔汁大招 (12 MP)
+      if (actorObj.mp < 12) {
+        logEntries.push(`❌ MP 不足！無法施展極凍檳榔汁。`);
+        setCombatState({ ...nextState, combatLog: [...nextState.combatLog, ...logEntries] });
+        return;
+      }
+      actorObj.mp -= 12;
+      damage = Math.max(15, Math.round(40 - monster.defense * 0.3));
+      nextState.frozenTurns = 2;
+      logEntries.push(`❄️ ${actorObj.name} 施展主動大招【極凍檳榔汁】！對 ${monster.name} 造成 ${damage} 點冰霜傷害，並將其定身冰凍 2 回合！`);
       nextState.monsterHp = Math.max(0, nextState.monsterHp - damage);
     }
 

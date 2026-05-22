@@ -628,5 +628,291 @@ export const AVG_EVENTS: Record<string, AVGEvent> = {
         nextId: undefined
       }
     }
+  },
+  hidden_fortress: {
+    id: 'hidden_fortress',
+    title: '隱密要塞',
+    startNodeId: 'start',
+    nodes: {
+      start: {
+        speaker: '殘存將領 瓦爾多',
+        text: '來者何人……！天啊，這面容與這氣質，您是殿下！老將瓦爾多率殘部在此要塞隱守多年，終於盼得殿下歸來！',
+        choices: [
+          {
+            text: '⚔️ 接受將士們的效忠，研習皇家奧義「十字斬」',
+            effect: (_state) => {
+              return {
+                log: '女兒繼承了昔日皇家奧義「十字斬」！並與將士們約定每季資助軍餉 500 金幣，持續一年。',
+                nextDialogId: 'fortress_end',
+                rewards: {
+                  addInventories: ['royal_sword_cross', 'fortress_fund_4'],
+                  combatSkill: 40,
+                  reputation: 50
+                }
+              };
+            }
+          }
+        ]
+      },
+      fortress_end: {
+        speaker: '殘存將領 瓦爾多',
+        text: '殿下，此去復國之路艱險重重，請務必保重。我們將在暗中為您籌措軍餉，每季送往府上！蔚藍海岸王國萬歲！',
+        nextId: undefined
+      }
+    }
+  },
+  hidden_library: {
+    id: 'hidden_library',
+    title: '地下皇家圖書館',
+    startNodeId: 'start',
+    nodes: {
+      start: {
+        speaker: '古老石像守衛',
+        text: '此乃蔚藍海岸皇家禁地。凡人止步。若無通行權或王室信物，強闖者將受神罰！',
+        choices: [
+          {
+            text: '👑 出示皇家通行信物（需「文臣老爸背景」或「圖書館線索」）',
+            effect: (state) => {
+              const hasPass = state.daughter.fatherBackground === 'scholar' || state.inventory.includes('royal_library_clue');
+              if (hasPass) {
+                return {
+                  log: '守衛石像感應到信物，緩緩開啟了大門。女兒在密室中查閱了皇家禁忌古籍，智力暴漲，查明了昔日內亂陰謀的真相！',
+                  nextDialogId: 'library_success',
+                  rewards: {
+                    intelligence: 50,
+                    addInventories: ['royal_crest', 'rebellion_truth']
+                  }
+                };
+              } else {
+                return {
+                  log: '妳沒有任何通行證明，石像釋放了警報雷擊，女兒受到重創並被迫撤退！',
+                  nextDialogId: 'library_fail',
+                  rewards: {
+                    hp: -30,
+                    stress: 20
+                  }
+                };
+              }
+            }
+          },
+          {
+            text: '↩️ 默默退開',
+            effect: (_state) => {
+              return {
+                log: '女兒覺得太過危險，選擇了離開。',
+                nextDialogId: undefined
+              };
+            }
+          }
+        ]
+      },
+      library_success: {
+        speaker: '旁白',
+        text: '古籍中記載著當年王國內亂的罪魁禍首——原來是偽王勾結了鄰國外敵……女兒記下了這個陰謀真相，這將對復國大業起到至關重要的作用！',
+        nextId: undefined
+      },
+      library_fail: {
+        speaker: '古老石像守衛',
+        text: '無知之徒，速速退去，否對灰飛煙滅！',
+        nextId: undefined
+      }
+    }
+  },
+  hidden_blackmarket: {
+    id: 'hidden_blackmarket',
+    title: '黑市走私營地',
+    startNodeId: 'start',
+    nodes: {
+      start: {
+        speaker: '黑市大佬 霍金斯',
+        text: '喲，這不是我們行商會的千金嘛！小姑娘長這麼大啦，真有老爺子的風範。既然妳拿著商會黑卡來了，那黑市的秘密通道就對妳永久敞開了！',
+        choices: [
+          {
+            text: '🤝 接受大佬的好意，開啟走私交易',
+            effect: (_state) => {
+              return {
+                log: '女兒與黑市大佬達成密約，永久開啟了黑市神裝店，稀有檳榔享有5折批發優惠！',
+                nextDialogId: 'blackmarket_end',
+                rewards: {
+                  addInventory: 'black_market_unlocked',
+                  gold: 500
+                }
+              };
+            }
+          }
+        ]
+      },
+      blackmarket_end: {
+        speaker: '黑市大佬 霍金斯',
+        text: '在這片海岸上，沒有錢辦不到的事。如果有，那就是錢不夠。嘿嘿，祝妳生意興隆，王女殿下。',
+        nextId: undefined
+      }
+    }
+  },
+  hidden_fairy: {
+    id: 'hidden_fairy',
+    title: '精靈的妖精之環',
+    startNodeId: 'start',
+    nodes: {
+      start: {
+        speaker: '旁白',
+        text: '前方森林深處出現了一圈散發著奇異微光的七彩蘑菇——妖精之環。傳說中，只有擁有老爸的舊魯特琴與靈性樂章的人，才能喚醒這裡的精靈女王。',
+        choices: [
+          {
+            text: '🎵 用「舊魯特琴」彈奏父親傳授的樂章',
+            effect: (state) => {
+              const hasLute = state.inventory.includes('old_lute');
+              if (hasLute) {
+                return {
+                  log: '悠揚的魯特琴樂章喚醒了精靈。妖精女王親臨並給予祝福：魅力大幅提升，且修行專注度消耗永久減半！',
+                  nextDialogId: 'fairy_success',
+                  rewards: {
+                    charisma: 50,
+                    addInventory: 'fairy_blessing'
+                  }
+                };
+              } else {
+                return {
+                  log: '妳沒有舊魯特琴，無法彈奏出引導精靈的樂曲。妖精之環的迷霧漸漸散去……',
+                  nextDialogId: 'fairy_fail'
+                };
+              }
+            }
+          },
+          {
+            text: '↩️ 離開這裡',
+            effect: (_state) => {
+              return {
+                log: '女兒離開了神祕的蘑菇環。',
+                nextDialogId: undefined
+              };
+            }
+          }
+        ]
+      },
+      fairy_success: {
+        speaker: '妖精女王',
+        text: '這首曲子……多麼懷念的旋律。是那個吟遊詩人對吧？既然是他的女兒，那這片森林的微光將永遠眷顧妳的旅途。',
+        nextId: undefined
+      },
+      fairy_fail: {
+        speaker: '旁白',
+        text: '風中只留下樹葉沙沙作響，什麼也沒有發生。',
+        nextId: undefined
+      }
+    }
+  },
+  temple_event: {
+    id: 'temple_event',
+    title: '荖葉林的古老豐收神廟',
+    startNodeId: 'start',
+    nodes: {
+      start: {
+        speaker: '旁白',
+        text: '在茂密的荖葉林深處，赫然矗立著一座古老斑駁的豐收神廟。神壇前有微光閃爍，似乎正渴望著獻祭此地的特色檳榔……',
+        choices: [
+          {
+            text: '🔥 獻祭雙子星檳榔（需背包有雙子星檳榔）',
+            effect: (state) => {
+              const hasTwin = state.inventory.includes('binlang_twin');
+              if (hasTwin) {
+                return {
+                  log: '妳將雙子星檳榔獻祭於神壇，神廟金光大盛！女兒獲得被動加成：戰鬥連擊率（暴擊率）永久提升 10%！',
+                  nextDialogId: 'temple_success',
+                  rewards: {
+                    removeInventory: 'binlang_twin',
+                    addInventory: 'temple_double_rate'
+                  }
+                };
+              } else {
+                return {
+                  log: '背包中沒有雙子星檳榔，無法完成獻祭。',
+                  nextDialogId: 'temple_fail'
+                };
+              }
+            }
+          },
+          {
+            text: '❄️ 獻祭結冰檳榔（需背包有結冰檳榔）',
+            effect: (state) => {
+              const hasIce = state.inventory.includes('binlang_ice');
+              if (hasIce) {
+                return {
+                  log: '妳將結冰檳榔置於神壇上，神壇瞬間結霜。女兒領悟了戰鬥大招「極凍檳榔汁」！',
+                  nextDialogId: 'temple_success',
+                  rewards: {
+                    removeInventory: 'binlang_ice',
+                    addInventory: 'temple_ice_juice'
+                  }
+                };
+              } else {
+                return {
+                  log: '背包中沒有結冰檳榔，無法完成獻祭。',
+                  nextDialogId: 'temple_fail'
+                };
+              }
+            }
+          },
+          {
+            text: '↩️ 默默離開',
+            effect: (_state) => {
+              return {
+                log: '女兒向神壇鞠躬後轉身離開。',
+                nextDialogId: undefined
+              };
+            }
+          }
+        ]
+      },
+      temple_success: {
+        speaker: '豐收神像',
+        text: '虔誠的王女啊，汝的祭品令吾愉悅。接下這份大自然的饋贈，它將指引汝走向復國與勝利的彼方。',
+        nextId: undefined
+      },
+      temple_fail: {
+        speaker: '旁白',
+        text: '神壇的微光漸漸暗淡，似乎在等待著正確的祭品……',
+        nextId: undefined
+      }
+    }
+  },
+  casino_event: {
+    id: 'casino_event',
+    title: '逆天改命的黑鑽賭局',
+    startNodeId: 'start',
+    nodes: {
+      start: {
+        speaker: '地下賭場老闆 凱薩',
+        text: '喲，小姑娘，看妳一臉疲憊的樣子，要不要在我們黑鑽俱樂部玩一把？只要贏了，這間賭場的產權分紅就是妳的；要是輸了，妳手上的所有金幣歸我，敢不敢賭一把？',
+        choices: [
+          {
+            text: '🎲 憑強運盲擲梭哈！（大成功概率 100%）',
+            effect: (_state) => {
+              return {
+                log: '艾莉卡憑藉強運連續盲擲三個 6 點共 18 點滿分！贏到賭場老闆當場破產，轉讓「賭場產權書」！',
+                nextDialogId: 'casino_success',
+                rewards: {
+                  addInventory: 'casino_property'
+                }
+              };
+            }
+          },
+          {
+            text: '↩️ 敬而遠之撤退',
+            effect: (_state) => {
+              return {
+                log: '女兒果斷拒絕了賭局，轉身離去。',
+                nextDialogId: undefined
+              };
+            }
+          }
+        ]
+      },
+      casino_success: {
+        speaker: '地下賭場老闆 凱薩',
+        text: '這、這不可能……！連續盲擲 18 點！？妳這丫頭運氣也太逆天了吧！罷了，願賭服輸，這張「賭場產權書」歸妳了，以後每季的分紅我會派人送去。',
+        nextId: undefined
+      }
+    }
   }
 };

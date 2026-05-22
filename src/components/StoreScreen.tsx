@@ -90,9 +90,23 @@ export const StoreScreen: React.FC = () => {
 
       {/* Items Shelf */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {ITEMS.map((item) => {
-          const discount = daughter.fatherBackground === 'merchant' ? 0.8 : 1;
-          const finalPrice = Math.round(item.price * discount);
+        {ITEMS.filter((item) => {
+          if (item.id.startsWith('bm_')) {
+            return state.inventory.includes('black_market_unlocked');
+          }
+          return true;
+        }).map((item) => {
+          let isBlackMarketDiscount = false;
+          let isMerchantDiscount = false;
+          let finalPrice = item.price;
+
+          if (item.id.startsWith('binlang_') && state.inventory.includes('black_market_unlocked')) {
+            isBlackMarketDiscount = true;
+            finalPrice = Math.round(item.price * 0.5);
+          } else if (daughter.fatherBackground === 'merchant') {
+            isMerchantDiscount = true;
+            finalPrice = Math.round(item.price * 0.8);
+          }
 
           return (
             <div key={item.id} className="glass-panel p-5 flex flex-col justify-between gap-4 border border-slate-800/80 hover:border-[rgba(212,175,55,0.3)] transition-all">
@@ -100,10 +114,24 @@ export const StoreScreen: React.FC = () => {
               {/* Title & Price */}
               <div>
                 <div className="flex justify-between items-start gap-2 mb-2">
-                  <h3 className="text-base font-bold text-white tracking-wide">{item.name}</h3>
+                  <div className="flex flex-col gap-1">
+                    <h3 className="text-base font-bold text-white tracking-wide flex items-center gap-1.5">
+                      {item.name}
+                      {isBlackMarketDiscount && (
+                        <span className="text-[10px] px-1.5 py-0.5 bg-cyan-950 border border-cyan-800 text-cyan-400 font-bold rounded">
+                          5折批發
+                        </span>
+                      )}
+                      {!isBlackMarketDiscount && isMerchantDiscount && (
+                        <span className="text-[10px] px-1.5 py-0.5 bg-amber-950 border border-amber-800 text-[#ffd700] font-bold rounded">
+                          8折商惠
+                        </span>
+                      )}
+                    </h3>
+                  </div>
                   <span className="shrink-0 text-xs px-2.5 py-1 bg-slate-900 border border-slate-800 text-[#ffd700] font-bold rounded-lg flex items-center gap-1">
                     <Coins size={12} />
-                    {discount < 1 ? (
+                    {finalPrice < item.price ? (
                       <span className="flex items-center gap-1">
                         <span className="line-through text-slate-500 mr-0.5">{item.price}</span>
                         <span>{finalPrice} G</span>

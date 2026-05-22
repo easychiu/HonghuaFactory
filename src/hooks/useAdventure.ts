@@ -21,9 +21,11 @@ export const useAdventure = () => {
 
   const currentNode = adventure.nodes.find(n => n.id === adventure.currentNodeId) || adventure.nodes[0];
   
-  // Calculate motorcycle discount
-  const hasMotorcycle = inventory.includes('future_gp125');
-  const focusCost = hasMotorcycle ? 1 : 4;
+  // Calculate motorcycle discount (future_gp125 or black market bm_cheap_gp125)
+  const hasMotorcycle = inventory.includes('future_gp125') || inventory.includes('bm_cheap_gp125');
+  // Fairy blessing reduces focus cost by half (base 4 to 2, or 1 to 1 if motorcycle exists)
+  const hasBlessing = inventory.includes('fairy_blessing');
+  const focusCost = hasMotorcycle ? 1 : (hasBlessing ? 2 : 4);
 
   // Check if jumbo hammer is equipped (must be Emilia and have giant_hammer in inventory)
   const isJumboHammerEquipped = daughter.characterId === 'emilia' && inventory.includes('giant_hammer');
