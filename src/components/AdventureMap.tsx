@@ -6,7 +6,7 @@ import { Swords, Heart, LogOut, Backpack, AlertCircle } from 'lucide-react';
 
 export const AdventureMap: React.FC = () => {
   const { state, resolveCombatVictory, resolveCombatDefeat } = useGame();
-  const { combatState, startCombat, executePlayerAction, resolveEnemyTurn, endCombat } = useCombat();
+  const { combatState, startCombat, executePlayerAction, resolveEnemyTurn, endCombat, failFleeAttempt } = useCombat();
   const { daughter, inventory } = state;
   
   const {
@@ -124,9 +124,18 @@ export const AdventureMap: React.FC = () => {
     } else {
       remainingHp = combatState.party.solo?.hp || 0;
     }
-    // Return to exploration with 0 gold reward
-    resolveCombatVictory(remainingHp, 0);
-    endCombat('fled');
+    
+    // Knight background escape rate is 100%, others is 75%
+    const isKnight = daughter.fatherBackground === 'knight';
+    const escapeChance = isKnight ? 1.0 : 0.75;
+    
+    if (Math.random() < escapeChance) {
+      // Return to exploration with 0 gold reward
+      resolveCombatVictory(remainingHp, 0);
+      endCombat('fled');
+    } else {
+      failFleeAttempt();
+    }
   };
 
   return (

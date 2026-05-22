@@ -29,6 +29,7 @@ interface CombatContextProps {
   ) => void;
   resolveEnemyTurn: (daughter: Daughter) => void;
   endCombat: (result: 'victory' | 'defeat' | 'fled') => void;
+  failFleeAttempt: () => void;
 }
 
 const CombatContext = createContext<CombatContextProps | undefined>(undefined);
@@ -340,6 +341,17 @@ export const CombatProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     setCombatState({ ...nextState, combatLog: [...nextState.combatLog, ...logEntries] });
   };
 
+  const failFleeAttempt = () => {
+    setCombatState(prev => {
+      if (!prev.isActive || !prev.monster) return prev;
+      return {
+        ...prev,
+        turn: 'enemy',
+        combatLog: [...prev.combatLog, `❌ 逃跑失敗！${prev.monster.name} 封鎖了退路！`]
+      };
+    });
+  };
+
   const endCombat = (_result: 'victory' | 'defeat' | 'fled') => {
     setCombatState(INITIAL_COMBAT_STATE);
   };
@@ -351,7 +363,8 @@ export const CombatProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         startCombat,
         executePlayerAction,
         resolveEnemyTurn,
-        endCombat
+        endCombat,
+        failFleeAttempt
       }}
     >
       {children}
