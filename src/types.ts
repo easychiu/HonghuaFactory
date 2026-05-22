@@ -157,7 +157,7 @@ export interface GameState {
   time: GameTime;
   schedule: [string, string, string] | null; // 上、中、下旬的活動 ID
   inventory: string[]; // 已擁有道具 ID 列表
-  activeScreen: 'main' | 'scheduler' | 'execution' | 'store' | 'adventure' | 'ending';
+  activeScreen: 'main' | 'scheduler' | 'execution' | 'store' | 'adventure' | 'ending' | 'festival';
   logs: LogEntry[];
   currentEvent: AVGEvent | null;
   currentEventStep: string | null; // 當前對話節點 ID

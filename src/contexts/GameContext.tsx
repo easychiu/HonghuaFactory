@@ -433,6 +433,7 @@ interface GameContextProps {
   resolveCombatDefeat: () => void;
   unlockAllProtagonists: () => void;
   eatRiceCake: () => void;
+  resolveFestival: (victory: boolean, goldPrize: number, repPrize: number, logText: string, consumedItems?: string[]) => void;
 }
 
 const GameContext = createContext<GameContextProps | undefined>(undefined);
@@ -994,9 +995,10 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
         ...prev,
         daughter: updatedDaughter,
         time: { year: nextYear, month: nextMonth, period: 'early' },
-        currentEvent: triggeredEvent,
-        currentEventStep: eventStep,
+        currentEvent: nextMonth === 10 ? null : triggeredEvent,
+        currentEventStep: nextMonth === 10 ? null : eventStep,
         schedule: null,
+        activeScreen: nextMonth === 10 ? 'festival' : 'main',
         logs: newLogs
       };
     });
@@ -1614,6 +1616,46 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
   };
 
+  const resolveFestival = (_victory: boolean, goldPrize: number, repPrize: number, logText: string, consumedItems?: string[]) => {
+    setState((prev) => {
+      const newDaughter = { ...prev.daughter };
+      newDaughter.gold = Math.max(0, newDaughter.gold + goldPrize);
+      newDaughter.attributes.reputation = Math.max(0, newDaughter.attributes.reputation + repPrize);
+
+      let newInventory = [...prev.inventory];
+      if (consumedItems && consumedItems.length > 0) {
+        consumedItems.forEach((itemId) => {
+          const idx = newInventory.indexOf(itemId);
+          if (idx > -1) {
+            newInventory.splice(idx, 1);
+          }
+        });
+      }
+
+      const logId = Math.random().toString();
+      const nextMonth = 11;
+      const nextYear = prev.time.year;
+      
+      const newLogs = [...prev.logs, {
+        id: logId,
+        year: prev.time.year,
+        month: prev.time.month,
+        period: 'late' as const,
+        text: logText,
+        type: 'event' as const
+      }];
+
+      return {
+        ...prev,
+        daughter: newDaughter,
+        inventory: newInventory,
+        time: { year: nextYear, month: nextMonth, period: 'early' as const },
+        activeScreen: 'main' as const,
+        logs: newLogs
+      };
+    });
+  };
+
   return (
     <GameContext.Provider
       value={{
@@ -1640,7 +1682,8 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
         resolveCombatVictory,
         resolveCombatDefeat,
         unlockAllProtagonists,
-        eatRiceCake
+        eatRiceCake,
+        resolveFestival
       }}
     >
       {children}

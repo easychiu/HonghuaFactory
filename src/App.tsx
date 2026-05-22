@@ -8,6 +8,7 @@ import { ExecutionScreen } from './components/ExecutionScreen';
 import { StoreScreen } from './components/StoreScreen';
 import { AdventureMap } from './components/AdventureMap';
 import { EndingScreen } from './components/EndingScreen';
+import { FestivalScreen } from './components/FestivalScreen';
 import { AVGDialog } from './components/AVGDialog';
 
 const GameContent: React.FC = () => {
@@ -28,6 +29,7 @@ const GameContent: React.FC = () => {
       {state.activeScreen === 'store' && <StoreScreen />}
       {state.activeScreen === 'adventure' && <AdventureMap />}
       {state.activeScreen === 'ending' && <EndingScreen />}
+      {state.activeScreen === 'festival' && <FestivalScreen />}
 
       {/* Narrative Dialogue Event Overlay */}
       <AVGDialog />
