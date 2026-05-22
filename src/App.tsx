@@ -1,13 +1,14 @@
 import React from 'react';
 import { GameProvider, useGame } from './contexts/GameContext';
+import { CombatProvider } from './contexts/CombatContext';
 import { StartScreen } from './components/StartScreen';
-import { MainScreen } from './components/MainScreen';
-import { SchedulerScreen } from './components/SchedulerScreen';
+import { MainPanel } from './components/MainPanel';
+import { Scheduler } from './components/Scheduler';
 import { ExecutionScreen } from './components/ExecutionScreen';
 import { StoreScreen } from './components/StoreScreen';
-import { AdventureScreen } from './components/AdventureScreen';
+import { AdventureMap } from './components/AdventureMap';
 import { EndingScreen } from './components/EndingScreen';
-import { DialogOverlay } from './components/DialogOverlay';
+import { AVGDialog } from './components/AVGDialog';
 
 const GameContent: React.FC = () => {
   const { state } = useGame();
@@ -21,15 +22,15 @@ const GameContent: React.FC = () => {
     <div className="min-h-screen flex flex-col justify-between py-6">
       
       {/* Dynamic Screen Routing */}
-      {state.activeScreen === 'main' && <MainScreen />}
-      {state.activeScreen === 'scheduler' && <SchedulerScreen />}
+      {state.activeScreen === 'main' && <MainPanel />}
+      {state.activeScreen === 'scheduler' && <Scheduler />}
       {state.activeScreen === 'execution' && <ExecutionScreen />}
       {state.activeScreen === 'store' && <StoreScreen />}
-      {state.activeScreen === 'adventure' && <AdventureScreen />}
+      {state.activeScreen === 'adventure' && <AdventureMap />}
       {state.activeScreen === 'ending' && <EndingScreen />}
 
       {/* Narrative Dialogue Event Overlay */}
-      <DialogOverlay />
+      <AVGDialog />
       
       {/* Footer copyright */}
       <footer className="text-center text-[10px] text-slate-600 mt-8 tracking-wider">
@@ -42,7 +43,9 @@ const GameContent: React.FC = () => {
 function App() {
   return (
     <GameProvider>
-      <GameContent />
+      <CombatProvider>
+        <GameContent />
+      </CombatProvider>
     </GameProvider>
   );
 }

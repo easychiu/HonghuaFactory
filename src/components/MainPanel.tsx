@@ -1,30 +1,12 @@
 import React, { useState } from 'react';
 import { useGame } from '../contexts/GameContext';
-import type { AttributeKey } from '../types';
+import { StatPanel } from './StatPanel';
 import { getAvatarPath } from '../utils/avatar';
 import { 
-  Heart, Shield, Brain, Sparkles, Compass, HelpCircle, 
-  MessageSquare, ShoppingCart, Calendar, Coins, History, 
-  ToggleLeft, ToggleRight, Save, FolderOpen, RefreshCw, Trophy, Swords,
-  Crown, Palette, Skull, Lock, Check
+  Sparkles, Calendar, Coins, Save, FolderOpen, RefreshCw, 
+  MessageSquare, ShoppingCart, Compass, ToggleLeft, ToggleRight, 
+  History, Crown, Lock, Check
 } from 'lucide-react';
-
-const ATTRIBUTE_LABELS: Record<AttributeKey, { label: string; color: string; icon: any; max: number }> = {
-  stamina: { label: '體力 (Stamina)', color: 'var(--color-stamina)', icon: Heart, max: 999 },
-  strength: { label: '力量 (Strength)', color: 'var(--color-strength)', icon: Shield, max: 999 },
-  intelligence: { label: '智力 (Intelligence)', color: 'var(--color-intelligence)', icon: Brain, max: 999 },
-  charisma: { label: '魅力 (Charisma)', color: 'var(--color-charisma)', icon: Sparkles, max: 999 },
-  morality: { label: '道德 (Morality)', color: 'var(--color-morality)', icon: Compass, max: 999 },
-  piety: { label: '信仰 (Piety)', color: 'var(--color-piety)', icon: HelpCircle, max: 999 },
-  sensitivity: { label: '感受 (Sensitivity)', color: 'var(--color-sensitivity)', icon: Sparkles, max: 999 },
-  stress: { label: '疲勞 (Stress)', color: 'var(--color-stress)', icon: Shield, max: 999 },
-  combatSkill: { label: '戰術 (Combat)', color: 'var(--color-combat)', icon: Swords, max: 999 },
-  magicSkill: { label: '魔法 (Magic)', color: 'var(--color-magic)', icon: Brain, max: 999 },
-  reputation: { label: '名望 (Reputation)', color: 'var(--color-reputation)', icon: Trophy, max: 999 },
-  sin: { label: '罪孽 (Sin)', color: '#ef476f', icon: Skull, max: 999 },
-  elegance: { label: '禮儀 (Elegance)', color: '#ffb703', icon: Crown, max: 999 },
-  art: { label: '氣質 (Art)', color: '#a855f7', icon: Palette, max: 999 }
-};
 
 const OUTFIT_NAMES = {
   default: '日常便服',
@@ -34,13 +16,13 @@ const OUTFIT_NAMES = {
 };
 
 const OUTFIT_BORDER_COLORS = {
-  default: 'border-slate-500 rgba(255,255,255,0.15)',
+  default: 'rgba(255,255,255,0.1)',
   dress: 'rgba(212, 175, 55, 0.6)',
   armor: 'rgba(192, 192, 192, 0.6)',
   summer: 'rgba(0, 180, 216, 0.6)'
 };
 
-export const MainScreen: React.FC = () => {
+export const MainPanel: React.FC = () => {
   const { 
     state, 
     setScreen,
@@ -49,12 +31,25 @@ export const MainScreen: React.FC = () => {
     toggleCheatMode,
     saveGame,
     loadGame,
-    resetGame,
-    changeOutfit
+    restartGame,
+    changeOutfit,
+    performStreetPerformance
   } = useGame();
 
   const { daughter, time, logs, cheatMode } = state;
   const [isClosetOpen, setIsClosetOpen] = useState(false);
+
+  const getAvatarStyle = (charId: string) => {
+    if (charId === 'emilia') {
+      return { filter: 'hue-rotate(330deg) saturate(0.8) sepia(0.5)' };
+    }
+    return {};
+  };
+
+  const scaleFactor = 
+    daughter.age <= 11 ? 0.82 :
+    daughter.age <= 13 ? 0.88 :
+    daughter.age <= 15 ? 0.94 : 1.0;
 
   return (
     <div className="flex-1 flex flex-col gap-6 p-4 md:p-6 w-full max-w-7xl mx-auto animate-slide-up">
@@ -65,8 +60,10 @@ export const MainScreen: React.FC = () => {
             <Sparkles size={24} />
           </div>
           <div>
-            <h1 className="text-xl md:text-2xl font-bold">美少女夢工廠</h1>
-            <p className="text-xs text-slate-400">養育女兒的成長軌跡 ({daughter.name})</p>
+            <h1 className="text-xl md:text-2xl font-bold bg-gradient-to-r from-amber-400 to-[#d4af37] bg-clip-text text-transparent">
+              蔚藍海岸的王女們
+            </h1>
+            <p className="text-xs text-slate-400">養育王女的成長軌跡 ({daughter.name})</p>
           </div>
         </div>
 
@@ -82,7 +79,7 @@ export const MainScreen: React.FC = () => {
 
           {/* Gold Display */}
           <div className="flex items-center gap-2 px-3 py-1.5 bg-[rgba(212,175,55,0.08)] border border-[rgba(212,175,55,0.25)] rounded-lg text-sm">
-            <Coins className="text-[#d4af37] float-animation" size={16} />
+            <Coins className="text-[#ffd700] float-animation" size={16} />
             <span className="font-bold text-[#ffd700]">{daughter.gold} G</span>
           </div>
 
@@ -105,7 +102,7 @@ export const MainScreen: React.FC = () => {
             <button 
               onClick={() => {
                 if (window.confirm('確定要重新開始遊戲嗎？這會清除所有進度。')) {
-                  resetGame();
+                  restartGame();
                 }
               }} 
               title="重新開始" 
@@ -120,120 +117,76 @@ export const MainScreen: React.FC = () => {
       {/* Main Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         
-        {/* Left Side: Attributes Panel (lg:col-span-4) */}
-        <div className="glass-panel p-6 lg:col-span-4 flex flex-col gap-4">
-          <h2 className="text-lg font-bold border-b border-[rgba(212,175,55,0.2)] pb-2 mb-2 flex items-center gap-2">
-            <Trophy size={18} /> 女兒屬性面板
-          </h2>
-          
-          <div className="flex flex-col gap-3">
-            {Object.entries(ATTRIBUTE_LABELS).map(([key, item]) => {
-              const val = daughter.attributes[key as AttributeKey] || 0;
-              const max = item.max;
-              const percent = Math.min(100, (val / max) * 100);
-              const Icon = item.icon;
-
-              return (
-                <div key={key} className="space-y-1 group">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="flex items-center gap-1.5 text-slate-300 group-hover:text-white transition-colors">
-                      <Icon size={14} style={{ color: item.color }} />
-                      {item.label}
-                    </span>
-                    <span className="font-bold" style={{ color: key === 'stress' && val > daughter.attributes.stamina ? '#ef476f' : '#fff' }}>
-                      {val}
-                    </span>
-                  </div>
-                  {/* Progress Bar Container */}
-                  <div className="w-full h-2.5 bg-slate-900/80 rounded-full overflow-hidden border border-slate-800/40">
-                    <div 
-                      className="h-full rounded-full transition-all duration-500 ease-out" 
-                      style={{ 
-                        width: `${percent}%`, 
-                        backgroundColor: item.color,
-                        boxShadow: `0 0 8px ${item.color}80`
-                      }}
-                    />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+        {/* Left Side: Attributes Panel */}
+        <div className="lg:col-span-4 flex flex-col gap-4 w-full">
+          <StatPanel daughter={daughter} />
         </div>
 
-        {/* Center: Character Chamber Display (lg:col-span-5) */}
+        {/* Center: Character Chamber Display */}
         <div className="glass-panel p-6 lg:col-span-5 flex flex-col gap-4 items-center">
-          <h2 className="text-lg font-bold border-b border-[rgba(212,175,55,0.2)] pb-2 w-full text-center">
+          <h2 className="text-lg font-bold border-b border-[rgba(212,175,55,0.2)] pb-2 w-full text-center text-slate-200">
             {daughter.name} 的起居室
           </h2>
 
           {/* Portrait Container */}
-          {(() => {
-            const scaleFactor = 
-              daughter.age <= 11 ? 0.82 :
-              daughter.age <= 13 ? 0.88 :
-              daughter.age <= 15 ? 0.94 : 1.0;
-            return (
-              <div 
-                className="w-full max-w-[280px] h-[340px] rounded-xl relative overflow-hidden flex flex-col items-center justify-end p-4"
-                style={{
-                  background: 'radial-gradient(circle at center, #1b1633 0%, #0d0a1b 100%)',
-                  border: `2px solid ${OUTFIT_BORDER_COLORS[daughter.outfit] || 'rgba(255,255,255,0.1)'}`,
-                  boxShadow: 'inset 0 0 20px rgba(0,0,0,0.8)'
+          <div 
+            className="w-full max-w-[280px] h-[340px] rounded-xl relative overflow-hidden flex flex-col items-center justify-end p-4"
+            style={{
+              background: 'radial-gradient(circle at center, #1b1633 0%, #0d0a1b 100%)',
+              border: `2px solid ${OUTFIT_BORDER_COLORS[daughter.outfit] || 'rgba(255,255,255,0.1)'}`,
+              boxShadow: 'inset 0 0 20px rgba(0,0,0,0.8)'
+            }}
+          >
+            {/* Sprite Overlay Container with Age Scale and CSS Filters */}
+            <div 
+              style={{
+                transform: `scale(${scaleFactor})`,
+                transformOrigin: 'bottom center',
+                transition: 'transform 0.5s ease-in-out',
+                display: 'flex',
+                alignItems: 'end',
+                justifyContent: 'center',
+                height: '270px',
+                width: '100%',
+                position: 'absolute',
+                bottom: '20px',
+                left: 0,
+                right: 0,
+                ...getAvatarStyle(daughter.characterId)
+              }}
+            >
+              <img 
+                src={getAvatarPath(daughter.age, daughter.outfit, daughter.avatarUrl)} 
+                alt={daughter.name} 
+                className="h-[250px] w-auto object-contain float-animation"
+                onError={(e) => {
+                  (e.target as HTMLElement).style.display = 'none';
                 }}
-              >
-                {/* Sprite Overlay Container with Age Scale */}
-                <div 
-                  style={{
-                    transform: `scale(${scaleFactor})`,
-                    transformOrigin: 'bottom center',
-                    transition: 'transform 0.5s ease-in-out',
-                    display: 'flex',
-                    alignItems: 'end',
-                    justifyContent: 'center',
-                    height: '270px',
-                    width: '100%',
-                    position: 'absolute',
-                    bottom: '20px',
-                    left: 0,
-                    right: 0
-                  }}
-                  className="z-10"
-                >
-                  <img 
-                    src={getAvatarPath(daughter.age, daughter.outfit, daughter.avatarUrl)} 
-                    alt={daughter.name} 
-                    className="h-[250px] w-auto object-contain float-animation"
-                    onError={(e) => {
-                      (e.target as HTMLElement).style.display = 'none';
-                    }}
-                  />
-                </div>
-                
-                {/* Decorative frame inside */}
-                <div className="absolute inset-2 border border-[rgba(212,175,55,0.08)] pointer-events-none rounded-lg" />
-                
-                {/* Sickness Overlay */}
-                {daughter.attributes.stress > daughter.attributes.stamina && (
-                  <div className="absolute inset-0 bg-red-950/40 backdrop-blur-[1px] flex items-center justify-center z-20">
-                    <span className="px-3 py-1.5 bg-red-600 text-white font-bold rounded-lg border border-red-400 text-xs animate-bounce shadow-lg">
-                      🤒 疲勞過度 (生病危險)
-                    </span>
-                  </div>
-                )}
-
-                {/* Custom outfit label */}
-                <div className="absolute bottom-3 left-3 bg-black/60 border border-slate-700/50 backdrop-blur px-2.5 py-1 rounded text-xs text-[#f3e5ab] font-bold z-20">
-                  👕 {OUTFIT_NAMES[daughter.outfit]}
-                </div>
-                
-                {/* Age/Relationship overlay */}
-                <div className="absolute top-3 right-3 bg-black/60 border border-slate-700/50 backdrop-blur px-2.5 py-1 rounded text-xs text-white font-bold z-20">
-                  🎂 {daughter.age} 歲
-                </div>
+              />
+            </div>
+            
+            {/* Decorative frame inside */}
+            <div className="absolute inset-2 border border-[rgba(212,175,55,0.08)] pointer-events-none rounded-lg" />
+            
+            {/* Sickness Overlay */}
+            {daughter.attributes.stress > daughter.attributes.stamina && (
+              <div className="absolute inset-0 bg-red-950/40 backdrop-blur-[1px] flex items-center justify-center z-20">
+                <span className="px-3 py-1.5 bg-red-600 text-white font-bold rounded-lg border border-red-400 text-xs animate-bounce shadow-lg">
+                  🤒 疲勞過度 (生病危險)
+                </span>
               </div>
-            );
-          })()}
+            )}
+
+            {/* Custom outfit label */}
+            <div className="absolute bottom-3 left-3 bg-black/60 border border-slate-700/50 backdrop-blur px-2.5 py-1 rounded text-xs text-[#f3e5ab] font-bold z-20">
+              👕 {OUTFIT_NAMES[daughter.outfit]}
+            </div>
+            
+            {/* Age overlay */}
+            <div className="absolute top-3 right-3 bg-black/60 border border-slate-700/50 backdrop-blur px-2.5 py-1 rounded text-xs text-white font-bold z-20">
+              🎂 {daughter.age} 歲
+            </div>
+          </div>
 
           {/* Quick info bar */}
           <div className="w-full grid grid-cols-2 gap-4 text-center mt-2">
@@ -282,14 +235,14 @@ export const MainScreen: React.FC = () => {
               onClick={() => setIsClosetOpen(true)}
               className="btn-fantasy w-full py-3.5 text-sm flex items-center justify-center gap-2 hover:border-[#ffd700] hover:text-[#ffd700]"
             >
-              👗 開啟女兒的衣櫃 (Closet)
+              裙 開啟女兒的衣櫃 (Closet)
             </button>
           </div>
         </div>
 
-        {/* Right Side: Command Center / Actions Panel (lg:col-span-3) */}
+        {/* Right Side: Command Center / Actions Panel */}
         <div className="glass-panel p-6 lg:col-span-3 flex flex-col gap-4">
-          <h2 className="text-lg font-bold border-b border-[rgba(212,175,55,0.2)] pb-2 mb-2 flex items-center gap-2">
+          <h2 className="text-lg font-bold border-b border-[rgba(212,175,55,0.2)] pb-2 mb-2 flex items-center gap-2 text-slate-200">
             <Coins size={18} /> 行動指揮中心
           </h2>
 
@@ -314,6 +267,16 @@ export const MainScreen: React.FC = () => {
             >
               <Compass size={18} /> 前往幽暗森林修行
             </button>
+
+            {/* Bard specific street selling command */}
+            {daughter.fatherBackground === 'bard' && (
+              <button 
+                onClick={performStreetPerformance} 
+                className="btn-fantasy-sec w-full py-3.5 text-sm flex items-center justify-center gap-2 border-purple-500/40 text-purple-300 hover:bg-purple-950/20 hover:border-purple-400"
+              >
+                🎸 街頭琴藝賣藝
+              </button>
+            )}
           </div>
 
           <div className="border-t border-slate-800/80 pt-4 mt-2">
@@ -365,7 +328,7 @@ export const MainScreen: React.FC = () => {
 
       {/* Closet Modal */}
       {isClosetOpen && (
-        <div className="fixed inset-0 bg-black/75 backdrop-blur-[2px] flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/75 backdrop-blur-[2px] flex items-center justify-center z-50 p-4 animate-fade-in">
           <div className="glass-panel w-full max-w-xl p-6 md:p-8 animate-slide-up border-2 border-[#d4af37]/45 shadow-[0_0_30px_rgba(212,175,55,0.25)] flex flex-col gap-6">
             
             {/* Header */}
@@ -401,7 +364,7 @@ export const MainScreen: React.FC = () => {
                   id: 'dress' as const, 
                   name: OUTFIT_NAMES.dress, 
                   desc: '皇家絲綢華麗洋裝，極大提升魅力與名望。', 
-                  itemId: 'luxury_dress', 
+                  itemId: 'royal_dress', 
                   image: getAvatarPath(daughter.age, 'dress', daughter.avatarUrl) 
                 },
                 { 
@@ -433,7 +396,10 @@ export const MainScreen: React.FC = () => {
                   >
                     {/* Item header with Preview */}
                     <div className="flex gap-3 items-center">
-                      <div className="w-14 h-14 bg-slate-900 rounded-lg overflow-hidden border border-slate-800/80 flex items-center justify-center shrink-0">
+                      <div 
+                        className="w-14 h-14 bg-slate-900 rounded-lg overflow-hidden border border-slate-800/80 flex items-center justify-center shrink-0"
+                        style={getAvatarStyle(daughter.characterId)}
+                      >
                         <img 
                           src={item.image} 
                           alt={item.name} 

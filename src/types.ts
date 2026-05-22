@@ -17,6 +17,9 @@ export interface CharacterAttributes {
 
 export type AttributeKey = keyof CharacterAttributes;
 
+export type CharacterId = 'honghua' | 'erica' | 'emilia';
+export type FatherBackground = 'knight' | 'scholar' | 'merchant' | 'bard';
+
 export interface Daughter {
   name: string;
   age: number;
@@ -26,9 +29,13 @@ export interface Daughter {
   gold: number;
   relationship: number; // 與父親的親密度
   outfit: 'default' | 'dress' | 'armor' | 'summer';
-  combatHp: number; // 戰鬥生命值 (目前值)
-  combatMp: number; // 戰鬥魔法值 (目前值)
-  avatarUrl: string; // 頭像路徑或自訂上傳 Base64
+  combatHp: number; // 戰鬥生命值
+  combatMp: number; // 戰鬥魔法值
+  focus: number;    // 專注度
+  maxFocus: number; // 專注度上限
+  avatarUrl: string; // 頭像路徑
+  characterId: CharacterId; // 主角ID
+  fatherBackground: FatherBackground; // 老爸背景
 }
 
 export type PeriodType = 'early' | 'mid' | 'late';
@@ -69,27 +76,27 @@ export interface Item {
   outfitChange?: Daughter['outfit'];
 }
 
-export interface DialogueNode {
-  id: string;
-  speaker: string;
+export interface AVGChoice {
   text: string;
-  choices?: {
-    text: string;
-    nextId: string;
-    effects?: (state: GameState) => Partial<GameState>;
-  }[];
+  effect: (state: any) => { log: string; nextDialogId?: string; rewards?: any };
   nextId?: string;
 }
 
-export interface NarrativeEvent {
-  id: string;
-  title: string;
-  triggerCondition: (state: GameState) => boolean;
-  dialogue: DialogueNode[];
-  onComplete?: (state: GameState) => GameState;
+export interface AVGDialogueNode {
+  speaker: string;
+  text: string;
+  choices?: AVGChoice[];
+  nextId?: string;
 }
 
-// 冒險修行狀態
+export interface AVGEvent {
+  id: string;
+  title: string;
+  startNodeId: string;
+  nodes: Record<string, AVGDialogueNode>;
+}
+
+// 戰鬥狀態下的怪物
 export interface Monster {
   name: string;
   hp: number;
@@ -98,24 +105,45 @@ export interface Monster {
   defense: number;
   goldReward: number;
   expReward: number;
+  behaviorPattern?: 'standard' | 'aggressive' | 'boss';
 }
 
-export interface AdventureNode {
-  id: number;
-  type: 'start' | 'empty' | 'chest' | 'monster' | 'rest' | 'boss';
+// Slay the Spire 風格的節點
+export interface AdventureMapNode {
+  id: string;
+  layer: number; // 0 (起點) 到 5 (Boss)
+  index: number; // 同一層的橫向排列位置
+  type: 'start' | 'battle' | 'event' | 'rest' | 'shop' | 'hidden' | 'boss';
   name: string;
   cleared: boolean;
+  connectedTo: string[]; // 下一層所連接的節點 ID 列表
   monster?: Monster;
 }
 
+// 艾蜜莉亞三人小隊隊員狀態
+export interface PartyMember {
+  name: string;
+  hp: number;
+  maxHp: number;
+  mp: number;
+  maxMp: number;
+}
+
+// 冒險修行狀態
 export interface AdventureState {
   areaName: string;
-  nodes: AdventureNode[];
-  currentNodeIndex: number;
+  nodes: AdventureMapNode[];
+  currentNodeId: string;
   daughterHp: number;
   daughterMaxHp: number;
+  party?: {
+    yv: PartyMember;
+    jumbo: PartyMember;
+  };
   combatLog: string[];
   status: 'exploring' | 'fighting' | 'chest' | 'defeat' | 'victory';
+  // 記錄是否已打破巨石障礙等冒險暫存狀態
+  boulderBroken?: boolean;
 }
 
 export interface GameState {
@@ -125,8 +153,10 @@ export interface GameState {
   inventory: string[]; // 已擁有道具 ID 列表
   activeScreen: 'main' | 'scheduler' | 'execution' | 'store' | 'adventure' | 'ending';
   logs: LogEntry[];
-  currentEvent: NarrativeEvent | null;
+  currentEvent: AVGEvent | null;
   currentEventStep: string | null; // 當前對話節點 ID
   adventure: AdventureState | null;
   cheatMode: boolean;
+  unlockedCharacters: CharacterId[]; // 已解鎖角色列表（NG+ 用）
+  completedEndings: string[]; // 已達成結局列表
 }

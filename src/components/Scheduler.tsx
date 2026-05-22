@@ -1,23 +1,32 @@
 import React, { useState } from 'react';
-import { useGame } from '../contexts/GameContext';
-import { ACTIVITIES } from '../data/gameData';
+import { useGame, ACTIVITIES } from '../contexts/GameContext';
+import { COURSES } from '../data/courses';
 import type { Activity } from '../types';
 import { Calendar, AlertCircle, Coins, BookOpen, Smile, Sparkles } from 'lucide-react';
 
-export const SchedulerScreen: React.FC = () => {
+export const Scheduler: React.FC = () => {
   const { state, setSchedule, startScheduleExecution, setScreen } = useGame();
-  
+  const { daughter } = state;
+
+  // Filter activities: only show street_performance if the father is a bard
+  const availableActivities = ACTIVITIES.filter(act => {
+    if (act.id === 'street_performance') {
+      return daughter.fatherBackground === 'bard';
+    }
+    return true;
+  });
+
+  const allList = [...availableActivities, ...COURSES];
+
   // Selected activities for [early, mid, late]
   const [selected, setSelected] = useState<[string, string, string]>([
-    ACTIVITIES[0].id,
-    ACTIVITIES[1].id,
-    ACTIVITIES[2].id
+    allList.find(a => a.type === 'work')?.id || 'farm',
+    COURSES[0].id,
+    allList.find(a => a.id === 'rest_home')?.id || 'rest_home'
   ]);
 
   // Which period we are currently choosing for (0: early, 1: mid, 2: late)
   const [activeSlot, setActiveSlot] = useState<0 | 1 | 2>(0);
-
-  const { daughter } = state;
 
   const handleSelectActivity = (activityId: string) => {
     setSelected(prev => {
@@ -38,13 +47,33 @@ export const SchedulerScreen: React.FC = () => {
 
   // Calculate total Gold cost vs reward for the month
   const totalCost = selected.reduce((sum, id) => {
-    const act = ACTIVITIES.find(a => a.id === id);
-    return sum + (act ? act.cost : 0);
+    const act = allList.find(a => a.id === id);
+    if (!act) return sum;
+    let cost = act.cost;
+    // Scholar discount on humanities courses
+    if (daughter.fatherBackground === 'scholar' && act.type === 'study') {
+      const isHumanities = ['rhetoric', 'history', 'music_poetry', 'theology_art', 'etiquette'].includes(act.id);
+      if (isHumanities) {
+        cost = Math.round(cost * 0.8);
+      }
+    }
+    return sum + cost;
   }, 0);
 
   const totalReward = selected.reduce((sum, id) => {
-    const act = ACTIVITIES.find(a => a.id === id);
-    return sum + (act ? act.reward : 0);
+    const act = allList.find(a => a.id === id);
+    if (!act) return sum;
+    let reward = act.reward;
+    // Merchant bonus on work
+    if (daughter.fatherBackground === 'merchant' && act.type === 'work') {
+      reward = Math.round(reward * 1.2);
+    }
+    // Lute performance base reward is 35, plus art bonus (calculated in context)
+    // Here we give a preview of the performance reward
+    if (act.id === 'street_performance') {
+      reward += Math.round(daughter.attributes.art * 0.15);
+    }
+    return sum + reward;
   }, 0);
 
   const netGold = totalReward - totalCost;
@@ -55,7 +84,7 @@ export const SchedulerScreen: React.FC = () => {
       <div className="glass-panel p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
         <div>
           <h1 className="text-xl md:text-2xl font-bold flex items-center gap-2">
-            <Calendar size={22} className="text-[#d4af37]" /> 制定本月日程
+            <Calendar size={22} className="text-[#ffd700]" /> 制定本月日程
           </h1>
           <p className="text-xs text-slate-400 mt-1">
             為女兒規劃上旬、中旬及下旬的活動，以培育不同的心智與體魄。
@@ -86,12 +115,12 @@ export const SchedulerScreen: React.FC = () => {
               }`}
             >
               <div className="text-[10px] text-[#ffd700] uppercase font-bold tracking-wider mb-1">上旬 (1日 - 10日)</div>
-              <div className="text-sm font-bold text-white">
-                {ACTIVITIES.find(a => a.id === selected[0])?.name || '未選擇'}
+              <div className="text-sm font-bold text-white truncate">
+                {allList.find(a => a.id === selected[0])?.name || '未選擇'}
               </div>
               <div className="text-[10px] text-slate-400 mt-2 truncate">
-                {ACTIVITIES.find(a => a.id === selected[0])?.type === 'work' ? '打工賺錢' : 
-                 ACTIVITIES.find(a => a.id === selected[0])?.type === 'study' ? '學習課業' : '修養身心'}
+                {allList.find(a => a.id === selected[0])?.type === 'work' ? '打工賺錢' : 
+                 allList.find(a => a.id === selected[0])?.type === 'study' ? '學習課業' : '修養身心'}
               </div>
             </div>
 
@@ -105,12 +134,12 @@ export const SchedulerScreen: React.FC = () => {
               }`}
             >
               <div className="text-[10px] text-[#ffd700] uppercase font-bold tracking-wider mb-1">中旬 (11日 - 20日)</div>
-              <div className="text-sm font-bold text-white">
-                {ACTIVITIES.find(a => a.id === selected[1])?.name || '未選擇'}
+              <div className="text-sm font-bold text-white truncate">
+                {allList.find(a => a.id === selected[1])?.name || '未選擇'}
               </div>
               <div className="text-[10px] text-slate-400 mt-2 truncate">
-                {ACTIVITIES.find(a => a.id === selected[1])?.type === 'work' ? '打工賺錢' : 
-                 ACTIVITIES.find(a => a.id === selected[1])?.type === 'study' ? '學習課業' : '修養身心'}
+                {allList.find(a => a.id === selected[1])?.type === 'work' ? '打工賺錢' : 
+                 allList.find(a => a.id === selected[1])?.type === 'study' ? '學習課業' : '修養身心'}
               </div>
             </div>
 
@@ -124,12 +153,12 @@ export const SchedulerScreen: React.FC = () => {
               }`}
             >
               <div className="text-[10px] text-[#ffd700] uppercase font-bold tracking-wider mb-1">下旬 (21日 - 30日)</div>
-              <div className="text-sm font-bold text-white">
-                {ACTIVITIES.find(a => a.id === selected[2])?.name || '未選擇'}
+              <div className="text-sm font-bold text-white truncate">
+                {allList.find(a => a.id === selected[2])?.name || '未選擇'}
               </div>
               <div className="text-[10px] text-slate-400 mt-2 truncate">
-                {ACTIVITIES.find(a => a.id === selected[2])?.type === 'work' ? '打工賺錢' : 
-                 ACTIVITIES.find(a => a.id === selected[2])?.type === 'study' ? '學習課業' : '修養身心'}
+                {allList.find(a => a.id === selected[2])?.type === 'work' ? '打工賺錢' : 
+                 allList.find(a => a.id === selected[2])?.type === 'study' ? '學習課業' : '修養身心'}
               </div>
             </div>
           </div>
@@ -142,12 +171,13 @@ export const SchedulerScreen: React.FC = () => {
                 <Coins size={14} /> Part-time Jobs / 打工賺錢
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {ACTIVITIES.filter(a => a.type === 'work').map(act => (
+                {availableActivities.filter(a => a.type === 'work').map(act => (
                   <ActivityCard 
                     key={act.id} 
                     act={act} 
                     onSelect={handleSelectActivity}
                     active={selected[activeSlot] === act.id}
+                    fatherBackground={daughter.fatherBackground}
                   />
                 ))}
               </div>
@@ -159,12 +189,13 @@ export const SchedulerScreen: React.FC = () => {
                 <BookOpen size={14} /> Study Classes / 學習課程
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {ACTIVITIES.filter(a => a.type === 'study').map(act => (
+                {COURSES.map(act => (
                   <ActivityCard 
                     key={act.id} 
                     act={act} 
                     onSelect={handleSelectActivity}
                     active={selected[activeSlot] === act.id}
+                    fatherBackground={daughter.fatherBackground}
                   />
                 ))}
               </div>
@@ -176,12 +207,13 @@ export const SchedulerScreen: React.FC = () => {
                 <Smile size={14} /> Leisure Rest / 休息度假
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {ACTIVITIES.filter(a => a.type === 'rest').map(act => (
+                {availableActivities.filter(a => a.type === 'rest').map(act => (
                   <ActivityCard 
                     key={act.id} 
                     act={act} 
                     onSelect={handleSelectActivity}
                     active={selected[activeSlot] === act.id}
+                    fatherBackground={daughter.fatherBackground}
                   />
                 ))}
               </div>
@@ -192,7 +224,7 @@ export const SchedulerScreen: React.FC = () => {
         {/* Right Financial & Confirmation Panel (lg:col-span-1) */}
         <div className="flex flex-col gap-6">
           <div className="glass-panel p-6 flex flex-col gap-4">
-            <h2 className="text-lg font-bold border-b border-[rgba(212,175,55,0.2)] pb-2">本月預算清算</h2>
+            <h2 className="text-lg font-bold border-b border-[rgba(212,175,55,0.2)] pb-2 text-[#ffd700]">本月預算清算</h2>
             
             <div className="space-y-3 text-sm">
               <div className="flex justify-between">
@@ -247,7 +279,7 @@ export const SchedulerScreen: React.FC = () => {
                 </span>
               </div>
               <div className="mt-2 text-[10px] text-slate-500">
-                ※ 提示：如果疲勞值（Stress）超過了體力（Stamina），女兒下個月有機率生病住院，將額外扣除 50 G 醫療費且減少體力！請適度安排休息。
+                ※ 提示：如果疲勞值（Stress）超過了體力（Stamina），女兒下個月有機率生病住院，將額外扣除 60 G 醫療費且減少體力！請適度安排休息。
               </div>
             </div>
           </div>
@@ -261,9 +293,25 @@ interface ActivityCardProps {
   act: Activity;
   onSelect: (id: string) => void;
   active: boolean;
+  fatherBackground: string;
 }
 
-const ActivityCard: React.FC<ActivityCardProps> = ({ act, onSelect, active }) => {
+const ActivityCard: React.FC<ActivityCardProps> = ({ act, onSelect, active, fatherBackground }) => {
+  let cost = act.cost;
+  // Apply Scholar discount on humanities courses in budget display
+  if (fatherBackground === 'scholar' && act.type === 'study') {
+    const isHumanities = ['rhetoric', 'history', 'music_poetry', 'theology_art', 'etiquette'].includes(act.id);
+    if (isHumanities) {
+      cost = Math.round(cost * 0.8);
+    }
+  }
+
+  let reward = act.reward;
+  // Apply Merchant bonus on work in budget display
+  if (fatherBackground === 'merchant' && act.type === 'work') {
+    reward = Math.round(reward * 1.2);
+  }
+
   return (
     <div 
       onClick={() => onSelect(act.id)}
@@ -283,9 +331,9 @@ const ActivityCard: React.FC<ActivityCardProps> = ({ act, onSelect, active }) =>
           </p>
         </div>
         <div className="shrink-0 text-right text-xs">
-          {act.cost > 0 && <span className="text-red-400 font-bold">-{act.cost} G</span>}
-          {act.reward > 0 && <span className="text-emerald-400 font-bold">+{act.reward} G</span>}
-          {act.cost === 0 && act.reward === 0 && <span className="text-slate-400">免費</span>}
+          {cost > 0 && <span className="text-red-400 font-bold">-{cost} G</span>}
+          {reward > 0 && <span className="text-emerald-400 font-bold">+{reward} G</span>}
+          {cost === 0 && reward === 0 && <span className="text-slate-400">免費</span>}
         </div>
       </div>
       <div className="text-[10px] text-slate-400 border-t border-slate-900/60 pt-2 mt-2 leading-relaxed">

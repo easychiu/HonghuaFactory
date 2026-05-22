@@ -1,110 +1,330 @@
 import React, { useState } from 'react';
 import { useGame } from '../contexts/GameContext';
-import { Sparkles, Calendar, User } from 'lucide-react';
+import { Sparkles, Calendar, User, Shield, BookOpen, Coins, Music, Lock } from 'lucide-react';
+import type { CharacterId, FatherBackground } from '../types';
 
 export const StartScreen: React.FC = () => {
-  const { initGame } = useGame();
-  const [name, setName] = useState('小櫻');
+  const { state, initGame } = useGame();
+  const { unlockedCharacters = ['honghua'] } = state;
+
+  const [name, setName] = useState('');
   const [birthMonth, setBirthMonth] = useState(5);
   const [birthDay, setBirthDay] = useState(20);
+  const [selectedChar, setSelectedChar] = useState<CharacterId>('honghua');
+  const [selectedFather, setSelectedFather] = useState<FatherBackground>('knight');
 
   const base = import.meta.env.BASE_URL || '/';
   const prefix = base.endsWith('/') ? base : `${base}/`;
   const defaultAvatar = `${prefix}sprites/daughter_10_default.png`;
 
+  // Autocomplete default name when selecting character
+  const handleCharSelect = (charId: CharacterId) => {
+    if (!unlockedCharacters.includes(charId)) return; // Locked
+    setSelectedChar(charId);
+    if (charId === 'honghua') setName('紅花');
+    else if (charId === 'erica') setName('艾莉卡');
+    else if (charId === 'emilia') setName('艾蜜莉亞');
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    initGame(name, birthMonth, birthDay, defaultAvatar);
+    const finalName = name || (selectedChar === 'honghua' ? '紅花' : selectedChar === 'erica' ? '艾莉卡' : '艾蜜莉亞');
+    initGame(finalName, birthMonth, birthDay, selectedChar, selectedFather);
   };
 
   return (
-    <div className="flex-1 flex items-center justify-center p-6 min-h-[90vh]">
-      <div className="glass-panel w-full max-w-lg p-8 animate-slide-up pulse-border text-center">
+    <div className="flex-1 flex items-center justify-center p-4 md:p-8 min-h-[95vh] w-full max-w-5xl mx-auto">
+      <div className="glass-panel w-full p-6 md:p-10 animate-slide-up border-2 border-[#d4af37]/35 shadow-[0_0_35px_rgba(212,175,55,0.2)]">
         
-        {/* Title */}
-        <h1 className="text-4xl md:text-5xl font-bold mb-2">美少女夢工廠</h1>
-        <p className="text-sm font-semibold tracking-widest text-[#ffd700] uppercase mb-6">Princess Maker Web Simulation</p>
-        
-        {/* Avatar Setup Area */}
-        <div className="flex flex-col items-center gap-4 mb-8">
-          {/* Logo/Character Preview */}
-          <div 
-            className="w-32 h-32 rounded-full overflow-hidden border-2 bg-[rgba(255,255,255,0.03)] border-[#d4af37] flex items-center justify-center transition-all duration-300"
-          >
-            <img 
-              src={defaultAvatar} 
-              alt="Daughter preview" 
-              className="w-full h-full object-cover float-animation" 
-              onError={(e) => {
-                (e.target as HTMLElement).style.display = 'none';
-              }} 
-            />
-          </div>
-          <p className="text-xs text-[#f3e5ab] font-semibold tracking-wider">初始女兒年齡：10 歲 👧</p>
+        {/* Game Title */}
+        <div className="text-center mb-8">
+          <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-[#ffd700] via-[#ffb703] to-[#e9c46a] bg-clip-text text-transparent drop-shadow-md">
+            《蔚藍海岸的王女們》
+          </h1>
+          <p className="text-xs font-semibold tracking-widest text-[#a855f7] uppercase mt-2">
+            Multi-Protagonist (NG+) Princess Maker Web Simulation
+          </p>
         </div>
-        
-        <p className="text-xs text-[#a3a1bc] mb-8 leading-relaxed">
-          作為曾經名震大陸的傳奇勇者，你在戰爭結束後收養了一名孤兒女童。<br />
-          在未來的八年裡，你將親自為她規劃課業、打工與生活，<br />
-          引導她走向命運的終點。
-        </p>
 
-        {/* Setup Form */}
-        <form onSubmit={handleSubmit} className="space-y-6 text-left">
+        <form onSubmit={handleSubmit} className="space-y-8">
           
-          {/* Name input */}
-          <div className="space-y-2">
-            <label className="text-sm font-bold tracking-wider text-[#ffd700] flex items-center gap-2">
-              <User size={16} /> 女兒的姓名
-            </label>
-            <input 
-              type="text" 
-              value={name} 
-              onChange={(e) => setName(e.target.value.slice(0, 10))}
-              placeholder="請輸入姓名..." 
-              required
-              className="w-full bg-[rgba(10,8,22,0.6)] border border-[rgba(212,175,55,0.3)] rounded-lg py-3 px-4 text-white focus:outline-none focus:border-[#d4af37] transition-all"
-            />
-          </div>
+          {/* Grid: 1. Basic Setup & Daughter selection */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 border-b border-slate-900 pb-8">
+            
+            {/* Left: Basic Info */}
+            <div className="space-y-6">
+              <h2 className="text-sm font-bold text-[#ffd700] border-b border-slate-800 pb-2 flex items-center gap-1.5 uppercase">
+                <User size={14} /> 基礎身份設定
+              </h2>
+              
+              {/* Name */}
+              <div className="space-y-2 text-left">
+                <label className="text-xs font-bold text-slate-300">女兒姓名</label>
+                <input 
+                  type="text" 
+                  value={name} 
+                  onChange={(e) => setName(e.target.value.slice(0, 10))}
+                  placeholder={selectedChar === 'honghua' ? '紅花' : selectedChar === 'erica' ? '艾莉卡' : '艾蜜莉亞'}
+                  className="w-full bg-slate-950/70 border border-slate-800 rounded-lg py-2.5 px-4 text-white focus:outline-none focus:border-[#ffd700] text-sm transition-all"
+                />
+              </div>
 
-          {/* Birthday picker */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label className="text-sm font-bold tracking-wider text-[#ffd700] flex items-center gap-2">
-                <Calendar size={16} /> 生日月份
-              </label>
-              <select 
-                value={birthMonth} 
-                onChange={(e) => setBirthMonth(Number(e.target.value))}
-                className="w-full bg-[rgba(10,8,22,0.6)] border border-[rgba(212,175,55,0.3)] rounded-lg py-3 px-4 text-white focus:outline-none focus:border-[#d4af37] transition-all"
-              >
-                {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
-                  <option key={m} value={m}>{m} 月</option>
-                ))}
-              </select>
+              {/* Birthday */}
+              <div className="grid grid-cols-2 gap-4 text-left">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-300 flex items-center gap-1">
+                    <Calendar size={12} /> 月份
+                  </label>
+                  <select 
+                    value={birthMonth} 
+                    onChange={(e) => setBirthMonth(Number(e.target.value))}
+                    className="w-full bg-slate-950/70 border border-slate-800 rounded-lg py-2.5 px-4 text-white focus:outline-none focus:border-[#ffd700] text-sm transition-all"
+                  >
+                    {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
+                      <option key={m} value={m}>{m} 月</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-300 flex items-center gap-1">
+                    <Calendar size={12} /> 日期
+                  </label>
+                  <select 
+                    value={birthDay} 
+                    onChange={(e) => setBirthDay(Number(e.target.value))}
+                    className="w-full bg-slate-950/70 border border-slate-800 rounded-lg py-2.5 px-4 text-white focus:outline-none focus:border-[#ffd700] text-sm transition-all"
+                  >
+                    {Array.from({ length: 30 }, (_, i) => i + 1).map((d) => (
+                      <option key={d} value={d}>{d} 日</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
             </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-bold tracking-wider text-[#ffd700] flex items-center gap-2">
-                <Calendar size={16} /> 生日日期
-              </label>
-              <select 
-                value={birthDay} 
-                onChange={(e) => setBirthDay(Number(e.target.value))}
-                className="w-full bg-[rgba(10,8,22,0.6)] border border-[rgba(212,175,55,0.3)] rounded-lg py-3 px-4 text-white focus:outline-none focus:border-[#d4af37] transition-all"
-              >
-                {Array.from({ length: 30 }, (_, i) => i + 1).map((d) => (
-                  <option key={d} value={d}>{d} 日</option>
-                ))}
-              </select>
+            {/* Right: Protagonist Selector */}
+            <div className="space-y-4">
+              <h2 className="text-sm font-bold text-[#ffd700] border-b border-slate-800 pb-2 flex items-center gap-1.5 uppercase">
+                <Sparkles size={14} /> 選擇扮演王女 (NG+ 解鎖)
+              </h2>
+              
+              <div className="flex flex-col gap-3">
+                {/* 1. Honghua */}
+                <div 
+                  onClick={() => handleCharSelect('honghua')}
+                  className={`p-3.5 rounded-xl border cursor-pointer transition-all flex items-center gap-4 ${
+                    selectedChar === 'honghua' 
+                      ? 'bg-[rgba(212,175,55,0.06)] border-[#ffd700] shadow-[0_0_12px_rgba(212,175,55,0.08)]' 
+                      : 'bg-slate-950/30 border-slate-900 hover:border-slate-800'
+                  }`}
+                >
+                  <img 
+                    src={defaultAvatar} 
+                    alt="紅花" 
+                    className="w-12 h-12 rounded-full border border-slate-800 bg-slate-950 object-cover" 
+                  />
+                  <div className="flex-1 text-left">
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-sm text-white">紅花 (首週目主角)</span>
+                      <span className="text-[10px] text-emerald-400 bg-emerald-950/20 border border-emerald-900/20 px-1.5 rounded">專屬：檳榔流</span>
+                    </div>
+                    <p className="text-[10px] text-slate-400 mt-1">銀色短髮。道具店販售各式檳榔 Buff，野外修行可採集檳榔原物料。</p>
+                  </div>
+                </div>
+
+                {/* 2. Erica */}
+                <div 
+                  onClick={() => handleCharSelect('erica')}
+                  className={`p-3.5 rounded-xl border transition-all flex items-center gap-4 relative ${
+                    !unlockedCharacters.includes('erica') 
+                      ? 'opacity-40 cursor-not-allowed bg-slate-950/60 border-slate-950' 
+                      : selectedChar === 'erica'
+                      ? 'bg-[rgba(212,175,55,0.06)] border-[#ffd700] shadow-[0_0_12px_rgba(212,175,55,0.08)] cursor-pointer' 
+                      : 'bg-slate-950/30 border-slate-900 hover:border-slate-800 cursor-pointer'
+                  }`}
+                >
+                  {!unlockedCharacters.includes('erica') && (
+                    <div className="absolute inset-0 bg-slate-950/20 rounded-xl flex items-center justify-end pr-4 z-10">
+                      <span className="text-[10px] text-red-400 font-bold flex items-center gap-1 bg-red-950/30 border border-red-900/30 px-2 py-0.5 rounded shadow-sm">
+                        <Lock size={10} /> 達成任意結局解鎖
+                      </span>
+                    </div>
+                  )}
+                  <img 
+                    src={`${prefix}sprites/daughter_10_dress.png`} 
+                    alt="艾莉卡" 
+                    className="w-12 h-12 rounded-full border border-slate-800 bg-slate-950 object-cover" 
+                  />
+                  <div className="flex-1 text-left">
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-sm text-white">艾莉卡 (成就主角)</span>
+                      <span className="text-[10px] text-amber-400 bg-amber-950/20 border border-amber-900/20 px-1.5 rounded">專屬：機率流</span>
+                    </div>
+                    <p className="text-[10px] text-slate-400 mt-1">銀色雙馬尾。天生強運，日常學習、打工極高機率觸發大成功 (雙倍收益且無疲勞)。</p>
+                  </div>
+                </div>
+
+                {/* 3. Emilia */}
+                <div 
+                  onClick={() => handleCharSelect('emilia')}
+                  className={`p-3.5 rounded-xl border transition-all flex items-center gap-4 relative ${
+                    !unlockedCharacters.includes('emilia') 
+                      ? 'opacity-40 cursor-not-allowed bg-slate-950/60 border-slate-950' 
+                      : selectedChar === 'emilia'
+                      ? 'bg-[rgba(212,175,55,0.06)] border-[#ffd700] shadow-[0_0_12px_rgba(212,175,55,0.08)] cursor-pointer' 
+                      : 'bg-slate-950/30 border-slate-900 hover:border-slate-800 cursor-pointer'
+                  }`}
+                >
+                  {!unlockedCharacters.includes('emilia') && (
+                    <div className="absolute inset-0 bg-slate-950/20 rounded-xl flex items-center justify-end pr-4 z-10">
+                      <span className="text-[10px] text-red-400 font-bold flex items-center gap-1 bg-red-950/30 border border-red-900/30 px-2 py-0.5 rounded shadow-sm">
+                        <Lock size={10} /> 達成認親或主線結局解鎖
+                      </span>
+                    </div>
+                  )}
+                  <img 
+                    src={`${prefix}sprites/daughter_10_summer.png`} 
+                    alt="艾蜜莉亞" 
+                    className="w-12 h-12 rounded-full border border-slate-800 bg-slate-950 object-cover" 
+                    style={{ filter: 'hue-rotate(330deg) saturate(0.8) sepia(0.5)' }} // Coffee hair filter
+                  />
+                  <div className="flex-1 text-left">
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-sm text-white">艾蜜莉亞 (成就主角)</span>
+                      <span className="text-[10px] text-indigo-400 bg-indigo-950/20 border border-indigo-900/20 px-1.5 rounded">專屬：三人小隊</span>
+                    </div>
+                    <p className="text-[10px] text-slate-400 mt-1">咖啡色雙馬尾。武者修行時青梅竹馬 yv、jumbo 全程陪同，解鎖三人聯擊奧義。</p>
+                  </div>
+                </div>
+
+              </div>
             </div>
           </div>
 
-          {/* Submit Button */}
-          <button type="submit" className="w-full btn-fantasy py-4 mt-4 text-lg">
-            <Sparkles size={20} /> 展開養育之旅
-          </button>
+          {/* 2. Father Identity selector */}
+          <div className="space-y-4">
+            <h2 className="text-sm font-bold text-[#ffd700] border-b border-slate-800 pb-2 flex items-center gap-1.5 uppercase">
+              <Shield size={14} /> 選擇父親的身份背景 (決定初始資源與修行隱藏節點)
+            </h2>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              
+              {/* Lost Knight */}
+              <div 
+                onClick={() => setSelectedFather('knight')}
+                className={`p-4 rounded-xl border text-left cursor-pointer transition-all flex flex-col justify-between ${
+                  selectedFather === 'knight'
+                    ? 'bg-[rgba(212,175,55,0.06)] border-[#ffd700] shadow-[0_0_12px_rgba(212,175,55,0.08)]' 
+                    : 'bg-slate-950/30 border-slate-900 hover:border-slate-850 hover:bg-slate-950/40'
+                }`}
+              >
+                <div>
+                  <div className="flex justify-between items-center mb-2">
+                    <h3 className="font-bold text-sm text-white flex items-center gap-1">
+                      <Shield size={14} className="text-slate-300" /> 失落的騎士
+                    </h3>
+                    <span className="text-[9px] text-slate-400">小康開局</span>
+                  </div>
+                  <p className="text-[10px] text-slate-400 leading-normal">
+                    給予女兒傳家鐵劍、女武神胸甲。初始戰技與力量提高。武者修行解鎖【隱密要塞】節點。
+                  </p>
+                </div>
+                <div className="text-[10px] text-[#ffd700] border-t border-slate-900 mt-3 pt-2">
+                  💰 初始資金：1,500 金幣
+                </div>
+              </div>
+
+              {/* Scholar */}
+              <div 
+                onClick={() => setSelectedFather('scholar')}
+                className={`p-4 rounded-xl border text-left cursor-pointer transition-all flex flex-col justify-between ${
+                  selectedFather === 'scholar'
+                    ? 'bg-[rgba(212,175,55,0.06)] border-[#ffd700] shadow-[0_0_12px_rgba(212,175,55,0.08)]' 
+                    : 'bg-slate-950/30 border-slate-900 hover:border-slate-850 hover:bg-slate-950/40'
+                }`}
+              >
+                <div>
+                  <div className="flex justify-between items-center mb-2">
+                    <h3 className="font-bold text-sm text-white flex items-center gap-1">
+                      <BookOpen size={14} className="text-slate-300" /> 失落的文臣
+                    </h3>
+                    <span className="text-[9px] text-slate-400">中產開局</span>
+                  </div>
+                  <p className="text-[10px] text-slate-400 leading-normal">
+                    自帶宮廷推薦信（提早高薪打工）。提升初始智力，文科課程享 8 折。修行解鎖【地下皇家圖書館】。
+                  </p>
+                </div>
+                <div className="text-[10px] text-[#ffd700] border-t border-slate-900 mt-3 pt-2">
+                  💰 初始資金：2,500 金幣
+                </div>
+              </div>
+
+              {/* Merchant */}
+              <div 
+                onClick={() => setSelectedFather('merchant')}
+                className={`p-4 rounded-xl border text-left cursor-pointer transition-all flex flex-col justify-between ${
+                  selectedFather === 'merchant'
+                    ? 'bg-[rgba(212,175,55,0.06)] border-[#ffd700] shadow-[0_0_12px_rgba(212,175,55,0.08)]' 
+                    : 'bg-slate-950/30 border-slate-900 hover:border-slate-850 hover:bg-slate-950/40'
+                }`}
+              >
+                <div>
+                  <div className="flex justify-between items-center mb-2">
+                    <h3 className="font-bold text-sm text-white flex items-center gap-1">
+                      <Coins size={14} className="text-slate-300" /> 行商人
+                    </h3>
+                    <span className="text-[9px] text-slate-400">富裕開局</span>
+                  </div>
+                  <p className="text-[10px] text-slate-400 leading-normal">
+                    自帶載具【未來摩托車 Gp125】，打工收入增加，道具店全品項 8 折。修行解鎖【黑市走私營地】。
+                  </p>
+                </div>
+                <div className="text-[10px] text-[#ffd700] border-t border-slate-900 mt-3 pt-2">
+                  💰 初始資金：5,000 金幣
+                </div>
+              </div>
+
+              {/* Bard */}
+              <div 
+                onClick={() => setSelectedFather('bard')}
+                className={`p-4 rounded-xl border text-left cursor-pointer transition-all flex flex-col justify-between ${
+                  selectedFather === 'bard'
+                    ? 'bg-[rgba(212,175,55,0.06)] border-[#ffd700] shadow-[0_0_12px_rgba(212,175,55,0.08)]' 
+                    : 'bg-slate-950/30 border-slate-900 hover:border-slate-850 hover:bg-slate-950/40'
+                }`}
+              >
+                <div>
+                  <div className="flex justify-between items-center mb-2">
+                    <h3 className="font-bold text-sm text-white flex items-center gap-1">
+                      <Music size={14} className="text-slate-300" /> 吟遊詩人
+                    </h3>
+                    <span className="text-[9px] text-slate-400">赤貧開局</span>
+                  </div>
+                  <p className="text-[10px] text-slate-400 leading-normal">
+                    配備舊魯特琴。藝術課程效果 +20%，日常解鎖「街頭賣藝」指令。修行解鎖【精靈的妖精之環】。
+                  </p>
+                </div>
+                <div className="text-[10px] text-[#ffd700] border-t border-slate-900 mt-3 pt-2">
+                  💰 初始資金：500 金幣
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          {/* Submit */}
+          <div className="pt-4 text-center">
+            <button 
+              type="submit" 
+              className="w-full max-w-sm btn-fantasy py-4 text-base font-bold flex items-center justify-center gap-2 shadow-lg"
+            >
+              <Sparkles size={20} /> 展開王女養育之旅
+            </button>
+          </div>
+
         </form>
+
       </div>
     </div>
   );

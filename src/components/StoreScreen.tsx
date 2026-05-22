@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { useGame } from '../contexts/GameContext';
-import { ITEMS } from '../data/gameData';
+import { useGame, ITEMS } from '../contexts/GameContext';
 import type { Item } from '../types';
 import { ShoppingCart, Coins, Heart, Shield, Brain, Sparkles, Trophy, HelpCircle, ArrowLeft } from 'lucide-react';
 
@@ -91,62 +90,75 @@ export const StoreScreen: React.FC = () => {
 
       {/* Items Shelf */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {ITEMS.map((item) => (
-          <div key={item.id} className="glass-panel p-5 flex flex-col justify-between gap-4 border border-slate-800/80 hover:border-[rgba(212,175,55,0.3)] transition-all">
-            
-            {/* Title & Price */}
-            <div>
-              <div className="flex justify-between items-start gap-2 mb-2">
-                <h3 className="text-base font-bold text-white tracking-wide">{item.name}</h3>
-                <span className="shrink-0 text-xs px-2.5 py-1 bg-slate-900 border border-slate-800 text-[#ffd700] font-bold rounded-lg flex items-center gap-1">
-                  <Coins size={12} /> {item.price} G
-                </span>
-              </div>
-              <p className="text-xs text-slate-400 leading-relaxed mb-4">{item.description}</p>
-            </div>
+        {ITEMS.map((item) => {
+          const discount = daughter.fatherBackground === 'merchant' ? 0.8 : 1;
+          const finalPrice = Math.round(item.price * discount);
 
-            {/* Stat changes & Purchase Button */}
-            <div className="space-y-4">
-              {/* Stat boosts list */}
-              <div className="bg-slate-950/50 border border-slate-900/60 p-3 rounded-lg flex flex-wrap gap-2">
-                {Object.entries(item.statChanges).map(([key, val]) => {
-                  const Icon = STAT_ICONS[key] || HelpCircle;
-                  const label = STAT_LABELS[key] || key;
-                  const isPositive = val > 0;
-                  
-                  return (
-                    <span 
-                      key={key} 
-                      className={`text-[10px] px-2 py-0.5 rounded font-semibold flex items-center gap-1 ${
-                        isPositive 
-                          ? 'bg-emerald-950/40 text-emerald-400 border border-emerald-900/50' 
-                          : 'bg-red-950/40 text-red-400 border border-red-900/50'
-                      }`}
-                    >
-                      <Icon size={10} />
-                      {label} {isPositive ? `+${val}` : val}
-                    </span>
-                  );
-                })}
-                {item.outfitChange && (
-                  <span className="text-[10px] px-2 py-0.5 rounded font-semibold bg-pink-950/40 text-pink-400 border border-pink-900/50 flex items-center gap-1">
-                    👕 獲得新服裝外觀
+          return (
+            <div key={item.id} className="glass-panel p-5 flex flex-col justify-between gap-4 border border-slate-800/80 hover:border-[rgba(212,175,55,0.3)] transition-all">
+              
+              {/* Title & Price */}
+              <div>
+                <div className="flex justify-between items-start gap-2 mb-2">
+                  <h3 className="text-base font-bold text-white tracking-wide">{item.name}</h3>
+                  <span className="shrink-0 text-xs px-2.5 py-1 bg-slate-900 border border-slate-800 text-[#ffd700] font-bold rounded-lg flex items-center gap-1">
+                    <Coins size={12} />
+                    {discount < 1 ? (
+                      <span className="flex items-center gap-1">
+                        <span className="line-through text-slate-500 mr-0.5">{item.price}</span>
+                        <span>{finalPrice} G</span>
+                      </span>
+                    ) : (
+                      <span>{item.price} G</span>
+                    )}
                   </span>
-                )}
+                </div>
+                <p className="text-xs text-slate-400 leading-relaxed mb-4">{item.description}</p>
               </div>
 
-              {/* Buy action */}
-              <button 
-                onClick={() => handleBuy(item)}
-                disabled={daughter.gold < item.price}
-                className="w-full btn-fantasy py-2.5 text-xs font-bold"
-              >
-                {daughter.gold < item.price ? '金幣不足' : '購入商品'}
-              </button>
-            </div>
+              {/* Stat changes & Purchase Button */}
+              <div className="space-y-4">
+                {/* Stat boosts list */}
+                <div className="bg-slate-950/50 border border-slate-900/60 p-3 rounded-lg flex flex-wrap gap-2">
+                  {Object.entries(item.statChanges).map(([key, val]) => {
+                    const Icon = STAT_ICONS[key] || HelpCircle;
+                    const label = STAT_LABELS[key] || key;
+                    const isPositive = val > 0;
+                    
+                    return (
+                      <span 
+                        key={key} 
+                        className={`text-[10px] px-2 py-0.5 rounded font-semibold flex items-center gap-1 ${
+                          isPositive 
+                            ? 'bg-emerald-950/40 text-emerald-400 border border-emerald-900/50' 
+                            : 'bg-red-950/40 text-red-400 border border-red-900/50'
+                        }`}
+                      >
+                        <Icon size={10} />
+                        {label} {isPositive ? `+${val}` : val}
+                      </span>
+                    );
+                  })}
+                  {item.outfitChange && (
+                    <span className="text-[10px] px-2 py-0.5 rounded font-semibold bg-pink-950/40 text-pink-400 border border-pink-900/50 flex items-center gap-1">
+                      👕 獲得新服裝外觀
+                    </span>
+                  )}
+                </div>
 
-          </div>
-        ))}
+                {/* Buy action */}
+                <button 
+                  onClick={() => handleBuy(item)}
+                  disabled={daughter.gold < finalPrice}
+                  className="w-full btn-fantasy py-2.5 text-xs font-bold"
+                >
+                  {daughter.gold < finalPrice ? '金幣不足' : '購入商品'}
+                </button>
+              </div>
+
+            </div>
+          );
+        })}
       </div>
 
     </div>
