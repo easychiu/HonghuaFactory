@@ -1,11 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useGame } from '../contexts/GameContext';
 import type { AttributeKey } from '../types';
+import { getAvatarPath } from '../utils/avatar';
 import { 
   Heart, Shield, Brain, Sparkles, Compass, HelpCircle, 
   MessageSquare, ShoppingCart, Calendar, Coins, History, 
   ToggleLeft, ToggleRight, Save, FolderOpen, RefreshCw, Trophy, Swords,
-  Upload
+  Crown, Palette, Skull, Lock, Check
 } from 'lucide-react';
 
 const ATTRIBUTE_LABELS: Record<AttributeKey, { label: string; color: string; icon: any; max: number }> = {
@@ -19,7 +20,10 @@ const ATTRIBUTE_LABELS: Record<AttributeKey, { label: string; color: string; ico
   stress: { label: '疲勞 (Stress)', color: 'var(--color-stress)', icon: Shield, max: 999 },
   combatSkill: { label: '戰術 (Combat)', color: 'var(--color-combat)', icon: Swords, max: 999 },
   magicSkill: { label: '魔法 (Magic)', color: 'var(--color-magic)', icon: Brain, max: 999 },
-  reputation: { label: '名望 (Reputation)', color: 'var(--color-reputation)', icon: Trophy, max: 999 }
+  reputation: { label: '名望 (Reputation)', color: 'var(--color-reputation)', icon: Trophy, max: 999 },
+  sin: { label: '罪孽 (Sin)', color: '#ef476f', icon: Skull, max: 999 },
+  elegance: { label: '禮儀 (Elegance)', color: '#ffb703', icon: Crown, max: 999 },
+  art: { label: '氣質 (Art)', color: '#a855f7', icon: Palette, max: 999 }
 };
 
 const OUTFIT_NAMES = {
@@ -46,10 +50,11 @@ export const MainScreen: React.FC = () => {
     saveGame,
     loadGame,
     resetGame,
-    updateAvatarUrl
+    changeOutfit
   } = useGame();
 
   const { daughter, time, logs, cheatMode } = state;
+  const [isClosetOpen, setIsClosetOpen] = useState(false);
 
   return (
     <div className="flex-1 flex flex-col gap-6 p-4 md:p-6 w-full max-w-7xl mx-auto animate-slide-up">
@@ -163,68 +168,72 @@ export const MainScreen: React.FC = () => {
           </h2>
 
           {/* Portrait Container */}
-          <div 
-            className="w-full max-w-[280px] h-[340px] rounded-xl relative overflow-hidden flex flex-col items-center justify-center p-4"
-            style={{
-              background: 'radial-gradient(circle at center, #1b1633 0%, #0d0a1b 100%)',
-              border: `2px solid ${OUTFIT_BORDER_COLORS[daughter.outfit] || 'rgba(255,255,255,0.1)'}`,
-              boxShadow: 'inset 0 0 20px rgba(0,0,0,0.8)'
-            }}
-          >
-            {/* Sprite Overlay */}
-            <img 
-              src={daughter.avatarUrl} 
-              alt={daughter.name} 
-              className="h-[250px] w-auto object-contain float-animation z-10 transition-transform duration-300"
-              onError={(e) => {
-                (e.target as HTMLElement).style.display = 'none';
-              }}
-            />
-            {/* Quick Upload Button */}
-            <label 
-              title="上傳自訂頭像"
-              className="absolute top-3 left-3 bg-black/60 border border-slate-700/50 backdrop-blur p-1.5 rounded-lg text-slate-300 hover:text-white cursor-pointer transition-all z-20 hover:scale-105"
-            >
-              <Upload size={14} />
-              <input 
-                type="file" 
-                accept="image/*" 
-                className="hidden" 
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) {
-                    const reader = new FileReader();
-                    reader.onload = (uploadEvent) => {
-                      const base64 = uploadEvent.target?.result as string;
-                      updateAvatarUrl(base64);
-                    };
-                    reader.readAsDataURL(file);
-                  }
+          {(() => {
+            const scaleFactor = 
+              daughter.age <= 11 ? 0.82 :
+              daughter.age <= 13 ? 0.88 :
+              daughter.age <= 15 ? 0.94 : 1.0;
+            return (
+              <div 
+                className="w-full max-w-[280px] h-[340px] rounded-xl relative overflow-hidden flex flex-col items-center justify-end p-4"
+                style={{
+                  background: 'radial-gradient(circle at center, #1b1633 0%, #0d0a1b 100%)',
+                  border: `2px solid ${OUTFIT_BORDER_COLORS[daughter.outfit] || 'rgba(255,255,255,0.1)'}`,
+                  boxShadow: 'inset 0 0 20px rgba(0,0,0,0.8)'
                 }}
-              />
-            </label>
-            {/* Decorative frame inside */}
-            <div className="absolute inset-2 border border-[rgba(212,175,55,0.08)] pointer-events-none rounded-lg" />
-            
-            {/* Sickness Overlay */}
-            {daughter.attributes.stress > daughter.attributes.stamina && (
-              <div className="absolute inset-0 bg-red-950/40 backdrop-blur-[1px] flex items-center justify-center z-20">
-                <span className="px-3 py-1.5 bg-red-600 text-white font-bold rounded-lg border border-red-400 text-xs animate-bounce shadow-lg">
-                  🤒 疲勞過度 (生病危險)
-                </span>
-              </div>
-            )}
+              >
+                {/* Sprite Overlay Container with Age Scale */}
+                <div 
+                  style={{
+                    transform: `scale(${scaleFactor})`,
+                    transformOrigin: 'bottom center',
+                    transition: 'transform 0.5s ease-in-out',
+                    display: 'flex',
+                    alignItems: 'end',
+                    justifyContent: 'center',
+                    height: '270px',
+                    width: '100%',
+                    position: 'absolute',
+                    bottom: '20px',
+                    left: 0,
+                    right: 0
+                  }}
+                  className="z-10"
+                >
+                  <img 
+                    src={getAvatarPath(daughter.age, daughter.outfit, daughter.avatarUrl)} 
+                    alt={daughter.name} 
+                    className="h-[250px] w-auto object-contain float-animation"
+                    onError={(e) => {
+                      (e.target as HTMLElement).style.display = 'none';
+                    }}
+                  />
+                </div>
+                
+                {/* Decorative frame inside */}
+                <div className="absolute inset-2 border border-[rgba(212,175,55,0.08)] pointer-events-none rounded-lg" />
+                
+                {/* Sickness Overlay */}
+                {daughter.attributes.stress > daughter.attributes.stamina && (
+                  <div className="absolute inset-0 bg-red-950/40 backdrop-blur-[1px] flex items-center justify-center z-20">
+                    <span className="px-3 py-1.5 bg-red-600 text-white font-bold rounded-lg border border-red-400 text-xs animate-bounce shadow-lg">
+                      🤒 疲勞過度 (生病危險)
+                    </span>
+                  </div>
+                )}
 
-            {/* Custom outfit label */}
-            <div className="absolute bottom-3 left-3 bg-black/60 border border-slate-700/50 backdrop-blur px-2.5 py-1 rounded text-xs text-[#f3e5ab] font-bold z-20">
-              👕 {OUTFIT_NAMES[daughter.outfit]}
-            </div>
-            
-            {/* Age/Relationship overlay */}
-            <div className="absolute top-3 right-3 bg-black/60 border border-slate-700/50 backdrop-blur px-2.5 py-1 rounded text-xs text-white font-bold z-20">
-              🎂 {daughter.age} 歲
-            </div>
-          </div>
+                {/* Custom outfit label */}
+                <div className="absolute bottom-3 left-3 bg-black/60 border border-slate-700/50 backdrop-blur px-2.5 py-1 rounded text-xs text-[#f3e5ab] font-bold z-20">
+                  👕 {OUTFIT_NAMES[daughter.outfit]}
+                </div>
+                
+                {/* Age/Relationship overlay */}
+                <div className="absolute top-3 right-3 bg-black/60 border border-slate-700/50 backdrop-blur px-2.5 py-1 rounded text-xs text-white font-bold z-20">
+                  🎂 {daughter.age} 歲
+                </div>
+              </div>
+            );
+          })()}
 
           {/* Quick info bar */}
           <div className="w-full grid grid-cols-2 gap-4 text-center mt-2">
@@ -240,7 +249,6 @@ export const MainScreen: React.FC = () => {
             </div>
           </div>
 
-          {/* Father-Daughter Interactivity */}
           {/* Father-Daughter Interactivity */}
           <div className="w-full mt-2">
             <p className="text-xs font-bold text-[#ffd700] uppercase tracking-wider mb-2 flex items-center gap-1.5 justify-center">
@@ -268,60 +276,14 @@ export const MainScreen: React.FC = () => {
             </div>
           </div>
 
-          {/* Protagonist Avatar Switcher */}
+          {/* Closet Button */}
           <div className="w-full border-t border-slate-800/80 pt-3 mt-1">
-            <p className="text-xs font-bold text-[#ffd700] uppercase tracking-wider mb-2 flex items-center gap-1.5 justify-center">
-              <Upload size={14} /> 更換主角形象風格
-            </p>
-            <div className="flex items-center justify-center gap-2">
-              {[
-                { name: '主體', url: '/8719.png' },
-                { name: '公主', url: '/avatar_princess.png' },
-                { name: '武士', url: '/avatar_warrior.png' },
-                { name: '術士', url: '/avatar_mage.png' }
-              ].map((p) => (
-                <button
-                  key={p.url}
-                  type="button"
-                  onClick={() => updateAvatarUrl(p.url)}
-                  title={p.name}
-                  className={`w-9 h-9 rounded-full overflow-hidden border transition-all ${
-                    daughter.avatarUrl === p.url 
-                      ? 'border-[#d4af37] scale-105 shadow-[0_0_6px_rgba(212,175,55,0.4)]' 
-                      : 'border-slate-800 hover:border-slate-600'
-                  }`}
-                >
-                  <img src={p.url} alt={p.name} className="w-full h-full object-cover" />
-                </button>
-              ))}
-              {/* Custom upload button inside chamber */}
-              <label 
-                title="上傳自訂頭像"
-                className={`w-9 h-9 rounded-full border flex items-center justify-center text-slate-400 hover:text-white cursor-pointer transition-all bg-slate-900/60 ${
-                  daughter.avatarUrl.startsWith('data:')
-                    ? 'border-[#00b4d8] scale-105 shadow-[0_0_6px_rgba(0,180,216,0.4)] text-[#00b4d8]'
-                    : 'border-slate-800 hover:border-slate-600'
-                }`}
-              >
-                <Upload size={14} />
-                <input 
-                  type="file" 
-                  accept="image/*" 
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) {
-                      const reader = new FileReader();
-                      reader.onload = (uploadEvent) => {
-                        const base64 = uploadEvent.target?.result as string;
-                        updateAvatarUrl(base64);
-                      };
-                      reader.readAsDataURL(file);
-                    }
-                  }} 
-                  className="hidden" 
-                />
-              </label>
-            </div>
+            <button
+              onClick={() => setIsClosetOpen(true)}
+              className="btn-fantasy w-full py-3.5 text-sm flex items-center justify-center gap-2 hover:border-[#ffd700] hover:text-[#ffd700]"
+            >
+              👗 開啟女兒的衣櫃 (Closet)
+            </button>
           </div>
         </div>
 
@@ -400,6 +362,149 @@ export const MainScreen: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* Closet Modal */}
+      {isClosetOpen && (
+        <div className="fixed inset-0 bg-black/75 backdrop-blur-[2px] flex items-center justify-center z-50 p-4">
+          <div className="glass-panel w-full max-w-xl p-6 md:p-8 animate-slide-up border-2 border-[#d4af37]/45 shadow-[0_0_30px_rgba(212,175,55,0.25)] flex flex-col gap-6">
+            
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-slate-900 pb-3 text-[#d4af37]">
+              <div className="flex items-center gap-2 font-bold text-sm md:text-base tracking-wide">
+                <Crown size={18} />
+                <span>👗 女兒的更衣室 (Closet)</span>
+              </div>
+              <button 
+                onClick={() => setIsClosetOpen(false)}
+                className="text-slate-400 hover:text-white transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Description */}
+            <p className="text-xs text-slate-400">
+              隨時更換女兒的服飾裝扮。已在武器商店購買的特殊服飾會在此解鎖，更換服飾會即時呈現在起居室、日程執行動畫與結局中。
+            </p>
+
+            {/* Closet Items list */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[380px] overflow-y-auto pr-1">
+              {[
+                { 
+                  id: 'default' as const, 
+                  name: OUTFIT_NAMES.default, 
+                  desc: '初始日常便服，舒適而樸素。', 
+                  itemId: null, 
+                  image: getAvatarPath(daughter.age, 'default', daughter.avatarUrl) 
+                },
+                { 
+                  id: 'dress' as const, 
+                  name: OUTFIT_NAMES.dress, 
+                  desc: '皇家絲綢華麗洋裝，極大提升魅力與名望。', 
+                  itemId: 'luxury_dress', 
+                  image: getAvatarPath(daughter.age, 'dress', daughter.avatarUrl) 
+                },
+                { 
+                  id: 'armor' as const, 
+                  name: OUTFIT_NAMES.armor, 
+                  desc: '銀白女武神胸甲，防禦力驚人並提升戰技。', 
+                  itemId: 'silver_armor', 
+                  image: getAvatarPath(daughter.age, 'armor', daughter.avatarUrl) 
+                },
+                { 
+                  id: 'summer' as const, 
+                  name: OUTFIT_NAMES.summer, 
+                  desc: '盛夏微風連身裙，清涼舒適，洋溢青春氣息。', 
+                  itemId: 'summer_dress', 
+                  image: getAvatarPath(daughter.age, 'summer', daughter.avatarUrl) 
+                }
+              ].map((item) => {
+                const isOwned = !item.itemId || state.inventory.includes(item.itemId);
+                const isEquipped = daughter.outfit === item.id;
+                
+                return (
+                  <div 
+                    key={item.id} 
+                    className={`flex flex-col gap-3 p-3 bg-slate-950/60 border rounded-xl transition-all ${
+                      isEquipped 
+                        ? 'border-[#d4af37] bg-[rgba(212,175,55,0.04)] shadow-[0_0_10px_rgba(212,175,55,0.15)]' 
+                        : 'border-slate-800'
+                    }`}
+                  >
+                    {/* Item header with Preview */}
+                    <div className="flex gap-3 items-center">
+                      <div className="w-14 h-14 bg-slate-900 rounded-lg overflow-hidden border border-slate-800/80 flex items-center justify-center shrink-0">
+                        <img 
+                          src={item.image} 
+                          alt={item.name} 
+                          className="h-full w-auto object-contain" 
+                          onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
+                        />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h4 className="text-xs font-bold text-slate-200 truncate">{item.name}</h4>
+                        <p className="text-[10px] text-slate-400 mt-1 leading-normal line-clamp-2">{item.desc}</p>
+                      </div>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="mt-1 flex items-center justify-between gap-2">
+                      {!isOwned ? (
+                        <>
+                          <span className="text-[10px] text-red-400/80 flex items-center gap-1">
+                            <Lock size={12} /> 未擁有
+                          </span>
+                          <button
+                            onClick={() => {
+                              setIsClosetOpen(false);
+                              setScreen('store');
+                            }}
+                            className="px-3 py-1 bg-slate-900 hover:bg-[#d4af37] hover:text-black border border-slate-700 hover:border-transparent text-[10px] font-bold rounded transition-all"
+                          >
+                            前往商店購買
+                          </button>
+                        </>
+                      ) : isEquipped ? (
+                        <>
+                          <span className="text-[10px] text-[#ffd700] flex items-center gap-1 font-semibold">
+                            <Check size={12} /> 穿戴中
+                          </span>
+                          <button
+                            disabled
+                            className="px-3 py-1 bg-[rgba(255,255,255,0.03)] border border-slate-800 text-[10px] text-slate-500 rounded cursor-not-allowed"
+                          >
+                            已裝備
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <span className="text-[10px] text-emerald-400 flex items-center gap-1">
+                            已擁有
+                          </span>
+                          <button
+                            onClick={() => changeOutfit(item.id)}
+                            className="px-3 py-1 bg-[#d4af37]/80 hover:bg-[#d4af37] text-slate-950 text-[10px] font-bold rounded transition-all"
+                          >
+                            換上服飾
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Footer close */}
+            <button
+              onClick={() => setIsClosetOpen(false)}
+              className="btn-fantasy py-2.5 px-6 text-xs w-full mt-2"
+            >
+              關閉衣櫃
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

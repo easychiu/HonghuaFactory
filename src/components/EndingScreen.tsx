@@ -3,6 +3,7 @@ import { useGame } from '../contexts/GameContext';
 import { ENDINGS } from '../data/gameData';
 import { RefreshCw, Trophy } from 'lucide-react';
 import type { AttributeKey } from '../types';
+import { getAvatarPath } from '../utils/avatar';
 
 const STAT_LABELS: Record<AttributeKey, string> = {
   stamina: '體力 (Stamina)',
@@ -15,7 +16,10 @@ const STAT_LABELS: Record<AttributeKey, string> = {
   stress: '疲勞 (Stress)',
   combatSkill: '戰鬥技術 (Combat)',
   magicSkill: '魔法技術 (Magic)',
-  reputation: '王國名望 (Reputation)'
+  reputation: '王國名望 (Reputation)',
+  sin: '罪孽 (Sin)',
+  elegance: '禮儀 (Elegance)',
+  art: '氣質 (Art)'
 };
 
 export const EndingScreen: React.FC = () => {
@@ -91,7 +95,7 @@ export const EndingScreen: React.FC = () => {
 
             {/* Daughter Image */}
             <img 
-              src={daughter.avatarUrl} 
+              src={getAvatarPath(18, daughter.outfit, daughter.avatarUrl)} 
               alt={daughter.name} 
               className="h-[240px] w-auto object-contain float-animation z-10"
               onError={(e) => {

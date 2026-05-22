@@ -18,9 +18,9 @@ export const ACTIVITIES: Activity[] = [
     type: 'work',
     cost: 0,
     reward: 0,
-    description: '協助修女打掃教堂、照料信徒，提升道德與信仰。',
-    statChanges: { piety: 4, morality: 3, strength: -1, stress: 1 },
-    effectDescription: '信仰+4, 道德+3, 力量-1, 疲勞+1, 金幣+0'
+    description: '協助修女打掃教堂、照料信徒，提升道德與信仰並洗滌罪孽。',
+    statChanges: { piety: 4, morality: 3, strength: -1, sin: -3, stress: 1 },
+    effectDescription: '信仰+4, 道德+3, 力量-1, 罪孽-3, 疲勞+1, 金幣+0'
   },
   {
     id: 'maid',
@@ -28,9 +28,9 @@ export const ACTIVITIES: Activity[] = [
     type: 'work',
     cost: 0,
     reward: 15,
-    description: '在商人家中學習禮儀與打掃，培養魅力與細心。',
-    statChanges: { charisma: 2, sensitivity: 1, stamina: -1, stress: 4 },
-    effectDescription: '魅力+2, 感受+1, 體力-1, 疲勞+4, 金幣+15'
+    description: '在商人家中學習禮儀與打掃，培養魅力、禮儀與細心。',
+    statChanges: { charisma: 2, elegance: 3, sensitivity: 1, stamina: -1, stress: 4 },
+    effectDescription: '魅力+2, 禮儀+3, 感受+1, 體力-1, 疲勞+4, 金幣+15'
   },
   {
     id: 'graveyard',
@@ -38,9 +38,9 @@ export const ACTIVITIES: Activity[] = [
     type: 'work',
     cost: 0,
     reward: 22,
-    description: '在深夜看守墓園，直面未知的恐懼，開發潛在魔法資質。',
-    statChanges: { sensitivity: 3, magicSkill: 2, charisma: -2, stress: 5 },
-    effectDescription: '感受+3, 魔法+2, 魅力-2, 疲勞+5, 金幣+22'
+    description: '在深夜看守墓園，直面恐懼，但可能因接觸死靈而沾染罪孽。',
+    statChanges: { sensitivity: 3, magicSkill: 2, sin: 2, charisma: -2, stress: 5 },
+    effectDescription: '感受+3, 魔法+2, 罪孽+2, 魅力-2, 疲勞+5, 金幣+22'
   },
 
   // --- 學習 (Studies) ---
@@ -80,9 +80,9 @@ export const ACTIVITIES: Activity[] = [
     type: 'study',
     cost: 12,
     reward: 0,
-    description: '閱讀聖典與教義，感悟生命的崇高與秩序。',
-    statChanges: { piety: 5, morality: 3, stress: 1 },
-    effectDescription: '信仰+5, 道德+3, 疲勞+1, 金幣-12'
+    description: '閱讀聖典與教義，感悟生命的崇高與秩序，稍微減少罪孽。',
+    statChanges: { piety: 5, morality: 3, sin: -1, stress: 1 },
+    effectDescription: '信仰+5, 道德+3, 罪孽-1, 疲勞+1, 金幣-12'
   },
   {
     id: 'poetry',
@@ -90,9 +90,9 @@ export const ACTIVITIES: Activity[] = [
     type: 'study',
     cost: 15,
     reward: 0,
-    description: '撰寫詩歌、研讀藝術與音樂，提高品味與感受。',
-    statChanges: { sensitivity: 4, charisma: 2, stress: 2 },
-    effectDescription: '感受+4, 魅力+2, 疲勞+2, 金幣-15'
+    description: '撰寫詩歌、研讀藝術與音樂，提高氣質、品味與感受。',
+    statChanges: { sensitivity: 4, charisma: 2, art: 4, stress: 2 },
+    effectDescription: '感受+4, 魅力+2, 氣質+4, 疲勞+2, 金幣-15'
   },
 
   // --- 休息 (Rest) ---
@@ -190,7 +190,10 @@ export const ENDINGS: EndingCondition[] = [
       stats.reputation >= 600 && 
       stats.charisma >= 500 && 
       stats.intelligence >= 400 && 
-      stats.morality >= 400
+      stats.morality >= 400 &&
+      (stats.elegance || 0) >= 400 &&
+      (stats.art || 0) >= 400 &&
+      (stats.sin || 0) <= 50
   },
   {
     id: 'hero',
@@ -201,7 +204,8 @@ export const ENDINGS: EndingCondition[] = [
       stats.combatSkill >= 500 && 
       stats.strength >= 450 && 
       stats.stamina >= 400 && 
-      stats.reputation >= 400
+      stats.reputation >= 400 &&
+      (stats.sin || 0) <= 99
   },
   {
     id: 'dark_lord',
@@ -212,7 +216,8 @@ export const ENDINGS: EndingCondition[] = [
       stats.magicSkill >= 500 && 
       stats.stress >= 250 && 
       stats.morality <= 80 && 
-      stats.piety <= 80
+      stats.piety <= 80 &&
+      (stats.sin || 0) >= 150
   },
   {
     id: 'archmage',
@@ -231,7 +236,8 @@ export const ENDINGS: EndingCondition[] = [
     image: 'A gentle and beautiful anime nun with clasped hands in a grand gothic cathedral, rays of sunshine filtering through stained glass windows, serene and spiritual lighting.',
     evaluator: (stats) => 
       stats.piety >= 500 && 
-      stats.morality >= 500
+      stats.morality >= 500 &&
+      (stats.sin || 0) === 0
   },
   {
     id: 'prime_minister',
@@ -241,7 +247,8 @@ export const ENDINGS: EndingCondition[] = [
     evaluator: (stats) => 
       stats.intelligence >= 500 && 
       stats.morality >= 300 && 
-      stats.reputation >= 300
+      stats.reputation >= 300 &&
+      (stats.sin || 0) <= 50
   },
   {
     id: 'rich_merchant',
@@ -260,7 +267,8 @@ export const ENDINGS: EndingCondition[] = [
     evaluator: (stats) => 
       stats.combatSkill >= 400 && 
       stats.strength >= 300 && 
-      stats.reputation >= 300
+      stats.reputation >= 300 &&
+      stats.morality >= 150
   },
   {
     id: 'rebel_leader',
@@ -269,8 +277,9 @@ export const ENDINGS: EndingCondition[] = [
     image: 'A rebel female anime warrior standing on a barricade holding a rugged flag, broken chains, flames in the background, revolutionary heroic aesthetic.',
     evaluator: (stats) => 
       stats.combatSkill >= 300 && 
+      stats.strength >= 300 &&
       stats.morality <= 150 && 
-      stats.strength >= 300
+      (stats.sin || 0) >= 50
   },
   {
     id: 'royal_maid',
@@ -280,7 +289,8 @@ export const ENDINGS: EndingCondition[] = [
     evaluator: (stats) => 
       stats.stamina >= 250 && 
       stats.charisma >= 200 && 
-      stats.morality >= 200
+      stats.morality >= 200 &&
+      (stats.elegance || 0) >= 250
   },
   {
     id: 'ordinary_marriage',

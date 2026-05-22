@@ -10,6 +10,9 @@ export interface CharacterAttributes {
   combatSkill: number;  // 戰鬥技術
   magicSkill: number;   // 魔法技術
   reputation: number;   // 名望
+  sin: number;          // 罪孽
+  elegance: number;     // 禮儀
+  art: number;          // 氣質
 }
 
 export type AttributeKey = keyof CharacterAttributes;

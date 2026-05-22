@@ -6,6 +6,7 @@ interface GameContextProps {
   state: GameState;
   initGame: (name: string, birthMonth: number, birthDay: number, avatarUrl?: string) => void;
   updateAvatarUrl: (url: string) => void;
+  changeOutfit: (outfit: Daughter['outfit']) => void;
   setSchedule: (early: string, mid: string, late: string) => void;
   startScheduleExecution: () => void;
   executeNextPeriod: () => boolean; // returns true if month finished
@@ -25,6 +26,7 @@ interface GameContextProps {
   setScreen: (screen: GameState['activeScreen']) => void;
 }
 
+
 const DEFAULT_ATTRIBUTES: CharacterAttributes = {
   stamina: 100,
   strength: 50,
@@ -36,7 +38,17 @@ const DEFAULT_ATTRIBUTES: CharacterAttributes = {
   stress: 0,
   combatSkill: 10,
   magicSkill: 10,
-  reputation: 10
+  reputation: 10,
+  sin: 0,
+  elegance: 30,
+  art: 30
+};
+
+const getInitialAvatarUrl = (avatarUrl?: string) => {
+  if (avatarUrl) return avatarUrl;
+  const base = import.meta.env.BASE_URL || '/';
+  const prefix = base.endsWith('/') ? base : `${base}/`;
+  return `${prefix}sprites/daughter_10_default.png`;
 };
 
 const INITIAL_DAUGHTER = (name: string, birthMonth: number, birthDay: number, avatarUrl?: string): Daughter => ({
@@ -50,7 +62,7 @@ const INITIAL_DAUGHTER = (name: string, birthMonth: number, birthDay: number, av
   outfit: 'default',
   combatHp: 100,
   combatMp: 50,
-  avatarUrl: avatarUrl || '/8719.png'
+  avatarUrl: getInitialAvatarUrl(avatarUrl)
 });
 
 const INITIAL_STATE: GameState = {
@@ -153,31 +165,79 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const rest = ACTIVITIES.find(a => a.id === 'rest_home')!;
       newDaughter.attributes.stress = Math.max(0, newDaughter.attributes.stress + (rest.statChanges.stress || 0));
     } else {
-      // Deduct cost & add reward
-      newDaughter.gold = Math.max(0, newDaughter.gold - activity.cost + activity.reward);
+      // Deduct cost & determine success
+      let finalGoldReward = activity.reward;
+      let finalStatChanges = { ...activity.statChanges };
+      let isSuccess = true;
+      let statusPrefix = '';
+
+      if (activity.type !== 'rest') {
+        // Success rate decreases as stress rises relative to stamina
+        const successChance = Math.max(25, Math.round(100 - (newDaughter.attributes.stress / Math.max(1, newDaughter.attributes.stamina)) * 65));
+        isSuccess = Math.random() * 100 < successChance;
+        
+        if (!isSuccess) {
+          statusPrefix = '❌ ';
+          if (activity.type === 'work') {
+            finalGoldReward = Math.round(activity.reward * 0.3); // only get 30% gold for failed work
+            // Only stress increases, and is higher because of scolding
+            finalStatChanges = { stress: Math.round((activity.statChanges.stress || 3) * 1.5) };
+          } else {
+            // Study failure (tuition fee is still deducted)
+            // Attributes that would have increased only increase by 1 (daydreaming in class)
+            const modifiedChanges: Partial<CharacterAttributes> = {};
+            Object.entries(activity.statChanges).forEach(([key, val]) => {
+              const attrKey = key as keyof CharacterAttributes;
+              if (attrKey === 'stress') {
+                modifiedChanges.stress = val;
+              } else if ((val || 0) > 0) {
+                modifiedChanges[attrKey] = 1; // minor gain
+              } else {
+                modifiedChanges[attrKey] = val; // negative changes still apply
+              }
+            });
+            finalStatChanges = modifiedChanges;
+          }
+        }
+      }
+
+      newDaughter.gold = Math.max(0, newDaughter.gold - activity.cost + finalGoldReward);
       
       // Apply stat changes
       const updatedAttributes = { ...newDaughter.attributes };
       
-      Object.entries(activity.statChanges).forEach(([key, val]) => {
+      Object.entries(finalStatChanges).forEach(([key, val]) => {
         const attrKey = key as keyof CharacterAttributes;
         if (attrKey === 'stress') {
-          updatedAttributes.stress = Math.max(0, updatedAttributes.stress + val);
+          updatedAttributes.stress = Math.max(0, updatedAttributes.stress + (val || 0));
         } else {
-          updatedAttributes[attrKey] = Math.max(0, updatedAttributes[attrKey] + val);
+          updatedAttributes[attrKey] = Math.max(0, updatedAttributes[attrKey] + (val || 0));
         }
       });
 
       newDaughter.attributes = updatedAttributes;
 
       // Add log
+      let logText = '';
+      if (isSuccess) {
+        logText = `完成 ${activity.name}：${activity.effectDescription}`;
+      } else {
+        if (activity.type === 'work') {
+          logText = `【${activity.name}】過程中出錯被老闆訓斥，工作失敗！僅獲得 ${finalGoldReward} G，疲勞+${finalStatChanges.stress || 0}，屬性未提升。`;
+        } else {
+          logText = `【${activity.name}】上課時瞌睡連連、精神渙散，學習效果大打折扣！學費已繳，但屬性幾無提升。`;
+        }
+      }
+
       newLogs.push({
         id: logId,
         year: state.time.year,
         month: state.time.month,
         period: currentPeriod,
-        text: `完成 ${activity.name}：${activity.effectDescription}`,
-        type: activity.type === 'work' ? 'stat_up' : activity.type === 'study' ? 'info' : 'stat_down'
+        text: statusPrefix + logText,
+        type: isSuccess 
+          ? (activity.type === 'work' ? 'stat_up' : activity.type === 'study' ? 'info' : 'stat_down') 
+          : 'stat_down'
       });
     }
 
@@ -890,7 +950,10 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
           stress: 0,
           combatSkill: 800,
           magicSkill: 800,
-          reputation: 800
+          reputation: 800,
+          sin: 0,
+          elegance: 800,
+          art: 800
         };
       } else {
         daughter.gold = 150;
@@ -926,11 +989,22 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }));
   };
 
+  const changeOutfit = (outfit: Daughter['outfit']) => {
+    setState((prev) => ({
+      ...prev,
+      daughter: {
+        ...prev.daughter,
+        outfit
+      }
+    }));
+  };
+
   return (
     <GameContext.Provider value={{
       state,
       initGame,
       updateAvatarUrl,
+      changeOutfit,
       setSchedule,
       startScheduleExecution,
       executeNextPeriod,

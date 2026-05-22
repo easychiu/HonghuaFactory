@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useGame } from '../contexts/GameContext';
 import { ACTIVITIES } from '../data/gameData';
+import { getAvatarPath } from '../utils/avatar';
 import { Calendar, Zap, FastForward, Play, Pause, ChevronRight } from 'lucide-react';
 
 export const ExecutionScreen: React.FC = () => {
@@ -201,14 +202,34 @@ export const ExecutionScreen: React.FC = () => {
             <div className="text-4xl mb-4 float-animation">{anim.emote}</div>
             
             {/* Sprite character image (re-use same png with animations) */}
-            <img 
-              src={daughter.avatarUrl} 
-              alt="Daughter" 
-              className={`h-32 object-contain ${anim.className}`} 
-              onError={(e) => {
-                (e.target as HTMLElement).style.display = 'none';
-              }}
-            />
+            {(() => {
+              const scaleFactor = 
+                daughter.age <= 11 ? 0.82 :
+                daughter.age <= 13 ? 0.88 :
+                daughter.age <= 15 ? 0.94 : 1.0;
+              return (
+                <div
+                  style={{
+                    transform: `scale(${scaleFactor})`,
+                    transformOrigin: 'bottom center',
+                    transition: 'transform 0.5s ease-in-out',
+                    display: 'flex',
+                    alignItems: 'end',
+                    justifyContent: 'center',
+                    height: '140px'
+                  }}
+                >
+                  <img 
+                    src={getAvatarPath(daughter.age, daughter.outfit, daughter.avatarUrl)} 
+                    alt="Daughter" 
+                    className={`h-32 object-contain ${anim.className}`} 
+                    onError={(e) => {
+                      (e.target as HTMLElement).style.display = 'none';
+                    }}
+                  />
+                </div>
+              );
+            })()}
           </div>
 
           {/* Floating stat modifications overlay */}
