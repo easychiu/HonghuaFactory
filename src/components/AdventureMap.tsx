@@ -5,7 +5,7 @@ import { useAdventure } from '../hooks/useAdventure';
 import { Swords, Heart, LogOut, Backpack, AlertCircle } from 'lucide-react';
 
 export const AdventureMap: React.FC = () => {
-  const { state, resolveCombatVictory, resolveCombatDefeat, eatRiceCake } = useGame();
+  const { state, resolveCombatVictory, resolveCombatDefeat, eatRiceCake, consumeItem, resolveCombatReunion } = useGame();
   const { combatState, startCombat, executePlayerAction, resolveEnemyTurn, endCombat, failFleeAttempt } = useCombat();
   const { daughter, inventory } = state;
   
@@ -100,6 +100,12 @@ export const AdventureMap: React.FC = () => {
 
   // Handlers for victory / defeat
   const handleVictoryConfirm = () => {
+    if (combatState.isReunionTriggered && combatState.reunitedSisterId) {
+      resolveCombatReunion(combatState.reunitedSisterId);
+      endCombat('victory');
+      return;
+    }
+
     let remainingHp = daughter.combatHp;
     if (daughter.characterId === 'emilia') {
       remainingHp = combatState.party.emilia?.hp || 0;
@@ -562,6 +568,14 @@ export const AdventureMap: React.FC = () => {
                       >
                         🔥 皇家斬擊 (10 MP)
                       </button>
+                      {combatState.monster?.sisterId && (
+                        <button 
+                          onClick={() => executePlayerAction('solo', 'observe')}
+                          className="btn-fantasy py-3 text-xs border-amber-500/50 text-amber-300 hover:bg-amber-950/15"
+                        >
+                          🔍 仔細觀察
+                        </button>
+                      )}
                       <button 
                         onClick={handleFleeConfirm}
                         className="btn-fantasy-sec border-red-500/35 text-red-300 hover:bg-red-950/10 py-3 text-xs"
@@ -593,13 +607,22 @@ export const AdventureMap: React.FC = () => {
                             >
                               🗡️ 皇家斬擊 (10)
                             </button>
-                            <button 
-                              onClick={() => executePlayerAction('emilia', 'skill_combo')}
-                              disabled={combatState.party.emilia.mp < 30}
-                              className="btn-fantasy text-[10px] py-2 bg-gradient-to-r from-amber-500 to-red-500 border-none disabled:opacity-40"
-                            >
-                              ✨ 友情三連擊 (30)
-                            </button>
+                            {combatState.monster?.sisterId ? (
+                              <button 
+                                onClick={() => executePlayerAction('emilia', 'observe')}
+                                className="btn-fantasy text-[10px] py-2 border-amber-500/50 text-amber-300 hover:bg-amber-950/15"
+                              >
+                                🔍 仔細觀察
+                              </button>
+                            ) : (
+                              <button 
+                                onClick={() => executePlayerAction('emilia', 'skill_combo')}
+                                disabled={combatState.party.emilia.mp < 30}
+                                className="btn-fantasy text-[10px] py-2 bg-gradient-to-r from-amber-500 to-red-500 border-none disabled:opacity-40"
+                              >
+                                ✨ 友情三連擊 (30)
+                              </button>
+                            )}
                           </div>
                         </div>
                       )}
@@ -711,15 +734,12 @@ export const AdventureMap: React.FC = () => {
                       <Backpack size={10} /> 戰鬥補給檳榔 (背包持有數)
                     </h5>
                     <div className="flex gap-3">
-                      {/* Check and list Binlang items */}
                       {inventory.includes('binlang_ice') ? (
                         <button
                           onClick={() => {
                             const actor = daughter.characterId === 'emilia' ? 'emilia' : 'solo';
                             executePlayerAction(actor, 'item_binlang_ice');
-                            // Remove from inventory manually in UI representation
-                            const idx = inventory.indexOf('binlang_ice');
-                            if (idx > -1) inventory.splice(idx, 1);
+                            consumeItem('binlang_ice');
                           }}
                           className="btn-fantasy-sec text-[10px] py-1.5 px-3 border-blue-400/30 text-blue-300 flex items-center gap-1"
                         >
@@ -734,8 +754,7 @@ export const AdventureMap: React.FC = () => {
                           onClick={() => {
                             const actor = daughter.characterId === 'emilia' ? 'emilia' : 'solo';
                             executePlayerAction(actor, 'item_binlang_twin');
-                            const idx = inventory.indexOf('binlang_twin');
-                            if (idx > -1) inventory.splice(idx, 1);
+                            consumeItem('binlang_twin');
                           }}
                           className="btn-fantasy-sec text-[10px] py-1.5 px-3 border-amber-400/30 text-amber-300 flex items-center gap-1"
                         >
@@ -750,8 +769,7 @@ export const AdventureMap: React.FC = () => {
                           onClick={() => {
                             const actor = daughter.characterId === 'emilia' ? 'emilia' : 'solo';
                             executePlayerAction(actor, 'item_binlang_normal');
-                            const idx = inventory.indexOf('binlang_normal');
-                            if (idx > -1) inventory.splice(idx, 1);
+                            consumeItem('binlang_normal');
                           }}
                           className="btn-fantasy-sec text-[10px] py-1.5 px-3 border-emerald-400/30 text-emerald-300 flex items-center gap-1"
                         >

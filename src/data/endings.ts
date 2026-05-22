@@ -62,7 +62,11 @@ export const determineEnding = (
   }
 
   // 暗夜的蔚藍三連星
-  const hasThreeSisters = reunitedSisters.includes('erica') && reunitedSisters.includes('emilia');
+  const sistersSet = new Set<string>();
+  sistersSet.add(daughter.characterId);
+  reunitedSisters.forEach(s => sistersSet.add(s));
+
+  const hasThreeSisters = sistersSet.size === 3;
   if (hasThreeSisters && dad === 'bard' && attrs.art >= 500 && attrs.morality <= 150) {
     return {
       id: 'phantom_thief_triplets',
@@ -103,7 +107,7 @@ export const determineEnding = (
     }
   }
 
-  const hasTwoSisters = reunitedSisters.length >= 1;
+  const hasTwoSisters = sistersSet.size === 2;
   if (hasTwoSisters) {
     return {
       id: 'duet_adventurers',

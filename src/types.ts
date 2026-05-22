@@ -111,6 +111,7 @@ export interface Monster {
   goldReward: number;
   expReward: number;
   behaviorPattern?: 'standard' | 'aggressive' | 'boss';
+  sisterId?: CharacterId;
 }
 
 // Slay the Spire 風格的節點

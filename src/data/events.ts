@@ -547,5 +547,86 @@ export const AVG_EVENTS: Record<string, AVGEvent> = {
         nextId: undefined
       }
     }
+  },
+  erica_reunion_avg: {
+    id: 'erica_reunion_avg',
+    title: '命運的交織：與艾莉卡重逢',
+    startNodeId: 'start',
+    nodes: {
+      start: {
+        speaker: '遺失的王女 艾莉卡',
+        text: '這股溫暖的血脈共鳴……難道說，妳就是當年與我失散的姊妹？沒想到我們會在修行的戰場上重逢。',
+        choices: [
+          {
+            text: '💖 抱住她，千言萬語盡在不言中',
+            effect: (_state) => {
+              return {
+                log: '女兒流淚抱住艾莉卡，兩人相認，解鎖了下週目扮演艾莉卡的可能！',
+                nextDialogId: 'reunion_end'
+              };
+            }
+          }
+        ]
+      },
+      reunion_end: {
+        speaker: '艾莉卡',
+        text: '我現在還必須去處理一些王國遺留的線索，但在那之後，我們一定會再次團聚的！',
+        nextId: undefined
+      }
+    }
+  },
+  emilia_reunion_avg: {
+    id: 'emilia_reunion_avg',
+    title: '命運的交織：與艾蜜莉亞重逢',
+    startNodeId: 'start',
+    nodes: {
+      start: {
+        speaker: '遺失的王女 艾蜜莉亞',
+        text: '這個皇家紋章的感應，絕對不會錯！原來妳也活了下來……我的姊妹！有妳在，蔚藍海岸的復國希望更近了一步。',
+        choices: [
+          {
+            text: '💖 抱住她，千言萬語盡在不言中',
+            effect: (_state) => {
+              return {
+                log: '女兒流淚抱住艾蜜莉亞，兩人相認，解鎖了下週目扮演艾蜜莉亞的可能！',
+                nextDialogId: 'reunion_end'
+              };
+            }
+          }
+        ]
+      },
+      reunion_end: {
+        speaker: '艾蜜莉亞',
+        text: '帶上我的信物。雖然我現在必須在暗中活動，但當終局來臨，我們三姊妹必定會重登王座！',
+        nextId: undefined
+      }
+    }
+  },
+  honghua_reunion_avg: {
+    id: 'honghua_reunion_avg',
+    title: '命運的交織：與紅花重逢',
+    startNodeId: 'start',
+    nodes: {
+      start: {
+        speaker: '遺失的王女 紅花',
+        text: '這味道……包葉檳榔的香氣，不，是王國正統血脈的悸動！妳就是我的手足嗎？能在戰場上遇到妳，真是命運的恩賜！',
+        choices: [
+          {
+            text: '💖 抱住她，千言萬語盡在不言中',
+            effect: (_state) => {
+              return {
+                log: '女兒流淚抱住紅花，兩人相認，解鎖了下週目扮演紅花的可能！',
+                nextDialogId: 'reunion_end'
+              };
+            }
+          }
+        ]
+      },
+      reunion_end: {
+        speaker: '紅花',
+        text: '這片大地雖然破碎，但我們的羈絆已經重新連起。拿著這枚信物，期待我們在未來頂峰相見！',
+        nextId: undefined
+      }
+    }
   }
 };

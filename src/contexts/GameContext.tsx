@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import type { GameState, Daughter, CharacterId, FatherBackground, Activity, Item, AdventureMapNode, PeriodType } from '../types';
+import type { GameState, Daughter, CharacterId, FatherBackground, Activity, Item, AdventureMapNode, PeriodType, Monster } from '../types';
 import { COURSES } from '../data/courses';
 import { AVG_EVENTS } from '../data/events';
 import { determineEnding } from '../data/endings';
@@ -315,16 +315,45 @@ export const generateAdventureMap = (dad: FatherBackground, _charId: CharacterId
     connectedTo: ['3_2']
   });
 
+  // 根據當前主角 _charId 動態判定中層 Boss
+  let sisterAId: CharacterId = 'erica';
+  let sisterBId: CharacterId = 'emilia';
+  if (_charId === 'erica') {
+    sisterAId = 'honghua';
+    sisterBId = 'emilia';
+  } else if (_charId === 'emilia') {
+    sisterAId = 'honghua';
+    sisterBId = 'erica';
+  }
+
+  const getSisterMonster = (sisterId: CharacterId, layer: number): Monster => {
+    const isL3 = layer === 3;
+    const name = sisterId === 'erica' ? '遺失的王女 艾莉卡' : sisterId === 'emilia' ? '遺失的王女 艾蜜莉亞' : '遺失的王女 紅花';
+    return {
+      name,
+      hp: isL3 ? 150 : 230,
+      maxHp: isL3 ? 150 : 230,
+      attack: isL3 ? 24 : 32,
+      defense: isL3 ? 10 : 16,
+      goldReward: isL3 ? 150 : 250,
+      expReward: isL3 ? 50 : 90,
+      sisterId
+    };
+  };
+
+  const sisterAMonster = getSisterMonster(sisterAId, 3);
+  const sisterBMonster = getSisterMonster(sisterBId, 4);
+
   // Layer 3:
   nodes.push({
     id: '3_0',
     layer: 3,
     index: 0,
     type: 'battle',
-    name: '野獸石窟',
+    name: sisterAMonster.name,
     cleared: false,
     connectedTo: ['4_0'],
-    monster: { name: '狂暴狼王', hp: 130, maxHp: 130, attack: 24, defense: 8, goldReward: 120, expReward: 40 }
+    monster: sisterAMonster
   });
   nodes.push({
     id: '3_1',
@@ -360,10 +389,10 @@ export const generateAdventureMap = (dad: FatherBackground, _charId: CharacterId
     layer: 4,
     index: 1,
     type: 'battle',
-    name: '遺跡守衛',
+    name: sisterBMonster.name,
     cleared: false,
     connectedTo: ['5_0'],
-    monster: { name: '青銅魔石人', hp: 220, maxHp: 220, attack: 30, defense: 18, goldReward: 200, expReward: 80 }
+    monster: sisterBMonster
   });
 
   // Layer 5: Boss Jaks
@@ -434,6 +463,8 @@ interface GameContextProps {
   unlockAllProtagonists: () => void;
   eatRiceCake: () => void;
   resolveFestival: (victory: boolean, goldPrize: number, repPrize: number, logText: string, consumedItems?: string[]) => void;
+  consumeItem: (itemId: string) => void;
+  resolveCombatReunion: (sisterId: string) => void;
 }
 
 const GameContext = createContext<GameContextProps | undefined>(undefined);
@@ -942,6 +973,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const sisters: string[] = [];
         if (prev.inventory.includes('erica_reunited')) sisters.push('erica');
         if (prev.inventory.includes('emilia_reunited')) sisters.push('emilia');
+        if (prev.inventory.includes('honghua_reunited')) sisters.push('honghua');
 
         const end = determineEnding(prev.daughter, prev.completedEndings.length, finalClues, sisters);
         
@@ -1656,6 +1688,59 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
   };
 
+  const consumeItem = (itemId: string) => {
+    setState((prev) => {
+      const idx = prev.inventory.indexOf(itemId);
+      if (idx === -1) return prev;
+      const newInventory = [...prev.inventory];
+      newInventory.splice(idx, 1);
+      return {
+        ...prev,
+        inventory: newInventory
+      };
+    });
+  };
+
+  const resolveCombatReunion = (sisterId: string) => {
+    setState((prev) => {
+      const reunionItem = `${sisterId}_reunited`;
+      const newInventory = [...prev.inventory];
+      if (!newInventory.includes(reunionItem)) {
+        newInventory.push(reunionItem);
+      }
+
+      const newUnlocked = [...prev.unlockedCharacters];
+      if (!newUnlocked.includes(sisterId as CharacterId)) {
+        newUnlocked.push(sisterId as CharacterId);
+      }
+
+      const sisterName = sisterId === 'erica' ? '艾莉卡' : sisterId === 'emilia' ? '艾蜜莉亞' : '紅花';
+      const logId = Math.random().toString();
+      const newLogs = [...prev.logs, {
+        id: logId,
+        year: prev.time.year,
+        month: prev.time.month,
+        period: prev.time.period,
+        text: `✨ 命運的相逢：與遺失的王女【${sisterName}】在修行中成功相認！`,
+        type: 'event' as const
+      }];
+
+      const eventId = `${sisterId}_reunion_avg`;
+      const ev = AVG_EVENTS[eventId];
+
+      return {
+        ...prev,
+        inventory: newInventory,
+        unlockedCharacters: newUnlocked,
+        logs: newLogs,
+        adventure: null,
+        activeScreen: 'main' as const,
+        currentEvent: ev || null,
+        currentEventStep: ev ? ev.startNodeId : null
+      };
+    });
+  };
+
   return (
     <GameContext.Provider
       value={{
@@ -1683,7 +1768,9 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
         resolveCombatDefeat,
         unlockAllProtagonists,
         eatRiceCake,
-        resolveFestival
+        resolveFestival,
+        consumeItem,
+        resolveCombatReunion
       }}
     >
       {children}

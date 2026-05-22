@@ -19,6 +19,10 @@ export interface CombatState {
   frozenTurns: number; // 怪物結冰剩餘回合
   satiated: boolean; // 飽腹狀態
   inventory: string[]; // 當前背包備份，用於判定武器加成
+  observeCount: number;
+  isReunionTriggered: boolean;
+  reunitedSisterId: string | null;
+  daughter: Daughter | null;
 }
 
 interface CombatContextProps {
@@ -26,7 +30,7 @@ interface CombatContextProps {
   startCombat: (monster: Monster, daughter: Daughter, satiated?: boolean, inventory?: string[]) => void;
   executePlayerAction: (
     actor: 'solo' | 'emilia' | 'yv' | 'jumbo',
-    action: 'attack' | 'skill_slash' | 'skill_combo' | 'skill_heal' | 'skill_fire' | 'skill_taunt' | 'skill_smash' | 'item_binlang_ice' | 'item_binlang_twin' | 'item_binlang_normal' | 'flee',
+    action: 'attack' | 'skill_slash' | 'skill_combo' | 'skill_heal' | 'skill_fire' | 'skill_taunt' | 'skill_smash' | 'item_binlang_ice' | 'item_binlang_twin' | 'item_binlang_normal' | 'flee' | 'observe',
     targetMember?: 'emilia' | 'yv' | 'jumbo' | 'solo'
   ) => void;
   resolveEnemyTurn: (daughter: Daughter) => void;
@@ -53,7 +57,11 @@ const INITIAL_COMBAT_STATE: CombatState = {
   doubleAttackTurns: 0,
   frozenTurns: 0,
   satiated: false,
-  inventory: []
+  inventory: [],
+  observeCount: 0,
+  isReunionTriggered: false,
+  reunitedSisterId: null,
+  daughter: null
 };
 
 export const CombatProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -82,13 +90,17 @@ export const CombatProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       doubleAttackTurns: 0,
       frozenTurns: 0,
       satiated,
-      inventory
+      inventory,
+      observeCount: 0,
+      isReunionTriggered: false,
+      reunitedSisterId: null,
+      daughter
     });
   };
 
   const executePlayerAction = (
     actor: 'solo' | 'emilia' | 'yv' | 'jumbo',
-    action: 'attack' | 'skill_slash' | 'skill_combo' | 'skill_heal' | 'skill_fire' | 'skill_taunt' | 'skill_smash' | 'item_binlang_ice' | 'item_binlang_twin' | 'item_binlang_normal' | 'flee',
+    action: 'attack' | 'skill_slash' | 'skill_combo' | 'skill_heal' | 'skill_fire' | 'skill_taunt' | 'skill_smash' | 'item_binlang_ice' | 'item_binlang_twin' | 'item_binlang_normal' | 'flee' | 'observe',
     targetMember?: 'emilia' | 'yv' | 'jumbo' | 'solo'
   ) => {
     if (!combatState.isActive || !combatState.monster) return;
@@ -107,6 +119,12 @@ export const CombatProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
     if (!actorObj || actorObj.hp <= 0) return;
 
+    // 攻擊與傷害技能會重置觀察計數
+    const isOffensive = ['attack', 'skill_slash', 'skill_combo', 'skill_fire', 'skill_smash'].includes(action);
+    if (isOffensive) {
+      nextState.observeCount = 0;
+    }
+
     // --- 逃跑邏輯 ---
     if (action === 'flee') {
       const escapeChance = actor === 'solo' ? 0.5 : 0.4;
@@ -121,8 +139,40 @@ export const CombatProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       return;
     }
 
+    // --- 觀察邏輯 ---
+    if (action === 'observe') {
+      const isSister = ['遺失的王女 艾莉卡', '遺失的王女 艾蜜莉亞', '遺失的王女 紅花'].includes(monster.name);
+      if (isSister) {
+        nextState.observeCount += 1;
+        logEntries.push(`🔍 ${actorObj.name} 靜靜地看著 ${monster.name}，試圖尋找熟悉的感覺（連續觀察次數: ${nextState.observeCount}/3）。`);
+        
+        // 檢查是否滿足重逢條件
+        if (nextState.observeCount >= 3) {
+          const daughterData = nextState.daughter;
+          const inventoryData = nextState.inventory || [];
+          const elegance = daughterData?.attributes?.elegance || 0;
+          const art = daughterData?.attributes?.art || 0;
+          const hasClue = inventoryData.some(i => i.includes('royal') || i.includes('crest') || i.includes('saber') || i.includes('clue'));
+          
+          if (elegance >= 150 || art >= 150 || hasClue) {
+            nextState.isReunionTriggered = true;
+            let sisterId = 'erica';
+            if (monster.name.includes('艾蜜莉亞')) sisterId = 'emilia';
+            else if (monster.name.includes('紅花')) sisterId = 'honghua';
+            nextState.reunitedSisterId = sisterId;
+            nextState.turn = 'victory';
+            logEntries.push(`✨ 經過連續 3 次的仔細觀察，妳發現對方的面容與妳驚人地相似！身上佩戴的皇家飾物與妳的血脈產生了強烈的共鳴！姊妹重逢的眼淚奪眶而出……`);
+          } else {
+            logEntries.push(`🔍 妳仔細觀察著對方，雖然感到有一絲熟悉，但妳的氣質與禮儀不足 150，且沒有任何王國線索，無法喚醒對方的記憶與血脈共鳴！`);
+          }
+        }
+      } else {
+        logEntries.push(`🔍 ${actorObj.name} 仔細觀察著 ${monster.name} 的一舉一動，尋找對方的破綻。`);
+      }
+    }
+
     // --- 玩家各指令解析 ---
-    if (action === 'attack') {
+    else if (action === 'attack') {
       // 普通攻擊
       let baseDmg = actor === 'yv' ? 10 : actor === 'jumbo' ? 22 : 18;
       let critRate = 0.15;
