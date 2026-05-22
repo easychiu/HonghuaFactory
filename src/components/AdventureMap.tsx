@@ -157,6 +157,9 @@ export const AdventureMap: React.FC = () => {
             <span className="font-bold text-[#ffd700]">{daughter.focus}</span> / {daughter.maxFocus}
             {hasMotorcycle && <span className="text-emerald-400 ml-2 font-semibold">🏍️ 摩托車加持 (移動僅扣 1 專注度)</span>}
           </p>
+          <p className="text-[11px] text-indigo-300 mt-1">
+            ⚠️ 高層區域效果：{adventure.highLayerDebuffName}（{adventure.highLayerDebuffDescription}）
+          </p>
         </div>
 
         {/* HP & Actions */}
@@ -204,7 +207,7 @@ export const AdventureMap: React.FC = () => {
       {/* Slay the Spire Map (Exploring state) */}
       {adventure.status === 'exploring' && (
         <div className="glass-panel p-6 flex flex-col items-center justify-center relative overflow-hidden">
-          <h2 className="text-sm font-bold text-[#ffd700] mb-4 uppercase tracking-wider">📜 蔚藍森林修行路徑圖</h2>
+          <h2 className="text-sm font-bold text-[#ffd700] mb-4 uppercase tracking-wider">📜 {adventure.areaName} 修行路徑圖</h2>
           
           <div className="relative w-full max-w-[600px] overflow-x-auto bg-slate-950/40 rounded-2xl border border-slate-900/60 p-4 shadow-inner">
             <svg width="600" height="500" className="mx-auto block">

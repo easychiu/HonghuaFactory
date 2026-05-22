@@ -12,7 +12,7 @@ export const AVG_EVENTS: Record<string, AVGEvent> = {
         choices: [
           {
             text: '⚔️ 武力介入（進入戰鬥）',
-            effect: (_state) => {
+            effect: () => {
               // 觸發與貴族的戰鬥
               const silvaMonster: Monster = {
                 name: '流亡貴族 席爾瓦',
@@ -51,7 +51,7 @@ export const AVG_EVENTS: Record<string, AVGEvent> = {
           },
           {
             text: '👥 冷眼旁觀並繞路',
-            effect: (_state) => {
+            effect: () => {
               return {
                 log: '女兒默默繞開了他，多繞了一些林間小路，專注度消耗 5。',
                 nextDialogId: undefined,
@@ -72,7 +72,7 @@ export const AVG_EVENTS: Record<string, AVGEvent> = {
         choices: [
           {
             text: '迎戰！',
-            effect: (_state) => {
+            effect: () => {
               const silvaMonster: Monster = {
                 name: '流亡貴族 席爾瓦',
                 hp: 150,
@@ -173,7 +173,7 @@ export const AVG_EVENTS: Record<string, AVGEvent> = {
           },
           {
             text: '拒絕他並離開',
-            effect: (_state) => {
+            effect: () => {
               return { log: '女兒婉拒了黑市商人的推銷。' };
             }
           }
@@ -222,7 +222,7 @@ export const AVG_EVENTS: Record<string, AVGEvent> = {
           },
           {
             text: '⚔️ 拔劍硬闖（Boss 挑戰級戰鬥）',
-            effect: (_state) => {
+            effect: () => {
               const jaksBoss: Monster = {
                 name: '海軍少校 傑克斯',
                 hp: 400,
@@ -253,7 +253,7 @@ export const AVG_EVENTS: Record<string, AVGEvent> = {
         choices: [
           {
             text: '進行越獄戰鬥！',
-            effect: (_state) => {
+            effect: () => {
               const guardMonster: Monster = {
                 name: '海軍要塞守衛',
                 hp: 180,
@@ -314,7 +314,7 @@ export const AVG_EVENTS: Record<string, AVGEvent> = {
           },
           {
             text: '離開診所',
-            effect: (_state) => {
+            effect: () => {
               return { log: '女兒告別了阿俠醫生。' };
             }
           }
@@ -372,7 +372,7 @@ export const AVG_EVENTS: Record<string, AVGEvent> = {
           },
           {
             text: '↩️ 繞路退回',
-            effect: (_state) => {
+            effect: () => {
               return { log: '小隊選擇繞路前行。' };
             }
           }
@@ -401,7 +401,7 @@ export const AVG_EVENTS: Record<string, AVGEvent> = {
         choices: [
           {
             text: '💬 真誠直球（誇獎她的努力與雙馬尾）',
-            effect: (_state) => {
+            effect: () => {
               return {
                 log: '女兒真誠地誇獎了四葉草的雙馬尾和劍術，四葉草面紅耳赤地接受了。好感度 +20，名望 +10。',
                 nextDialogId: 'clover_gentle',
@@ -411,7 +411,7 @@ export const AVG_EVENTS: Record<string, AVGEvent> = {
           },
           {
             text: '⚔️ 良性競爭（全力切磋劍術）',
-            effect: (_state) => {
+            effect: () => {
               return {
                 log: '兩人進行了激烈的劍術切磋，雙方都有所領悟！好感度 +15，戰鬥技術 +5，體力 -5。',
                 nextDialogId: 'clover_compete',
@@ -421,7 +421,7 @@ export const AVG_EVENTS: Record<string, AVGEvent> = {
           },
           {
             text: '💬 打壓 PUA（嘲笑她的雙馬尾）',
-            effect: (_state) => {
+            effect: () => {
               return {
                 log: '女兒嘲笑了四葉草的雙馬尾，四葉草氣得大哭跑開了。好感度 -30，疲勞 +15。',
                 nextDialogId: 'clover_pua',
@@ -478,7 +478,7 @@ export const AVG_EVENTS: Record<string, AVGEvent> = {
           },
           {
             text: '💤 藉口累了推辭休息',
-            effect: (_state) => {
+            effect: () => {
               return {
                 log: '女兒藉口疲累推辭了。珊珊有些失望，但女兒得到了休息。好感度 +5，疲勞 -10。',
                 nextDialogId: 'shanshan_rest',
@@ -545,6 +545,138 @@ export const AVG_EVENTS: Record<string, AVGEvent> = {
         speaker: '同窗好友 雪舞',
         text: '嗚嗚，殿下好嚴厲喔……那、那我就再撐一下，不睡覺了……',
         nextId: undefined
+      }
+    }
+  },
+  bond_story_clover_30: {
+    id: 'bond_story_clover_30',
+    title: '四葉草好感事件：劍道晨練（好感 30）',
+    startNodeId: 'start',
+    nodes: {
+      start: {
+        speaker: '同窗好友 四葉草',
+        text: '哼，妳居然真的早起來陪我晨練……看來妳不是只會說漂亮話的人。',
+        choices: [
+          {
+            text: '🗡️ 與她並肩完成一輪劍型演練',
+            effect: () => {
+              return {
+                log: '妳與四葉草完成了高強度晨練，彼此默契更加穩固。好感度 +8，戰鬥技術 +6。',
+                rewards: { cloverBond: 8, combatSkill: 6, addInventory: 'bond_story_clover_30_done' }
+              };
+            }
+          }
+        ]
+      }
+    }
+  },
+  bond_story_clover_60: {
+    id: 'bond_story_clover_60',
+    title: '四葉草好感事件：守望約定（好感 60）',
+    startNodeId: 'start',
+    nodes: {
+      start: {
+        speaker: '同窗好友 四葉草',
+        text: '如果有一天戰場真的降臨，我希望背後能交給妳守著。妳……願意嗎？',
+        choices: [
+          {
+            text: '🤝 正面答應，交換彼此的守望誓言',
+            effect: () => {
+              return {
+                log: '四葉草正式與妳約定共同進退。好感度 +10，名望 +8。',
+                rewards: { cloverBond: 10, reputation: 8, addInventory: 'bond_story_clover_60_done' }
+              };
+            }
+          }
+        ]
+      }
+    }
+  },
+  bond_story_shanshan_30: {
+    id: 'bond_story_shanshan_30',
+    title: '珊珊好感事件：禁書室夜讀（好感 30）',
+    startNodeId: 'start',
+    nodes: {
+      start: {
+        speaker: '同窗好友 珊珊',
+        text: '殿下，這段古文我反覆推敲仍有疑點，能否請妳一起解讀？',
+        choices: [
+          {
+            text: '📖 一同比對註解並完成推論',
+            effect: () => {
+              return {
+                log: '妳與珊珊徹夜研讀，成功破解古籍隱喻。好感度 +8，智力 +7。',
+                rewards: { shanshanBond: 8, intelligence: 7, addInventory: 'bond_story_shanshan_30_done' }
+              };
+            }
+          }
+        ]
+      }
+    }
+  },
+  bond_story_shanshan_60: {
+    id: 'bond_story_shanshan_60',
+    title: '珊珊好感事件：宮廷論策預演（好感 60）',
+    startNodeId: 'start',
+    nodes: {
+      start: {
+        speaker: '同窗好友 珊珊',
+        text: '若未來妳站上王政中樞，我願成為妳最可信任的參謀。今天先來一場模擬辯論吧？',
+        choices: [
+          {
+            text: '🪶 接受辯論並整理完整政務提案',
+            effect: () => {
+              return {
+                log: '妳與珊珊完成了一場高水準政務辯論。好感度 +10，智力 +8，禮儀 +6。',
+                rewards: { shanshanBond: 10, intelligence: 8, elegance: 6, addInventory: 'bond_story_shanshan_60_done' }
+              };
+            }
+          }
+        ]
+      }
+    }
+  },
+  bond_story_xuewu_30: {
+    id: 'bond_story_xuewu_30',
+    title: '雪舞好感事件：海風午睡學（好感 30）',
+    startNodeId: 'start',
+    nodes: {
+      start: {
+        speaker: '同窗好友 雪舞',
+        text: '我發現海風會讓人靈感大爆發……要不要一起在樹蔭下做自然觀察？',
+        choices: [
+          {
+            text: '🍃 陪她做觀察筆記與標本採集',
+            effect: () => {
+              return {
+                log: '妳與雪舞在輕鬆氣氛中完成自然觀察。好感度 +8，感受 +8，疲勞 -8。',
+                rewards: { xuewuBond: 8, sensitivity: 8, stress: -8, addInventory: 'bond_story_xuewu_30_done' }
+              };
+            }
+          }
+        ]
+      }
+    }
+  },
+  bond_story_xuewu_60: {
+    id: 'bond_story_xuewu_60',
+    title: '雪舞好感事件：星夜魔法實驗（好感 60）',
+    startNodeId: 'start',
+    nodes: {
+      start: {
+        speaker: '同窗好友 雪舞',
+        text: '今夜星象很穩定，我想試試新的自然魔法迴路，妳願意當我的搭檔嗎？',
+        choices: [
+          {
+            text: '✨ 協助她完成迴路並共同施放',
+            effect: () => {
+              return {
+                log: '妳與雪舞成功完成了星夜魔法實驗。好感度 +10，魔法技術 +10，感受 +6。',
+                rewards: { xuewuBond: 10, magicSkill: 10, sensitivity: 6, addInventory: 'bond_story_xuewu_60_done' }
+              };
+            }
+          }
+        ]
       }
     }
   },

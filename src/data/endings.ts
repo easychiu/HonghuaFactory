@@ -76,6 +76,32 @@ export const determineEnding = (
     };
   }
 
+  // 同窗好友特殊結局
+  if ((daughter.bonds?.clover || 0) >= 100 && attrs.combatSkill >= 420 && attrs.strength >= 350) {
+    return {
+      id: 'clover_mercenary',
+      name: '與四葉草的傭兵誓約',
+      title: '蔚藍傭兵團雙劍團長',
+      description: '妳與四葉草在一次次課後切磋與實戰中建立了無可取代的信任，最終共同創立傭兵團。兩把劍、同一面旗，妳們成為王國邊境最令人安心的傳奇搭檔。'
+    };
+  }
+  if ((daughter.bonds?.shanshan || 0) >= 100 && attrs.intelligence >= 420 && attrs.elegance >= 320) {
+    return {
+      id: 'shanshan_court_aide',
+      name: '珊珊的宮廷助手',
+      title: '王都智囊院首席策士',
+      description: '妳與珊珊以過人的學識與辯證能力共同進入宮廷決策核心。從法典修訂到外事談判，妳們成為左右朝局的黃金雙腦，寫下了王都政治史的新篇章。'
+    };
+  }
+  if ((daughter.bonds?.xuewu || 0) >= 100 && attrs.magicSkill >= 380 && attrs.sensitivity >= 320) {
+    return {
+      id: 'xuewu_magic_tower',
+      name: '與雪舞的魔法塔歲月',
+      title: '星海塔隱居魔導師',
+      description: '在動盪時代落幕後，妳與雪舞選擇遠離權力中心，於海霧深處的魔法塔共研自然奧術。妳們留下的筆記成為後世魔法學派的經典，傳說至今仍被吟誦。'
+    };
+  }
+
   // 3. 主線隱藏結局 (姊妹重聚)
   if (hasThreeSisters) {
     // 王女的回歸
