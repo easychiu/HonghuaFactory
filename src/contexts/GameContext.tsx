@@ -483,6 +483,7 @@ interface GameContextProps {
   restartGame: () => void;
   saveGame: () => void;
   loadGame: () => void;
+  loadGameFromData: (data: Partial<GameState>) => void;
   performStreetPerformance: () => void;
   resolveCombatVictory: (remainingHp: number, goldReward: number) => void;
   resolveCombatDefeat: () => void;
@@ -1702,6 +1703,13 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     alert('讀取存檔成功！');
   };
 
+  const loadGameFromData = (data: Partial<GameState>) => {
+    setState(prev => ({
+      ...prev,
+      ...data
+    }));
+  };
+
   const performStreetPerformance = () => {
     if (state.daughter.fatherBackground !== 'bard') return;
     const newDaughter = { ...state.daughter };
@@ -1915,6 +1923,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
         restartGame,
         saveGame,
         loadGame,
+        loadGameFromData,
         performStreetPerformance,
         resolveCombatVictory,
         resolveCombatDefeat,

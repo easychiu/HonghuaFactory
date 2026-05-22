@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
 import { useGame } from '../contexts/GameContext';
-import { Sparkles, Calendar, User, Shield, BookOpen, Coins, Music, Lock } from 'lucide-react';
+import { EndingGallery } from './EndingGallery';
+import { Sparkles, Calendar, User, Shield, BookOpen, Coins, Music, Lock, Trophy } from 'lucide-react';
 import type { CharacterId, FatherBackground } from '../types';
 
 export const StartScreen: React.FC = () => {
   const { state, initGame, unlockAllProtagonists } = useGame();
-  const { unlockedCharacters = ['honghua'] } = state;
+  const { unlockedCharacters = ['honghua'], completedEndings = [] } = state;
 
   const [name, setName] = useState('');
+  const [showGallery, setShowGallery] = useState(false);
   const [birthMonth, setBirthMonth] = useState(5);
   const [birthDay, setBirthDay] = useState(20);
   const [selectedChar, setSelectedChar] = useState<CharacterId>('honghua');
@@ -54,6 +56,17 @@ export const StartScreen: React.FC = () => {
           >
             🔓 Debug Unlock
           </button>
+
+          {/* Ending Gallery Button */}
+          {completedEndings.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setShowGallery(true)}
+              className="absolute top-0 left-0 text-[10px] text-[#ffd700] hover:text-[#ffe566] border border-[#d4af37]/30 hover:border-[#ffd700]/50 bg-[#d4af37]/5 hover:bg-[#d4af37]/10 px-2.5 py-1 rounded transition-all flex items-center gap-1 uppercase"
+            >
+              <Trophy size={12} /> 結局圖鑑 ({completedEndings.length})
+            </button>
+          )}
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-8">
@@ -336,6 +349,9 @@ export const StartScreen: React.FC = () => {
         </form>
 
       </div>
+
+      {/* Ending Gallery Modal */}
+      {showGallery && <EndingGallery onClose={() => setShowGallery(false)} />}
     </div>
   );
 };
