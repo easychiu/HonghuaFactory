@@ -394,23 +394,23 @@ export const AdventureMap: React.FC = () => {
 
       {/* Combat UI Screen (Fighting state) */}
       {adventure.status === 'fighting' && combatState.isActive && combatState.monster && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-fade-in">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-fade-in dq-battle-layout">
           
           {/* Left Columns (lg:col-span-2) - Combat Arena */}
           <div className="lg:col-span-2 flex flex-col gap-6">
             
             {/* Arena board: Monster vs Party */}
-            <div className="glass-panel p-3 sm:p-6 flex flex-col md:flex-row items-center justify-around gap-4 sm:gap-6 bg-slate-950/20 border-2 border-[#d4af37]/35 min-h-[240px] sm:min-h-[300px] relative overflow-hidden">
-              <div className="absolute inset-0 bg-radial-gradient opacity-10 pointer-events-none" />
+            <div className="glass-panel p-3 sm:p-6 flex flex-col md:flex-row items-center justify-around gap-4 sm:gap-6 bg-slate-950/20 border-2 border-[#d4af37]/35 min-h-[240px] sm:min-h-[300px] relative overflow-hidden dq-battle-stage">
+              <div className="absolute inset-0 bg-radial-gradient opacity-10 pointer-events-none dq-battle-stage-glow" />
               
               {/* Team Party Members */}
-              <div className="flex flex-col gap-4 w-full md:w-auto">
-                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest text-center md:text-left">王女小隊</h3>
+              <div className="flex flex-col gap-4 w-full md:w-auto dq-party-roster">
+                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest text-center md:text-left dq-section-title">王女小隊</h3>
                 <div className="flex flex-col sm:flex-row md:flex-col gap-3 justify-center items-center w-full">
                   
                   {/* Single player daughter */}
                   {combatState.party.solo && (
-                    <div className={`flex items-center gap-3 p-3 rounded-xl border ${combatState.turn === 'player' ? 'border-emerald-500/40 bg-emerald-950/10' : 'border-slate-800 bg-slate-900/40'} w-full max-w-[240px] md:min-w-[200px]`}>
+                    <div className={`flex items-center gap-3 p-3 rounded-xl border w-full max-w-[240px] md:min-w-[200px] dq-party-card ${combatState.turn === 'player' ? 'is-active' : ''}`}>
                       <img 
                         src={daughterAvatar} 
                         alt={daughter.name} 
@@ -452,7 +452,7 @@ export const AdventureMap: React.FC = () => {
                     <>
                       {/* Emilia */}
                       {combatState.party.emilia && (
-                        <div className={`flex items-center gap-3 p-3 rounded-xl border ${combatState.party.emilia.hp <= 0 ? 'border-red-950 bg-red-950/10 opacity-50' : 'border-slate-800 bg-slate-900/40'} w-full max-w-[240px] md:min-w-[200px]`}>
+                        <div className={`flex items-center gap-3 p-3 rounded-xl border w-full max-w-[240px] md:min-w-[200px] dq-party-card ${combatState.party.emilia.hp <= 0 ? 'is-down' : ''}`}>
                           <img 
                             src={daughterAvatar} 
                             alt={daughter.name} 
@@ -489,7 +489,7 @@ export const AdventureMap: React.FC = () => {
 
                       {/* yv */}
                       {combatState.party.yv && (
-                        <div className={`flex items-center gap-3 p-3 rounded-xl border ${combatState.party.yv.hp <= 0 ? 'border-red-950 bg-red-950/10 opacity-50' : 'border-slate-800 bg-slate-900/40'} w-full max-w-[240px] md:min-w-[200px]`}>
+                        <div className={`flex items-center gap-3 p-3 rounded-xl border w-full max-w-[240px] md:min-w-[200px] dq-party-card ${combatState.party.yv.hp <= 0 ? 'is-down' : ''}`}>
                           <img 
                             src={yvAvatar} 
                             alt="yv" 
@@ -525,7 +525,7 @@ export const AdventureMap: React.FC = () => {
 
                       {/* jumbo */}
                       {combatState.party.jumbo && (
-                        <div className={`flex items-center gap-3 p-3 rounded-xl border ${combatState.party.jumbo.hp <= 0 ? 'border-red-950 bg-red-950/10 opacity-50' : 'border-slate-800 bg-slate-900/40'} w-full max-w-[240px] md:min-w-[200px]`}>
+                        <div className={`flex items-center gap-3 p-3 rounded-xl border w-full max-w-[240px] md:min-w-[200px] dq-party-card ${combatState.party.jumbo.hp <= 0 ? 'is-down' : ''}`}>
                           <img 
                             src={jumboAvatar} 
                             alt="jumbo" 
@@ -567,16 +567,16 @@ export const AdventureMap: React.FC = () => {
               </div>
 
               {/* VERSUS middle indicator */}
-              <div className="text-2xl font-black text-[#d4af37] py-2 md:py-0">VS</div>
+              <div className="text-2xl font-black text-[#d4af37] py-2 md:py-0 dq-versus-badge">VS</div>
 
               {/* Enemy Monster card */}
-              <div className="flex flex-col items-center gap-3 p-4 rounded-2xl bg-red-950/15 border border-red-500/20 min-w-[200px] text-center shadow-inner relative">
+              <div className="flex flex-col items-center gap-3 p-4 rounded-2xl bg-red-950/15 border border-red-500/20 min-w-[200px] text-center shadow-inner relative dq-enemy-card">
                 {combatState.frozenTurns > 0 && (
                   <div className="absolute top-2 right-2 text-blue-300 bg-blue-900/60 border border-blue-600/40 text-[9px] px-1.5 py-0.5 rounded font-bold animate-pulse">
                     ❄️ 冰凍 ({combatState.frozenTurns})
                   </div>
                 )}
-                <div className="text-4xl">😈</div>
+                <div className="text-4xl dq-enemy-sprite">😈</div>
                 <div>
                   <h3 className="text-sm font-bold text-white">{combatState.monster.name}</h3>
                   <div className="flex justify-center gap-3 text-[10px] text-slate-400 mt-1">
@@ -590,9 +590,9 @@ export const AdventureMap: React.FC = () => {
                     <span className="text-slate-400">生命值</span>
                     <span className="font-bold text-red-400">{combatState.monsterHp} / {combatState.monster.hp}</span>
                   </div>
-                  <div className="w-full h-2 bg-slate-900 rounded-full overflow-hidden border border-slate-800">
+                  <div className="w-full h-2 bg-slate-900 rounded-full overflow-hidden border border-slate-800 dq-hp-track">
                     <div 
-                      className="h-full bg-red-600 transition-all duration-300"
+                      className="h-full bg-red-600 transition-all duration-300 dq-hp-fill"
                       style={{ width: `${(combatState.monsterHp / combatState.monster.hp) * 100}%` }}
                     />
                   </div>
@@ -602,11 +602,11 @@ export const AdventureMap: React.FC = () => {
             </div>
 
             {/* Action Commands Control panel */}
-            <div className="glass-panel p-5 flex flex-col gap-4">
+            <div className="glass-panel p-5 flex flex-col gap-4 dq-command-panel">
               
               {/* Turn indicator banner */}
               <div className="flex justify-between items-center border-b border-slate-850 pb-2.5">
-                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest dq-turn-banner">
                   {combatState.turn === 'player' ? '🟢 己方出招回合' : 
                    combatState.turn === 'enemy' ? '🔴 敵方魔物反擊中...' : 
                    combatState.turn === 'victory' ? '🎉 戰鬥勝利！' : '☠️ 戰鬥失敗...'}
@@ -653,14 +653,14 @@ export const AdventureMap: React.FC = () => {
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                       <button 
                         onClick={() => executePlayerAction('solo', 'attack')}
-                        className="btn-fantasy py-3 text-xs"
+                        className="btn-fantasy py-3 text-xs dq-command-button"
                       >
                         ⚔️ 普通攻擊
                       </button>
                       <button 
                         onClick={() => executePlayerAction('solo', 'skill_slash')}
                         disabled={combatState.party.solo.mp < 10}
-                        className="btn-fantasy-sec py-3 text-xs disabled:opacity-40"
+                        className="btn-fantasy-sec py-3 text-xs disabled:opacity-40 dq-command-button"
                       >
                         {inventory.includes('royal_sword_cross') ? '⚔️ 十字斬 (10 MP)' : '🔥 皇家斬擊 (10 MP)'}
                       </button>
@@ -668,7 +668,7 @@ export const AdventureMap: React.FC = () => {
                         <button
                           onClick={() => executePlayerAction('solo', 'skill_ice_juice')}
                           disabled={combatState.party.solo.mp < 12}
-                          className="btn-fantasy py-3 text-xs border-cyan-500/50 text-cyan-300 hover:bg-cyan-950/15 disabled:opacity-40"
+                          className="btn-fantasy py-3 text-xs border-cyan-500/50 text-cyan-300 hover:bg-cyan-950/15 disabled:opacity-40 dq-command-button"
                         >
                           ❄️ 極凍檳榔汁 (12 MP)
                         </button>
@@ -676,14 +676,14 @@ export const AdventureMap: React.FC = () => {
                       {combatState.monster?.sisterId && (
                         <button 
                           onClick={() => executePlayerAction('solo', 'observe')}
-                          className="btn-fantasy py-3 text-xs border-amber-500/50 text-amber-300 hover:bg-amber-950/15"
+                          className="btn-fantasy py-3 text-xs border-amber-500/50 text-amber-300 hover:bg-amber-950/15 dq-command-button"
                         >
                           🔍 仔細觀察
                         </button>
                       )}
                       <button 
                         onClick={handleFleeConfirm}
-                        className="btn-fantasy-sec border-red-500/35 text-red-300 hover:bg-red-950/10 py-3 text-xs"
+                        className="btn-fantasy-sec border-red-500/35 text-red-300 hover:bg-red-950/10 py-3 text-xs dq-command-button"
                       >
                         🏃 逃跑撤退
                       </button>
@@ -696,26 +696,26 @@ export const AdventureMap: React.FC = () => {
                       
                       {/* Emilia Actions */}
                       {combatState.party.emilia && combatState.party.emilia.hp > 0 && (
-                        <div className="p-3 bg-slate-900/30 rounded-xl border border-slate-850 flex flex-col md:flex-row md:items-center gap-3">
+                        <div className="p-3 bg-slate-900/30 rounded-xl border border-slate-850 flex flex-col md:flex-row md:items-center gap-3 dq-ally-command-row">
                           <span className="font-bold text-white text-xs md:w-20">艾蜜莉亞:</span>
                           <div className="flex-1 grid grid-cols-2 sm:grid-cols-3 gap-2">
                             <button 
                               onClick={() => executePlayerAction('emilia', 'attack')}
-                              className="btn-fantasy text-[10px] py-2"
+                              className="btn-fantasy text-[10px] py-2 dq-command-button"
                             >
                               ⚔️ 普攻
                             </button>
                             <button 
                               onClick={() => executePlayerAction('emilia', 'skill_slash')}
                               disabled={combatState.party.emilia.mp < 10}
-                              className="btn-fantasy-sec text-[10px] py-2 disabled:opacity-40"
+                              className="btn-fantasy-sec text-[10px] py-2 disabled:opacity-40 dq-command-button"
                             >
                               {inventory.includes('royal_sword_cross') ? '⚔️ 十字斬 (10)' : '🗡️ 皇家斬擊 (10)'}
                             </button>
                             {combatState.monster?.sisterId ? (
                               <button 
                                 onClick={() => executePlayerAction('emilia', 'observe')}
-                                className="btn-fantasy text-[10px] py-2 border-amber-500/50 text-amber-300 hover:bg-amber-950/15 col-span-2 sm:col-span-1"
+                                className="btn-fantasy text-[10px] py-2 border-amber-500/50 text-amber-300 hover:bg-amber-950/15 col-span-2 sm:col-span-1 dq-command-button"
                               >
                                 🔍 仔細觀察
                               </button>
@@ -728,7 +728,7 @@ export const AdventureMap: React.FC = () => {
                                     <button 
                                       onClick={() => executePlayerAction('emilia', 'skill_combo')}
                                       disabled={disabled}
-                                      className="btn-fantasy text-[10px] py-2 bg-gradient-to-r from-violet-500 via-[#ffd700] to-red-500 border-none disabled:opacity-40 animate-pulse font-bold text-white shadow-[0_0_8px_rgba(255,215,0,0.4)] col-span-2 sm:col-span-1"
+                                      className="btn-fantasy text-[10px] py-2 bg-gradient-to-r from-violet-500 via-[#ffd700] to-red-500 border-none disabled:opacity-40 animate-pulse font-bold text-white shadow-[0_0_8px_rgba(255,215,0,0.4)] col-span-2 sm:col-span-1 dq-command-button dq-command-button--special"
                                     >
                                       ✨ 友情大連擊 (三人12)
                                     </button>
@@ -738,7 +738,7 @@ export const AdventureMap: React.FC = () => {
                                     <button 
                                       onClick={() => executePlayerAction('emilia', 'skill_combo')}
                                       disabled={combatState.party.emilia.mp < 30}
-                                      className="btn-fantasy text-[10px] py-2 bg-gradient-to-r from-amber-500 to-red-500 border-none disabled:opacity-40 text-white font-semibold col-span-2 sm:col-span-1"
+                                      className="btn-fantasy text-[10px] py-2 bg-gradient-to-r from-amber-500 to-red-500 border-none disabled:opacity-40 text-white font-semibold col-span-2 sm:col-span-1 dq-command-button dq-command-button--special"
                                     >
                                       ✨ 單人連擊 (30)
                                     </button>
@@ -752,7 +752,7 @@ export const AdventureMap: React.FC = () => {
 
                       {/* yv Actions */}
                       {combatState.party.yv && combatState.party.yv.hp > 0 && (
-                        <div className="p-3 bg-slate-900/30 rounded-xl border border-slate-850 flex flex-col md:flex-row md:items-center gap-3">
+                        <div className="p-3 bg-slate-900/30 rounded-xl border border-slate-850 flex flex-col md:flex-row md:items-center gap-3 dq-ally-command-row">
                           <span className="font-bold text-indigo-300 text-xs md:w-20">yv (賢者):</span>
                           
                           {healTargetSelect ? (
@@ -787,21 +787,21 @@ export const AdventureMap: React.FC = () => {
                             <div className="flex-1 grid grid-cols-2 sm:grid-cols-3 gap-2">
                               <button 
                                 onClick={() => executePlayerAction('yv', 'attack')}
-                                className="btn-fantasy text-[10px] py-2"
+                                className="btn-fantasy text-[10px] py-2 dq-command-button"
                               >
                                 ⚔️ 普攻
                               </button>
                               <button 
                                 onClick={() => executePlayerAction('yv', 'skill_fire')}
                                 disabled={combatState.party.yv.mp < 15}
-                                className="btn-fantasy-sec text-[10px] py-2 disabled:opacity-40"
+                                className="btn-fantasy-sec text-[10px] py-2 disabled:opacity-40 dq-command-button"
                               >
                                 💥 火球術 (15)
                               </button>
                               <button 
                                 onClick={() => setHealTargetSelect(true)}
                                 disabled={combatState.party.yv.mp < 12}
-                                className="btn-fantasy-sec text-[10px] py-2 disabled:opacity-40 text-emerald-300 col-span-2 sm:col-span-1"
+                                className="btn-fantasy-sec text-[10px] py-2 disabled:opacity-40 text-emerald-300 col-span-2 sm:col-span-1 dq-command-button"
                               >
                                 💚 治癒術 (12)
                               </button>
@@ -812,26 +812,26 @@ export const AdventureMap: React.FC = () => {
 
                       {/* jumbo Actions */}
                       {combatState.party.jumbo && combatState.party.jumbo.hp > 0 && (
-                        <div className="p-3 bg-slate-900/30 rounded-xl border border-slate-850 flex flex-col md:flex-row md:items-center gap-3">
+                        <div className="p-3 bg-slate-900/30 rounded-xl border border-slate-850 flex flex-col md:flex-row md:items-center gap-3 dq-ally-command-row">
                           <span className="font-bold text-amber-300 text-xs md:w-20">jumbo:</span>
                           <div className="flex-1 grid grid-cols-2 sm:grid-cols-3 gap-2">
                             <button 
                               onClick={() => executePlayerAction('jumbo', 'attack')}
-                              className="btn-fantasy text-[10px] py-2"
+                              className="btn-fantasy text-[10px] py-2 dq-command-button"
                             >
                               ⚔️ 普攻
                             </button>
                             <button 
                               onClick={() => executePlayerAction('jumbo', 'skill_taunt')}
                               disabled={combatState.party.jumbo.mp < 8}
-                              className="btn-fantasy-sec text-[10px] py-2 disabled:opacity-40 text-yellow-300"
+                              className="btn-fantasy-sec text-[10px] py-2 disabled:opacity-40 text-yellow-300 dq-command-button"
                             >
                               🛡️ 挑釁嘲諷 (8)
                             </button>
                             <button 
                               onClick={() => executePlayerAction('jumbo', 'skill_smash')}
                               disabled={combatState.party.jumbo.mp < 15}
-                              className="btn-fantasy-sec text-[10px] py-2 disabled:opacity-40 col-span-2 sm:col-span-1"
+                              className="btn-fantasy-sec text-[10px] py-2 disabled:opacity-40 col-span-2 sm:col-span-1 dq-command-button"
                             >
                               🔨 碎石擊 (15)
                             </button>
@@ -842,7 +842,7 @@ export const AdventureMap: React.FC = () => {
                       <div className="flex justify-end mt-2">
                         <button 
                           onClick={handleFleeConfirm}
-                          className="btn-fantasy-sec border-red-500/30 text-red-400 hover:bg-red-950/15 py-2 px-6 text-xs flex items-center gap-1.5"
+                          className="btn-fantasy-sec border-red-500/30 text-red-400 hover:bg-red-950/15 py-2 px-6 text-xs flex items-center gap-1.5 dq-command-button"
                         >
                           🏃 撤退逃離戰場
                         </button>
@@ -928,11 +928,11 @@ export const AdventureMap: React.FC = () => {
           </div>
 
           {/* Right Column (lg:col-span-1) - Live Combat logs */}
-          <div className="glass-panel p-5 flex flex-col gap-3 h-full max-h-[500px]">
-            <h3 className="text-xs font-bold text-slate-300 flex items-center gap-2 tracking-wider">
+          <div className="glass-panel p-5 flex flex-col gap-3 h-full max-h-[500px] dq-log-panel">
+            <h3 className="text-xs font-bold text-slate-300 flex items-center gap-2 tracking-wider dq-section-title">
               📜 實戰出招紀錄
             </h3>
-            <div className="flex-1 overflow-y-auto bg-slate-950/80 border border-slate-900 rounded-xl p-4 space-y-2 text-xs font-mono min-h-[250px] shadow-inner text-left">
+            <div className="flex-1 overflow-y-auto bg-slate-950/80 border border-slate-900 rounded-xl p-4 space-y-2 text-xs font-mono min-h-[250px] shadow-inner text-left dq-log-window">
               {combatState.combatLog.map((logLine, idx) => (
                 <div key={idx} className="text-slate-300 leading-relaxed py-0.5 border-b border-slate-950">
                   {logLine}
