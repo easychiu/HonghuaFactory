@@ -3,6 +3,7 @@ import type { GameState, Daughter, CharacterId, FatherBackground, Activity, Item
 import { COURSES } from '../data/courses';
 import { AVG_EVENTS } from '../data/events';
 import { determineEnding } from '../data/endings';
+import { getPersonalityType, getPersonalityDialogue } from '../utils/personality';
 
 // 定義商店道具庫
 export const ITEMS: Item[] = [
@@ -534,7 +535,7 @@ interface GameContextProps {
   executeNextPeriod: () => boolean;
   finishExecution: () => void;
   buyItem: (itemId: string) => { success: boolean; message: string };
-  talkToDaughter: (type: 'gentle' | 'scold' | 'praise') => void;
+  talkToDaughter: (type: 'gentle' | 'scold' | 'praise' | 'headpat' | 'allowance') => void;
   changeOutfit: (outfit: Daughter['outfit']) => void;
   startAdventure: () => void;
   stepAdventure: (nodeId: string) => void;
@@ -966,42 +967,63 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
         let isSuccess = true;
         let logText = '';
         
-        if (isLuckySuccess) {
-          // 強運大成功
-          isSuccess = true;
-          // 屬性獲得兩倍，且不增加疲勞！
-          Object.entries(activity.statChanges).forEach(([key, val]) => {
-            const attrKey = key as keyof typeof activity.statChanges;
-            if (attrKey === 'stress') {
-              finalStatChanges.stress = 0; // 不增加疲勞
-            } else if ((val || 0) > 0) {
-              (finalStatChanges as any)[attrKey] = (val || 0) * 2;
-            }
-          });
-          logText = `✨【艾莉卡強運爆發！】在${activity.name}中大成功！獲得兩倍數值加成，且毫無壓力！`;
-        } else if (activity.type !== 'rest') {
-          // 常規成敗率
-          const successChance = Math.max(30, Math.round(100 - (newDaughter.attributes.stress / Math.max(1, newDaughter.attributes.stamina)) * 60));
-          isSuccess = Math.random() * 100 < successChance;
+      // 叛逆與生病狀態判定
+      const isRebellious = newDaughter.attributes.morality < 50 && newDaughter.attributes.stress > 80;
+      const isSick = !!newDaughter.isSick;
+      const isRebellionFail = !isLuckySuccess && isRebellious && activity.type !== 'rest' && Math.random() < 0.35;
+        
+      if (isLuckySuccess) {
+        // 強運大成功
+        isSuccess = true;
+        // 屬性獲得兩倍，且不增加疲勞！
+        Object.entries(activity.statChanges).forEach(([key, val]) => {
+          const attrKey = key as keyof typeof activity.statChanges;
+          if (attrKey === 'stress') {
+            finalStatChanges.stress = 0; // 不增加疲勞
+          } else if ((val || 0) > 0) {
+            (finalStatChanges as any)[attrKey] = (val || 0) * 2;
+          }
+        });
+        logText = `✨【艾莉卡強運爆發！】在${activity.name}中大成功！獲得兩倍數值加成，且毫無壓力！`;
+      } else if (isRebellionFail) {
+        // 叛逆狀態：強制拒絕行程，躲在房間玩耍
+        isSuccess = false;
+        finalGoldReward = 0;
+        finalStatChanges = { stress: -5 };
+        newDaughter.relationship = Math.max(0, newDaughter.relationship - 2);
+        logText = `😤【叛逆狀態】${newDaughter.name} 強硬拒絕了「${activity.name}」的安排，說「我不想去！」擅自躲在房間玩耍。請透過「嚴厲訓導」父女互動來矯正行為！`;
+      } else if (activity.type !== 'rest') {
+        // 常規成敗率（生病時成功率大幅下降）
+        let successChance = Math.max(30, Math.round(100 - (newDaughter.attributes.stress / Math.max(1, newDaughter.attributes.stamina)) * 60));
+        if (isSick) {
+          successChance = Math.max(10, successChance - 30);
+        }
+        isSuccess = Math.random() * 100 < successChance;
           
-          if (!isSuccess) {
-            if (activity.type === 'work') {
-              finalGoldReward = Math.round(finalGoldReward * 0.3);
-              finalStatChanges = { stress: Math.round((activity.statChanges.stress || 3) * 1.5) };
-              logText = `❌【${activity.name}】工作失誤被嚴厲責備！工作失敗！僅獲得 ${finalGoldReward} G，疲勞+${finalStatChanges.stress || 0}。`;
-            } else {
-              // 學習失敗
-              const modifiedChanges: any = {};
-              Object.entries(activity.statChanges).forEach(([key, val]) => {
-                if (key === 'stress') modifiedChanges.stress = val;
-                else if ((val || 0) > 0) modifiedChanges[key] = 1; // 混水摸魚微增
-                else modifiedChanges[key] = val;
-              });
-              finalStatChanges = modifiedChanges;
-              logText = `❌【${activity.name}】上課時心不在焉、打瞌睡。雖然扣了學費，但近乎沒有學到東西。`;
-            }
+        if (!isSuccess) {
+          if (isSick && activity.type === 'study') {
+            // 生病時無法專注上課
+            finalStatChanges = { stress: Math.round((activity.statChanges.stress || 2)) };
+            logText = `🤒【生病狀態】${newDaughter.name} 因身體不適無法集中精神，${activity.name}幾乎毫無收穫。請購買聖水或休息至恢復。`;
+          } else if (activity.type === 'work') {
+            finalGoldReward = Math.round(finalGoldReward * 0.3);
+            finalStatChanges = { stress: Math.round((activity.statChanges.stress || 3) * 1.5) };
+            logText = isSick
+              ? `🤒❌【${activity.name}】生病中體力不支，工作頻頻出錯被責備！僅獲得 ${finalGoldReward} G，疲勞+${finalStatChanges.stress || 0}。`
+              : `❌【${activity.name}】工作失誤被嚴厲責備！工作失敗！僅獲得 ${finalGoldReward} G，疲勞+${finalStatChanges.stress || 0}。`;
+          } else {
+            // 學習失敗
+            const modifiedChanges: any = {};
+            Object.entries(activity.statChanges).forEach(([key, val]) => {
+              if (key === 'stress') modifiedChanges.stress = val;
+              else if ((val || 0) > 0) modifiedChanges[key] = 1; // 混水摸魚微增
+              else modifiedChanges[key] = val;
+            });
+            finalStatChanges = modifiedChanges;
+            logText = `❌【${activity.name}】上課時心不在焉、打瞌睡。雖然扣了學費，但近乎沒有學到東西。`;
           }
         }
+      }
 
         if (isSuccess && !isLuckySuccess) {
           logText = `完成 ${activity.name}：${activity.effectDescription}`;
@@ -1118,16 +1140,44 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     // 2. 壓力生病檢查
     if (newDaughter.attributes.stress > newDaughter.attributes.stamina) {
-      newDaughter.attributes.stress = Math.round(newDaughter.attributes.stress * 0.4);
-      newDaughter.attributes.stamina = Math.max(40, newDaughter.attributes.stamina - 15);
-      newDaughter.gold = Math.max(0, newDaughter.gold - 60);
+      // 首次觸發積勞成疾
+      if (!newDaughter.isSick) {
+        newDaughter.isSick = true;
+        newDaughter.attributes.stress = Math.round(newDaughter.attributes.stress * 0.4);
+        newDaughter.attributes.stamina = Math.max(40, newDaughter.attributes.stamina - 15);
+        newDaughter.gold = Math.max(0, newDaughter.gold - 60);
+        newLogs.push({
+          id: Math.random().toString(),
+          year: state.time.year,
+          month: state.time.month,
+          period: currentPeriod,
+          text: `🤒 女兒積勞成疾生病住院！體力衰退，自動扣除 60 金幣醫藥費，壓力減半。生病期間活動失敗率大幅上升，請購買【聖水】或多次休息以恢復！`,
+          type: 'stat_down'
+        });
+      } else {
+        // 已生病仍過勞：繼續扣血和疲勞減少
+        newDaughter.attributes.stress = Math.round(newDaughter.attributes.stress * 0.5);
+        newDaughter.attributes.stamina = Math.max(30, newDaughter.attributes.stamina - 8);
+        newDaughter.gold = Math.max(0, newDaughter.gold - 40);
+        newLogs.push({
+          id: Math.random().toString(),
+          year: state.time.year,
+          month: state.time.month,
+          period: currentPeriod,
+          text: `🤒 仍在生病中的 ${newDaughter.name} 再次過度疲勞！狀況持續惡化，扣除 40 金幣追加醫療費。趕快讓她休息！`,
+          type: 'stat_down'
+        });
+      }
+    } else if (newDaughter.isSick && newDaughter.attributes.stress < Math.round(newDaughter.attributes.stamina * 0.5)) {
+      // 自然恢復：疲勞降至體力一半以下時解除生病
+      newDaughter.isSick = false;
       newLogs.push({
         id: Math.random().toString(),
         year: state.time.year,
         month: state.time.month,
         period: currentPeriod,
-        text: `⚠️ 女兒積勞成疾生病住院！體力衰退，自動扣除 60 金幣醫藥費，壓力減半。`,
-        type: 'stat_down'
+        text: `✅ ${newDaughter.name} 的身體狀況改善，生病狀態已解除！可以重新全力投入日程了。`,
+        type: 'stat_up'
       });
     }
 
@@ -1416,6 +1466,11 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
       newDaughter.outfit = item.outfitChange;
     }
 
+    // 聖水特效：清除生病狀態
+    if (itemId === 'holy_water' && newDaughter.isSick) {
+      newDaughter.isSick = false;
+    }
+
     newDaughter.combatHp = newDaughter.attributes.stamina;
     newDaughter.combatMp = newDaughter.attributes.magicSkill * 2 + 10;
 
@@ -1438,26 +1493,45 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return { success: true, message: `成功購買 ${item.name}！` };
   };
 
-  // 與女兒對話互動
-  const talkToDaughter = (type: 'gentle' | 'scold' | 'praise') => {
-    let text = '';
+  // 與女兒對話互動（每月限制一次）
+  const talkToDaughter = (type: 'gentle' | 'scold' | 'praise' | 'headpat' | 'allowance') => {
+    // 每月限制互動一次
+    if (state.lastFatherInteractionMonth === state.time.month && !state.cheatMode) {
+      return;
+    }
+    
+    const personality = getPersonalityType(state.daughter);
+    const text = getPersonalityDialogue(personality, type, state.daughter.name);
+    
     let newDaughter = { ...state.daughter };
     const updatedAttributes = { ...newDaughter.attributes };
 
     if (type === 'gentle') {
-      text = `父親溫柔地與女兒聊天。她非常開心，壓力顯著消除。`;
       newDaughter.relationship = Math.min(100, newDaughter.relationship + 5);
-      updatedAttributes.stress = Math.max(0, updatedAttributes.stress - 20);
+      updatedAttributes.stress = Math.max(0, updatedAttributes.stress - 25);
+      // 溫柔談心對叛逆狀態有額外效果
+      if (updatedAttributes.morality < 50) {
+        updatedAttributes.morality = Math.min(999, updatedAttributes.morality + 5);
+      }
     } else if (type === 'scold') {
-      text = `父親嚴肅地訓誡了女兒。女兒感到委屈，但更懂得自我約束了。`;
       newDaughter.relationship = Math.max(0, newDaughter.relationship - 5);
-      updatedAttributes.morality += 10;
-      updatedAttributes.stress += 8;
+      updatedAttributes.morality = Math.min(999, updatedAttributes.morality + 12);
+      updatedAttributes.stress = Math.min(999, updatedAttributes.stress + 8);
     } else if (type === 'praise') {
-      text = `父親誇獎了女兒，女兒的小臉上洋溢著驕傲的神采！`;
       newDaughter.relationship = Math.min(100, newDaughter.relationship + 4);
-      updatedAttributes.charisma += 5;
+      updatedAttributes.charisma = Math.min(999, updatedAttributes.charisma + 5);
       updatedAttributes.stress = Math.max(0, updatedAttributes.stress - 10);
+    } else if (type === 'headpat') {
+      // 摸頭：大幅減壓、增加關係
+      newDaughter.relationship = Math.min(100, newDaughter.relationship + 4);
+      updatedAttributes.stress = Math.max(0, updatedAttributes.stress - 30);
+      updatedAttributes.sensitivity = Math.min(999, updatedAttributes.sensitivity + 2);
+    } else if (type === 'allowance') {
+      // 給零用錢：補充金幣、增加關係
+      const allowanceAmount = 80 + Math.round(newDaughter.relationship * 0.5);
+      newDaughter.gold = Math.max(0, newDaughter.gold + allowanceAmount);
+      newDaughter.relationship = Math.min(100, newDaughter.relationship + 6);
+      updatedAttributes.sensitivity = Math.min(999, updatedAttributes.sensitivity + 2);
     }
 
     newDaughter.attributes = updatedAttributes;
@@ -1473,7 +1547,8 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setState((prev) => ({
       ...prev,
       daughter: newDaughter,
-      logs: newLogs
+      logs: newLogs,
+      lastFatherInteractionMonth: state.time.month
     }));
   };
 
