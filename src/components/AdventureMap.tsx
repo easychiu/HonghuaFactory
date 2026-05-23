@@ -108,12 +108,9 @@ export const AdventureMap: React.FC = () => {
       return;
     }
 
-    let remainingHp = daughter.combatHp;
-    if (daughter.characterId === 'emilia') {
-      remainingHp = combatState.party.emilia?.hp || 0;
-    } else {
-      remainingHp = combatState.party.solo?.hp || 0;
-    }
+    const remainingHp = daughter.characterId === 'emilia'
+      ? combatState.party.emilia?.hp || 0
+      : combatState.party.solo?.hp || 0;
     const goldReward = combatState.monster?.goldReward || 50;
 
     resolveCombatVictory(remainingHp, goldReward);
@@ -126,12 +123,9 @@ export const AdventureMap: React.FC = () => {
   };
 
   const handleFleeConfirm = () => {
-    let remainingHp = daughter.combatHp;
-    if (daughter.characterId === 'emilia') {
-      remainingHp = combatState.party.emilia?.hp || 0;
-    } else {
-      remainingHp = combatState.party.solo?.hp || 0;
-    }
+    const remainingHp = daughter.characterId === 'emilia'
+      ? combatState.party.emilia?.hp || 0
+      : combatState.party.solo?.hp || 0;
     
     // Knight background escape rate is 100%, others is 75%
     const isKnight = daughter.fatherBackground === 'knight';
