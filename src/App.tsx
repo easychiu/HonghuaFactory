@@ -10,17 +10,64 @@ import { AdventureMap } from './components/AdventureMap';
 import { EndingScreen } from './components/EndingScreen';
 import { FestivalScreen } from './components/FestivalScreen';
 import { AVGDialog } from './components/AVGDialog';
+import { audioManager } from './utils/audio';
+import { Volume2, VolumeX } from 'lucide-react';
+
+const SoundToggle: React.FC = () => {
+  const [muted, setMuted] = React.useState(audioManager.getMutedState());
+
+  const handleToggle = () => {
+    const nextMuted = audioManager.toggleMute();
+    setMuted(nextMuted);
+  };
+
+  return (
+    <button
+      onClick={handleToggle}
+      className="fixed top-4 right-4 z-[99] p-2.5 rounded-full bg-slate-950/70 border border-slate-800 text-[#ffd700] hover:text-[#ffe566] shadow-md backdrop-blur-sm hover:border-[#d4af37]/50 hover:scale-105 transition-all flex items-center justify-center"
+      title={muted ? '取消靜音' : '靜音背景音樂'}
+    >
+      {muted ? <VolumeX size={16} /> : <Volume2 size={16} />}
+    </button>
+  );
+};
 
 const GameContent: React.FC = () => {
   const { state } = useGame();
+
+  React.useEffect(() => {
+    if (state.logs.length === 0) {
+      audioManager.playBgm('BGM_Title.mp3');
+    } else if (state.activeScreen === 'main' || state.activeScreen === 'scheduler' || state.activeScreen === 'store') {
+      audioManager.playBgm('BGM_Room.mp3');
+    } else if (state.activeScreen === 'execution') {
+      audioManager.playBgm('BGM_Execution.mp3');
+    } else if (state.activeScreen === 'adventure') {
+      if (state.adventure?.status === 'fighting') {
+        audioManager.playBgm('bgm_battle.mp3');
+      } else {
+        audioManager.playBgm('BGM_Adventure.mp3');
+      }
+    } else if (state.activeScreen === 'festival') {
+      audioManager.playBgm('BGM_Harvest.mp3');
+    } else if (state.activeScreen === 'ending') {
+      audioManager.playBgm('BGM_Title.mp3');
+    }
+  }, [state.activeScreen, state.logs.length, state.adventure?.status]);
   
   // If no logs, the game hasn't started yet (still in initialization)
   if (state.logs.length === 0) {
-    return <StartScreen />;
+    return (
+      <>
+        <SoundToggle />
+        <StartScreen />
+      </>
+    );
   }
 
   return (
     <div className="min-h-screen flex flex-col justify-between py-6">
+      <SoundToggle />
       
       {/* Dynamic Screen Routing */}
       {state.activeScreen === 'main' && <MainPanel />}
