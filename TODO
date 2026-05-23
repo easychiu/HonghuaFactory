@@ -2,7 +2,7 @@
 《蔚藍海岸的王女們》網頁模擬遊戲 - 未來開發 TODO 待辦清單
 ================================================================================
 
-本文件記錄了目前已完成的 7 個 Step 基礎上，未來可供其他 Agent 繼續擴充、優化與打磨的方向，並新增了場景圖片缺漏清單與 AI 音樂提示詞規劃。
+本文件記錄了目前已完成的 7 個 Step 基礎上，未來可供其他 Agent 繼續擴充、優化與打磨的方向，並新增了場景圖片缺漏清單與 BGM 整合狀態。
 
 --------------------------------------------------------------------------------
 一、 存檔與系統功能 (System & Archive)
@@ -10,16 +10,16 @@
 - [x] **多存檔欄位 UI 介面** (已完成)
 - [x] **存檔匯出與匯入功能** (已完成)
 - [x] **歷史結局圖鑑系統 (Ending Gallery)** (已完成)
-- [ ] **獨立成就系統 (Achievement System)**
-  - TODO: 設計獨立的「成就面板」，記錄如「擊敗少校」、「觸發三姊妹重聚」、「首次通關」等成就。
-  - TODO: 解鎖成就後可為下一次開局提供永久微幅加成（例如：初始金幣 +100，或初始隨機屬性 +10）。
-- [ ] **多週目繼承機制 (NG+ Heritage System)**
-  - TODO: 當通關一個週目後，下一次開局可繼承上一個週目的部分資產或傳家寶（如：騎士老爸的鐵劍、胡村姑的錘子等）。
+- [x] **獨立成就系統 (Achievement System)** (已完成)
+  - DONE: 設計獨立的「成就面板」，記錄如「擊敗少校」、「觸發三姊妹重聚」、「首次通關」等成就。
+  - DONE: 解鎖成就後可為下一次開局提供永久微幅加成（例如：初始金幣 +100，或初始隨機屬性 +10）。
+- [x] **多週目繼承機制 (NG+ Heritage System)** (已完成)
+  - DONE: 當通關一個週目後，下一次開局可繼承上一個週目的部分資產或傳家寶（如：騎士老爸的鐵劍、胡村姑的錘子等）。
 
 --------------------------------------------------------------------------------
 二、 戰鬥與關卡平衡 (Combat & Balancing)
 --------------------------------------------------------------------------------
-- [ ] **艾蜜莉亞三人小隊深度平衡與合體技**
+- [ ] **物理/魔法/精神奧義與小隊連擊加強**
   - TODO: 
     - 為 yv (法術/智力) 與 jumbo (物理/力量) 設計各自獨立的裝備槽與技能。
     - 實作三人合體奧義「青梅竹馬友情大連擊」（消耗集氣值或多人 MP，造成全體高額傷害與特殊動畫）。
@@ -35,7 +35,7 @@
 - [x] **階段性好感度對話 (好感 30/60)** (已完成)
 - [x] **同窗好友特殊結局 (Companion Endings)** (已完成)
 - [ ] **生病與叛逆狀態的視覺與對話反饋**
-  - TODO: 當疲勞過高導致女兒「生病」或「叛逆」時，在主畫面立繪附加特殊表情濾鏡，並觸發專屬對話與打工負面扣減。
+  - TODO: 當疲勞過高導致女兒「生病」或「叛逆」時，在主畫面立繪附加特殊表情表情濾鏡，並觸發專屬對話與打工負面扣減。
 
 --------------------------------------------------------------------------------
 四、 視覺特效與場景背景整合 (UX & Visual / Missing Scene Images)
@@ -60,28 +60,10 @@
 --------------------------------------------------------------------------------
 五、 音效與背景音樂 (BGM) 整合 & AI 音樂提示詞
 --------------------------------------------------------------------------------
-- [ ] **音頻管理器與音樂整合**
-  - TODO: 整合 Web Audio API 或 Sound Manager，支援背景音樂（BGM）無縫循環播放，以及日常按鈕點擊、戰鬥打擊的音效（SFX）。
-- **【AI 音樂生成提示詞】**（建議使用 Suno.com 或 Udio.com 生成以下 6 首無人聲背景音樂）：
-
-  1. **首頁與角色選擇 (BGM_Title)**
-     - **風格**：史詩奇幻、優雅、帶點懷舊感。
-     - **Suno 提示詞 (Prompt)**：`Nostalgic fantasy JRPG title screen theme, sweeping orchestral, beautiful violin melody, mystical harp, acoustic guitar, emotional, royal, 85 bpm`
-  2. **起居室日常 (BGM_Room)**
-     - **風格**：溫馨、童話、輕鬆舒適。
-     - **Suno 提示詞 (Prompt)**：`Cozy JRPG town town theme, acoustic guitar, warm flute melody, light accordion, whimsical percussion, happy, peaceful, daily life, medieval fantasy`
-  3. **排程執行中 (BGM_Execution)**
-     - **風格**：輕快、活潑、逗趣。
-     - **Suno 提示詞 (Prompt)**：`Upbeat JRPG crafting and execution music, lively woodwinds, pizzicato strings, playful Glockenspiel, cheerful percussion, industrious, funny, 110 bpm`
-  4. **武者修行探索 (BGM_Adventure)**
-     - **風格**：神秘、空靈、氛圍感。
-     - **Suno 提示詞 (Prompt)**：`Atmospheric fantasy exploration music, JRPG overworld theme, acoustic strings, ambient synth pad, mysterious wood flute, quiet mystery, slow, immersive`
-  5. **激烈戰鬥 (BGM_Battle)**
-     - **風格**：熱血、緊張、英雄主義。
-     - **Suno 提示詞 (Prompt)**：`Epic JRPG battle theme, fast-paced symphonic rock, driving drum beats, aggressive violin staccato, heroic brass, action-packed, high energy, 135 bpm`
-  6. **年度收穫祭 (BGM_Harvest)**
-     - **風格**：慶典、中世紀酒館、歡騰。
-     - **Suno 提示詞 (Prompt)**：`Medieval tavern festival dance, Celtic folk music, lively bagpipes, fast lute strumming, tambourines, joyous handclaps, high spirits, renaissance fair`
+- [x] **音頻管理器與音樂整合** (已完成)
+  - DONE: 整合 HTML5 Audio 管理器，支援多畫面背景音樂（BGM）自動切換與無縫循環播放，並提供浮空 SoundToggle 靜音控制按鈕。
+- [ ] **按鈕點擊與戰鬥音效 (SFX) 整合**
+  - TODO: 整合日常按鈕點擊音效、買賣金幣聲、戰鬥受擊、暴擊與施法音效。
 
 --------------------------------------------------------------------------------
 六、 響應式佈局與多語系適配 (Responsive & i18n)
