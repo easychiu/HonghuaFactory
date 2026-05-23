@@ -38,22 +38,36 @@ const GameContent: React.FC = () => {
   React.useEffect(() => {
     if (state.logs.length === 0) {
       audioManager.playBgm('BGM_Title.mp3');
-    } else if (state.activeScreen === 'main' || state.activeScreen === 'scheduler' || state.activeScreen === 'store') {
+    } else if (state.activeScreen === 'main' || state.activeScreen === 'scheduler') {
       audioManager.playBgm('BGM_Room.mp3');
+    } else if (state.activeScreen === 'store') {
+      audioManager.playBgm('BGM_shop.mp3');
     } else if (state.activeScreen === 'execution') {
       audioManager.playBgm('BGM_Execution.mp3');
     } else if (state.activeScreen === 'adventure') {
+      const currentNode = state.adventure?.nodes.find(n => n.id === state.adventure?.currentNodeId);
       if (state.adventure?.status === 'fighting') {
-        audioManager.playBgm('bgm_battle.mp3');
+        const isBoss = currentNode?.type === 'boss' || currentNode?.monster?.behaviorPattern === 'boss';
+        if (isBoss) {
+          audioManager.playBgm('bgm_boss.mp3');
+        } else {
+          audioManager.playBgm('bgm_battle.mp3');
+        }
       } else {
-        audioManager.playBgm('BGM_Adventure.mp3');
+        if (currentNode?.type === 'rest' || currentNode?.type === 'spring') {
+          audioManager.playBgm('BGM_Campfire&Spring.mp3');
+        } else if (currentNode?.type === 'shop') {
+          audioManager.playBgm('BGM_shop.mp3');
+        } else {
+          audioManager.playBgm('BGM_Adventure.mp3');
+        }
       }
     } else if (state.activeScreen === 'festival') {
       audioManager.playBgm('BGM_Harvest.mp3');
     } else if (state.activeScreen === 'ending') {
-      audioManager.playBgm('BGM_Title.mp3');
+      audioManager.playBgm('BGM_Ending&Gallery.mp3');
     }
-  }, [state.activeScreen, state.logs.length, state.adventure?.status]);
+  }, [state.activeScreen, state.logs.length, state.adventure?.status, state.adventure?.currentNodeId]);
   
   // If no logs, the game hasn't started yet (still in initialization)
   if (state.logs.length === 0) {

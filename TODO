@@ -19,6 +19,10 @@
   - TODO: 建立道具圖鑑系統，記錄玩家在歷次遊戲中曾經購買、獲得或採集過的所有道具，附帶搞笑的奇幻世界觀描述與解鎖加成。
 - [ ] **稱號系統與成就專屬裝扮 (Titles & Custom Cosmetics)**
   - TODO: 達成特定結局或成就時，解鎖專屬稱號（例如「檳榔大亨」、「屠龍者」、「皇家學霸」）及專屬頭像框/主頁外觀特效。
+- [ ] **多週目繼承星塵商店 (NG+ Heritage Point Shop)**
+  - TODO: 通關不同結局可獲得「回憶星塵」點數（依結局稀有度與評價等級給予），可用於開局前在專屬繼承商店購買永久屬性加成、強力傳家寶裝備或解鎖特殊服裝。
+- [ ] **女兒成長回憶日記系統 (Daughter's Growth Diary & Milestones)**
+  - TODO: 在系統選單中新增「回憶相簿」與「女兒日記」，自動記錄女兒在成長過程中的重要里程碑事件（如第一次打工大成功、第一次擊倒Boss、第一次生病住院、第一次參加收穫祭），以女兒的第一人稱日記形式呈現，附帶手繪塗鴉風。
 
 --------------------------------------------------------------------------------
 二、 戰鬥與關卡平衡 (Combat & Balancing)
@@ -35,14 +39,21 @@
   - TODO: 戰鬥中加入「中毒」（每回合扣 HP）、「灼燒」（降低防禦並扣 HP）、「眩暈/定身」（無法行動）和「沉默」（無法施展法術）等負面狀態，讓技能搭配更具策略深度。
 - [ ] **同窗好友羈絆連擊與援護技能 (Bond Assist Skills)**
   - TODO: 當四葉草、珊珊、雪舞的好感度達到一定數值時，即使她們不直接加入戰鬥，在戰鬥中也有機率觸發「同窗援護」（如四葉草突襲、雪舞護盾、珊珊給予法力回復），提升角色間的聯繫感。
+- [ ] **裝備精煉與胡村姑的木工作坊升級系統 (Equipment Refinement & Blacksmith Upgrades)**
+  - TODO: 在野外冒險修行中踩到寶箱或擊敗強敵有機率獲得「精煉礦石」或「橡木硬材」，可前往「胡村姑的木工作坊」消耗金幣升級武器/防具（例如鐵劍+1 -> 鐵劍+5），強化基礎物理/魔法傷害及血量上限。
 
 --------------------------------------------------------------------------------
 三、 NPC 與劇情深度擴充 (NPC & Dialogue Expansion)
 --------------------------------------------------------------------------------
 - [x] **階段性好感度對話 (好感 30/60)** (已完成)
 - [x] **同窗好友特殊結局 (Companion Endings)** (已完成)
-- [ ] **生病與叛逆狀態的視覺與對話反饋**
-  - TODO: 當疲勞過高導致女兒「生病」或「叛逆」時，在主畫面立繪附加特殊表情表情濾鏡，並觸發專屬對話與打工負面扣減。
+- [ ] **生病與叛逆狀態實體玩法與視覺對話反饋 (Status Ailments: Sick & Rebellious)**
+  - TODO: 當疲勞值過高時有機率進入「生病」狀態，主畫面立繪附加蒼白濾鏡，此時無法執行打工/學習課程（或執行大機率失敗），必須購買聖水或前往教堂休養、住院治療。
+  - TODO: 當 morals（道德）過低、壓力過高或與老爸的關係不佳時，有機率進入「叛逆」狀態，立繪變為生氣或不屑的表情，安排打工或學習時有機率「翹課/罷工」擅自變更為睡覺或玩耍，需要老爸進行對話管教。
+- [ ] **老爸日常親情互動系統 (Father-Daughter Direct Interaction)**
+  - TODO: 在起居室主介面加入「日常互動」按鈕，每個月可與女兒互動（談話、摸摸頭、訓誡、給零用錢），可有效降低女兒的壓力、叛逆值，並增加親密度與氣質屬性。
+- [ ] **同學季節來信與社交回信 (Classmate Correspondence System)**
+  - TODO: 每隔數月，四葉草、珊珊、雪舞或老爸會給女兒寄來問候信件，玩家可以選擇不同回復（溫慢鼓勵、開玩笑、嚴肅回覆），回復將影響好友好感度並隨機增加特定的學習屬性。
 - [ ] **女兒性格傾向判定系統 (Daughter Personality System)**
   - TODO: 依據力量/智力/道德/感受的屬性比例，判定女兒當前性格為「元氣女漢子」、「高冷學霸」、「溫柔乖乖女」或「多愁善感藝術家」，影響起居室隨機對話內容、打工成功率與特殊劇情分支。
 - [ ] **隨機季節事件與市集商旅 (Random Seasonal Events)**
@@ -51,10 +62,13 @@
 --------------------------------------------------------------------------------
 四、 視覺特效與場景背景整合 (UX & Visual / Missing Scene Images)
 --------------------------------------------------------------------------------
-- [x] **現有場景背景圖片整合到 UI 中** (已完成)
+- [x] **現有與新上傳場景背景圖片整合到 UI 中** (已完成)
   - DONE: 將 `public/` 下現有的場景圖片套用至對應畫面背景：
-    - 當在上課/打工執行排程時：`ExecutionScreen` 的動態區域背景圖替換為對應的場景（上課顯示 `07. 皇家學院教室.jpg`；木工顯示 `08. 胡村姑的木工作坊.jpg`；民宿顯示 `​06. 提莫的民宿.jpg`）。
+    - 當在上課/打工執行排程時：`ExecutionScreen` 的動態區域背景圖替換為對應的場景（上課顯示 `07. 皇家學院教室.jpg`；木工顯示 `08. 胡村姑的木工作坊.jpg`；民宿顯示 `​06. 提莫的民宿.jpg`；教堂清潔顯示 `09. 塞特的教堂.png`）。
     - 當踩到老爸專屬隱藏節點時：AVG 畫面顯示對應場景（`02. 騎士老爸專屬：隱密要塞.jpg`、`03. 文臣老爸專屬：地下皇家圖書館.jpg`、`04. 商人老爸專屬：黑市走私營地.jpg`、`05. 詩人老爸專屬：精靈的妖精之環.jpg`）。
+    - 當觸發賭局事件時：AVG 畫面背景更換為 `10. 隱藏節點：綠洲大賭局.png`。
+    - 當進行收穫祭節日模擬與結算時：頂部橫幅隨活動類型顯示對應背景（武術大會擂台顯示 `11. 皇家武術大會擂台.png`；烹飪大賽顯示 `12. 王國烹飪大賽會場.png`；藝術祭顯示 `13. 蔚藍藝術祭舞台.png`）。
+    - 結局 CG 插圖整合：當達成特定結局時，顯示對應的 CG 圖（王女回歸結局顯示 `14. 結局：王女的回歸.png`；三女革命結局顯示 `15. 結局：三女的革命.png`；無限週目觀測者結局顯示 `16. 結局：無限週目的觀測者.png`）。
     - 序章事件：顯示 `01. 序章：蔚藍崩裂之夜.jpg` 作為背景並播放背景影片 `01. 序章：蔚藍崩裂之夜.mp4`。
 - [ ] **【需協助產生】缺漏的場景圖片清單**
   - 請玩家協助使用 AI 生圖或提供以下場景背景圖（尺寸建議 16:9，JPG 格式，放至 `public/`）：
@@ -72,12 +86,17 @@
 五、 音效與背景音樂 (BGM) 整合 & AI 音樂提示詞
 --------------------------------------------------------------------------------
 - [x] **音頻管理器與音樂整合** (已完成)
+- [x] **核心場景 BGM 上傳與動態路由** (已完成)
+  - DONE: 整合 `BGM_shop.mp3`（道具雜貨鋪/冒險商店專屬音樂）。
+  - DONE: 整合 `bgm_boss.mp3`（冒險修行魔王/首領戰專屬磅礡音樂）。
+  - DONE: 整合 `BGM_Campfire&Spring.mp3`（修行地圖營火休息/恢復泉水節點之溫馨原聲吉他音樂）。
+  - DONE: 整合 `BGM_Ending&Gallery.mp3`（結局謝幕與歷史圖鑑專屬的鋼琴交響終曲）。
 - [ ] **按鈕點擊與戰鬥音效 (SFX) 整合**
   - TODO: 整合日常按鈕點擊音效、買賣金幣聲、戰鬥受擊、暴擊與施法音效。
 - [ ] **【需協助產生與上傳】系統面缺漏的 BGM 與音效清單**
   - 為了進一步健全系統音效與各情境氛圍，請玩家協助產生以下音訊檔（放至 `public/` 目錄中）：
     - **背景音樂 (BGM) 擴充**:
-      1. `bgm_ending_triumphant.mp3` - 傳奇榮耀結局背景音樂（適用於女王、王女等光榮結局）。
+      1. `bgm_ending_triumphant.mp3` - 傳奇榮耀結局背景音樂（適用於女王、王女等光榮結局，可由 `BGM_Ending&Gallery.mp3` 繼承或使用更熱烈曲調）。
       2. `bgm_ending_sad.mp3` - 憂傷黯淡結局背景音樂（適用於流浪者、生病等壞結局）。
       3. `bgm_boss_jaks.mp3` - 傑克斯少校或帝國主力軍的緊張魔王戰 BGM。
       4. `bgm_casino.mp3` - 黑鑽賭局事件的地下酒吧爵士藍調風情音樂。
@@ -97,23 +116,17 @@
 - [ ] **多語系 (i18n) 支援 (zh-TW, zh-CN, en, ja)**
 
 --------------------------------------------------------------------------------
-七、 需玩家協助產生的 AI 音樂提示詞 (AI Music Prompts)
+七、 核心 BGM 已上傳清單與 AI 音樂提示詞 (AI Music Prompts)
 --------------------------------------------------------------------------------
-為使遊戲更有氛圍，若玩家想使用 AI 音樂生成軟體（如 Suno / Udio）新增或替換 BGM，可使用以下提示詞：
-
-1. **魔王戰/姊妹重逢戰背景音樂 (Boss Battle BGM)**
-   - **風格描述**: 史詩感、戲劇性的 JRPG 首領戰音樂，快速弦樂與雄壯管樂交織，沉重打擊樂，帶有悲壯人聲唱腔，160 BPM。
-   - **AI 提示詞 (Prompt)**: `Dramatic JRPG boss battle theme, epic dark orchestral, fast percussion, emotional violin solo, intense brass choir, gothic choir chanting, 160 BPM`
-
-2. **一般道具商店與黑市背景音樂 (Shop BGM)**
-   - **風格描述**: 溫馨、輕快的奇幻城鎮酒館或商店旋律，使用中世紀魯特琴、木吉他與木笛演奏，帶有愉悅的輕快節奏。
-   - **AI 提示詞 (Prompt)**: `Cozy fantasy JRPG shop theme, medieval town folk music, acoustic guitar, lute, recorder flute, playful pizzicato strings, warm and welcoming`
-
-3. **冒險中營火宿營/恢復泉水背景音樂 (Campfire & Spring BGM)**
-   - **風格描述**: 極簡舒適的夜間林地修行曲，溫柔的木吉他單音撥弦，柔和的環境背景音（風聲、營火劈啪聲），治癒、寧靜、略帶懷舊感。
-   - **AI 提示詞 (Prompt)**: `Nostalgic campfire theme, calm acoustic guitar picking, peaceful, gentle ambient forest sounds, slow tempo, cozy, soft synth pad`
-
-4. **結局謝幕與圖鑑背景音樂 (Ending & Gallery BGM)**
-   - **風格描述**: 令人動容的復國交響終曲，從溫柔的鋼琴獨奏起調，漸漸融入宏大的管弦樂合奏，充滿希望、榮耀與感動的告別。
-   - **AI 提示詞 (Prompt)**: `Triumphant JRPG ending credits theme, emotional piano solo transition to grand orchestral symphony, hopeful violin melody, cinematic, moving`
+- [x] **已上傳並整合的核心 BGM**:
+  1. `bgm_boss.mp3` (魔王戰/姊妹重逢戰背景音樂) - JRPG 首領戰音樂，快速弦樂與管樂，沉重打擊樂與悲壯感。
+  2. `BGM_shop.mp3` (一般道具商店與黑市背景音樂) - 溫馨、輕快的奇幻商店旋律，中世紀魯特琴、木吉他與木笛。
+  3. `BGM_Campfire&Spring.mp3` (冒險中營火宿營/恢復泉水背景音樂) - 極簡舒適夜間修行曲，溫柔木吉他撥弦。
+  4. `BGM_Ending&Gallery.mp3` (結局謝幕與圖鑑背景音樂) - 動人的鋼琴交響終曲，充滿希望與感動的告別。
+  
+- [ ] **若玩家想重新生成或替換，可使用以下 AI 提示詞 (Suno / Udio)**:
+  1. **魔王戰 (Boss Battle)**: `Dramatic JRPG boss battle theme, epic dark orchestral, fast percussion, emotional violin solo, intense brass choir, gothic choir chanting, 160 BPM`
+  2. **道具商店 (Shop BGM)**: `Cozy fantasy JRPG shop theme, medieval town folk music, acoustic guitar, lute, recorder flute, playful pizzicato strings, warm and welcoming`
+  3. **營火休息 (Campfire & Spring)**: `Nostalgic campfire theme, calm acoustic guitar picking, peaceful, gentle ambient forest sounds, slow tempo, cozy, soft synth pad`
+  4. **結局圖鑑 (Ending & Gallery)**: `Triumphant JRPG ending credits theme, emotional piano solo transition to grand orchestral symphony, hopeful violin melody, cinematic, moving`
 ================================================================================

@@ -91,6 +91,16 @@ export const EndingScreen: React.FC = () => {
     }
   };
 
+  const getEndingIllustration = (id: string) => {
+    const base = import.meta.env.BASE_URL || '/';
+    const prefix = base.endsWith('/') ? base : `${base}/`;
+    if (id === 'royal_return') return `${prefix}14. 結局：王女的回歸.png`;
+    if (id === 'three_revolution') return `${prefix}15. 結局：三女的革命.png`;
+    if (id === 'infinite_observer') return `${prefix}16. 結局：無限週目的觀測者.png`;
+    return null;
+  };
+
+  const endingIllustration = getEndingIllustration(matchedEnding.id);
   const vis = getEndingVisuals(matchedEnding.id);
 
   return (
@@ -123,18 +133,26 @@ export const EndingScreen: React.FC = () => {
               {vis.badge}
             </div>
 
-            {/* Daughter Image */}
-            <img 
-              src={getAvatarPath(18, daughter.outfit, daughter.avatarUrl)} 
-              alt={daughter.name} 
-              className="h-[240px] w-auto object-contain float-animation z-10"
-              style={{
-                filter: daughter.characterId === 'emilia' ? 'hue-rotate(330deg) saturate(0.8) sepia(0.5)' : undefined
-              }}
-              onError={(e) => {
-                (e.target as HTMLElement).style.display = 'none';
-              }}
-            />
+            {/* Ending CG Illustration or Daughter Image */}
+            {endingIllustration ? (
+              <img 
+                src={endingIllustration} 
+                alt="Ending Illustration" 
+                className="absolute inset-0 w-full h-full object-cover z-10 rounded-lg"
+              />
+            ) : (
+              <img 
+                src={getAvatarPath(18, daughter.outfit, daughter.avatarUrl)} 
+                alt={daughter.name} 
+                className="h-[240px] w-auto object-contain float-animation z-10"
+                style={{
+                  filter: daughter.characterId === 'emilia' ? 'hue-rotate(330deg) saturate(0.8) sepia(0.5)' : undefined
+                }}
+                onError={(e) => {
+                  (e.target as HTMLElement).style.display = 'none';
+                }}
+              />
+            )}
 
             <div className="absolute inset-3 border border-[rgba(255,255,255,0.05)] pointer-events-none rounded-lg" />
             
