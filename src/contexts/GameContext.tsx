@@ -342,8 +342,8 @@ export const generateAdventureMap = (areaId: AdventureAreaId, dad: FatherBackgro
     id: '1_1',
     layer: 1,
     index: 1,
-    type: 'event',
-    name: '林間小徑',
+    type: 'chest',
+    name: '林間寶箱',
     cleared: false,
     connectedTo: ['2_1', '2_2']
   });
@@ -447,8 +447,8 @@ export const generateAdventureMap = (areaId: AdventureAreaId, dad: FatherBackgro
     id: '3_1',
     layer: 3,
     index: 1,
-    type: 'event',
-    name: '遠古遺跡石碑',
+    type: 'spring',
+    name: '遠古恢復泉水',
     cleared: false,
     connectedTo: ['4_0', '4_1']
   });
@@ -539,6 +539,7 @@ interface GameContextProps {
   startAdventure: () => void;
   stepAdventure: (nodeId: string) => void;
   endAdventure: (isDefeat: boolean) => void;
+  equipMember: (memberId: 'yv' | 'jumbo', itemId: string) => void;
   triggerAVGEvent: (eventId: string) => void;
   executeAVGChoice: (choiceIndex: number) => void;
   toggleCheatMode: () => void;
@@ -851,8 +852,8 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
           type: 'info'
         }
       ],
-      currentEvent: null,
-      currentEventStep: null,
+      currentEvent: AVG_EVENTS.prologue,
+      currentEventStep: 'start',
       adventure: null,
       cheatMode: false,
       unlockedAchievements: nextAchievements
@@ -1521,11 +1522,36 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }));
   };
 
+  const equipMember = (memberId: 'yv' | 'jumbo', itemId: string) => {
+    setState((prev) => {
+      if (!prev.adventure || !prev.adventure.party) return prev;
+      const nextAdv = { ...prev.adventure };
+      const currentParty = nextAdv.party;
+      if (!currentParty) return prev;
+      
+      const nextParty = {
+        yv: { ...currentParty.yv },
+        jumbo: { ...currentParty.jumbo }
+      };
+      if (memberId === 'yv') {
+        nextParty.yv.weapon = itemId || undefined;
+      } else {
+        nextParty.jumbo.weapon = itemId || undefined;
+      }
+      nextAdv.party = nextParty;
+      return {
+        ...prev,
+        adventure: nextAdv
+      };
+    });
+  };
+
   const stepAdventure = (nodeId: string) => {
     if (!state.adventure) return;
     const nextAdv = { ...state.adventure };
     const targetNode = nextAdv.nodes.find(n => n.id === nodeId);
     if (!targetNode) return;
+    const nextInventory = [...state.inventory];
 
     // 計算專注度扣除。未來摩托車 / 黑市摩托車使基礎消耗為 1；精靈祝福使非摩托車的消耗減半為 2。
     const hasMotorcycle = state.inventory.includes('future_gp125') || state.inventory.includes('bm_cheap_gp125');
@@ -1656,10 +1682,79 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return;
     }
 
+    else if (targetNode.type === 'chest') {
+      nextAdv.status = 'exploring';
+      const roll = Math.random();
+      if (roll < 0.40) {
+        const goldReward = Math.floor(Math.random() * 151) + 100;
+        newDaughter.gold += goldReward;
+        nextAdv.combatLog.push(`🎁 踩到寶箱節點！獲得了金幣 ${goldReward}。`);
+      } else {
+        let itemId = '';
+        if (roll < 0.70) {
+          const eqList = ['steel_sword', 'silver_armor', 'royal_dress', 'summer_dress', 'bm_dark_armor', 'bm_poison_dagger'];
+          itemId = pickRandom(eqList);
+        } else {
+          const consList = ['binlang_ice', 'binlang_twin', 'binlang_normal', 'barrel_rice_cake', 'holy_water'];
+          itemId = pickRandom(consList);
+        }
+        const item = ITEMS.find(i => i.id === itemId);
+        if (item) {
+          nextInventory.push(itemId);
+          Object.entries(item.statChanges).forEach(([key, val]) => {
+            const attrKey = key as keyof typeof newDaughter.attributes;
+            if (attrKey === 'stress') {
+              newDaughter.attributes.stress = Math.max(0, newDaughter.attributes.stress + val);
+            } else {
+              newDaughter.attributes[attrKey] = Math.max(0, newDaughter.attributes[attrKey] + val);
+            }
+          });
+          if (item.outfitChange) {
+            newDaughter.outfit = item.outfitChange;
+          }
+          newDaughter.combatHp = newDaughter.attributes.stamina;
+          newDaughter.combatMp = newDaughter.attributes.magicSkill * 2 + 10;
+          nextAdv.daughterHp = Math.min(nextAdv.daughterMaxHp, nextAdv.daughterHp + (item.statChanges.stamina || 0));
+          
+          nextAdv.combatLog.push(`🎁 踩到寶箱節點！獲得了${item.type === 'weapon' || item.type === 'armor' || item.type === 'dress' ? '裝備' : '道具'}：【${item.name}】！`);
+        }
+      }
+    }
+    else if (targetNode.type === 'spring') {
+      nextAdv.status = 'exploring';
+      const roll = Math.random();
+      if (roll < 0.40) {
+        const restorePct = 0.4;
+        nextAdv.daughterHp = Math.min(nextAdv.daughterMaxHp, nextAdv.daughterHp + Math.round(nextAdv.daughterMaxHp * restorePct));
+        if (nextAdv.party) {
+          nextAdv.party.yv.hp = Math.min(nextAdv.party.yv.maxHp, nextAdv.party.yv.hp + Math.round(nextAdv.party.yv.maxHp * restorePct));
+          nextAdv.party.jumbo.hp = Math.min(nextAdv.party.jumbo.maxHp, nextAdv.party.jumbo.hp + Math.round(nextAdv.party.jumbo.maxHp * restorePct));
+          nextAdv.combatLog.push(`⛲ 踩到恢復泉水！泉水泛起溫暖微光，全隊恢復了 40% 的生命值！`);
+        } else {
+          nextAdv.combatLog.push(`⛲ 踩到恢復泉水！泉水泛起溫暖微光，女兒恢復了 40% 的生命值！`);
+        }
+      } else if (roll < 0.60) {
+        newDaughter.attributes.stress = Math.max(0, newDaughter.attributes.stress - 20);
+        nextAdv.combatLog.push(`⛲ 踩到恢復泉水！泉水清涼舒爽，洗淨了一身疲憊，疲勞度減少 20 點。`);
+      } else {
+        const battleAttrs: Array<'strength' | 'intelligence' | 'combatSkill' | 'magicSkill'> = ['strength', 'intelligence', 'combatSkill', 'magicSkill'];
+        const selectedAttr = pickRandom(battleAttrs);
+        const attrNames = {
+          strength: '力量',
+          intelligence: '智力',
+          combatSkill: '戰鬥技術',
+          magicSkill: '魔法技術'
+        };
+        newDaughter.attributes[selectedAttr] += 5;
+        nextAdv.combatLog.push(`⛲ 踩到恢復泉水！喝下甘甜泉水後精神大振，隨機戰鬥屬性【${attrNames[selectedAttr]}】提升了 5 點！`);
+      }
+    }
+
     setState(prev => ({
       ...prev,
       daughter: newDaughter,
-      adventure: nextAdv
+      adventure: nextAdv,
+      inventory: nextInventory
     }));
   };
 
@@ -2251,6 +2346,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
         startAdventure,
         stepAdventure,
         endAdventure,
+        equipMember,
         triggerAVGEvent,
         executeAVGChoice,
         toggleCheatMode,

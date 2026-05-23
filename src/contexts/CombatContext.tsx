@@ -27,7 +27,13 @@ export interface CombatState {
 
 interface CombatContextProps {
   combatState: CombatState;
-  startCombat: (monster: Monster, daughter: Daughter, satiated?: boolean, inventory?: string[]) => void;
+  startCombat: (
+    monster: Monster, 
+    daughter: Daughter, 
+    satiated?: boolean, 
+    inventory?: string[], 
+    party?: { yv: PartyMember; jumbo: PartyMember }
+  ) => void;
   executePlayerAction: (
     actor: 'solo' | 'emilia' | 'yv' | 'jumbo',
     action: 'attack' | 'skill_slash' | 'skill_combo' | 'skill_heal' | 'skill_fire' | 'skill_taunt' | 'skill_smash' | 'skill_ice_juice' | 'item_binlang_ice' | 'item_binlang_twin' | 'item_binlang_normal' | 'item_rice_cake' | 'flee' | 'observe',
@@ -67,14 +73,30 @@ const INITIAL_COMBAT_STATE: CombatState = {
 export const CombatProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [combatState, setCombatState] = useState<CombatState>(INITIAL_COMBAT_STATE);
 
-  const startCombat = (monster: Monster, daughter: Daughter, satiated: boolean = false, inventory: string[] = []) => {
+  const startCombat = (
+    monster: Monster,
+    daughter: Daughter,
+    satiated: boolean = false,
+    inventory: string[] = [],
+    party?: { yv: PartyMember; jumbo: PartyMember }
+  ) => {
     const isEmilia = daughter.characterId === 'emilia';
     
     const partyData: CombatState['party'] = {};
     if (isEmilia) {
       partyData.emilia = { name: daughter.name, hp: daughter.combatHp, maxHp: daughter.attributes.stamina, mp: daughter.combatMp, maxMp: daughter.attributes.magicSkill * 2 + 10 };
-      partyData.yv = { name: 'yv', hp: 90, maxHp: 90, mp: 60, maxMp: 60 };
-      partyData.jumbo = { name: 'jumbo', hp: 160, maxHp: 160, mp: 30, maxMp: 30 };
+      partyData.yv = party?.yv 
+        ? { ...party.yv } 
+        : { name: 'yv', hp: 90, maxHp: 90, mp: 60, maxMp: 60 };
+      partyData.jumbo = party?.jumbo 
+        ? { ...party.jumbo } 
+        : { name: 'jumbo', hp: 160, maxHp: 160, mp: 30, maxMp: 30 };
+      
+      // 私房聖水裝備加成：法力值上限 +20
+      if (partyData.yv.weapon === 'holy_water') {
+        partyData.yv.maxMp = 80;
+        partyData.yv.mp = Math.min(80, partyData.yv.mp + 20);
+      }
     } else {
       partyData.solo = { name: daughter.name, hp: daughter.combatHp, maxHp: daughter.attributes.stamina, mp: daughter.combatMp, maxMp: daughter.attributes.magicSkill * 2 + 10 };
     }
@@ -174,13 +196,27 @@ export const CombatProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     // --- 玩家各指令解析 ---
     else if (action === 'attack') {
       // 普通攻擊
-      let baseDmg = actor === 'yv' ? 10 : actor === 'jumbo' ? 22 : 18;
+      let baseDmg = 18;
       let critRate = 0.15;
-
-      const hasHammer = nextState.inventory && nextState.inventory.includes('giant_hammer');
-      if (hasHammer && (actor === 'solo' || actor === 'jumbo')) {
-        baseDmg += 30;
-        critRate = 0.30;
+      
+      if (actor === 'yv') {
+        baseDmg = actorObj.weapon === 'old_lute' ? 15 : 10;
+      } else if (actor === 'jumbo') {
+        if (actorObj.weapon === 'giant_hammer') {
+          baseDmg = 57; // 22 + 35
+          critRate = 0.30;
+        } else if (actorObj.weapon === 'steel_sword') {
+          baseDmg = 42; // 22 + 20
+        } else {
+          baseDmg = 22;
+        }
+      } else {
+        // solo / emilia
+        const hasHammer = nextState.inventory && nextState.inventory.includes('giant_hammer');
+        if (hasHammer) {
+          baseDmg += 30;
+          critRate = 0.30;
+        }
       }
 
       // 神廟獻祭暴擊加成判定
@@ -199,7 +235,13 @@ export const CombatProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       }
       
       logEntries.push(`⚔️ ${actorObj.name} 攻擊 ${monster.name}，造成 ${damage} 點傷害！${isCrit ? '（關鍵一擊！）' : ''}`);
-      if (hasHammer && (actor === 'solo' || actor === 'jumbo')) {
+      if (actor === 'jumbo' && actorObj.weapon === 'giant_hammer') {
+        logEntries.push(`🔨 jumbo 裝備「三十公分的錘子」加持：物理基礎攻擊力大幅提升，暴擊率提升至 30%！`);
+      } else if (actor === 'jumbo' && actorObj.weapon === 'steel_sword') {
+        logEntries.push(`⚔️ jumbo 裝備「古雅十字鐵劍」加持：物理基礎攻擊力提升！`);
+      } else if (actor === 'yv' && actorObj.weapon === 'old_lute') {
+        logEntries.push(`🎸 yv 裝備「古舊的魯特琴」加持：普通攻擊傷害微幅提升！`);
+      } else if ((actor === 'solo' || actor === 'emilia') && nextState.inventory && nextState.inventory.includes('giant_hammer')) {
         logEntries.push(`🔨 裝備「三十公分的錘子」加持：額外 +30 傷害，暴擊率提升至 30%！`);
       }
       nextState.monsterHp = Math.max(0, nextState.monsterHp - damage);
@@ -225,15 +267,45 @@ export const CombatProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     } 
     
     else if (action === 'skill_combo') {
-      // 青梅竹馬友情大連擊 (30 MP)
-      if (actorObj.mp < 30) {
-        logEntries.push(`❌ MP 不足！無法施展連擊。`);
-        setCombatState({ ...nextState, combatLog: [...nextState.combatLog, ...logEntries] });
-        return;
+      // 合體奧義「青梅竹馬友情大連擊」
+      const pEmilia = nextState.party.emilia;
+      const pYv = nextState.party.yv;
+      const pJumbo = nextState.party.jumbo;
+      const hasTrio = pEmilia && pYv && pJumbo && pYv.hp > 0 && pJumbo.hp > 0;
+      
+      if (hasTrio && pEmilia && pYv && pJumbo) {
+        if (pEmilia.mp < 12 || pYv.mp < 12 || pJumbo.mp < 12) {
+          logEntries.push(`❌ 全隊 MP 不足！三人皆需 12 點 MP 才能釋放友情合體奧義。`);
+          setCombatState({ ...nextState, combatLog: [...nextState.combatLog, ...logEntries] });
+          return;
+        }
+        pEmilia.mp -= 12;
+        pYv.mp -= 12;
+        pJumbo.mp -= 12;
+        
+        let bonus = 0;
+        if (pYv.weapon === 'old_lute') bonus += 15;
+        if (pJumbo.weapon === 'giant_hammer') bonus += 35;
+        if (pJumbo.weapon === 'steel_sword') bonus += 20;
+
+        damage = Math.max(100, Math.round(150 + bonus - monster.defense * 0.2));
+        logEntries.push(`✨✨✨ 【合體奧義】青梅竹馬友情大連擊！ ✨✨✨`);
+        logEntries.push(`⚔️ jumbo 舉盾正面防禦重擊！yv 吟唱爆炎旋風！艾蜜莉亞釋放皇家十字裂空斬！`);
+        logEntries.push(`💥 三人默契合一產生強烈共鳴，對魔物 ${monster.name} 造成了毀滅性的 ${damage} 點大傷害！`);
+        if (bonus > 0) {
+          logEntries.push(`🎒（小隊裝備共鳴加成：額外 +${bonus} 傷害）`);
+        }
+      } else {
+        // 單人連擊
+        if (actorObj.mp < 30) {
+          logEntries.push(`❌ MP 不足！無法施展單人連擊。`);
+          setCombatState({ ...nextState, combatLog: [...nextState.combatLog, ...logEntries] });
+          return;
+        }
+        actorObj.mp -= 30;
+        damage = Math.max(40, Math.round(75 - monster.defense * 0.3));
+        logEntries.push(`✨ ${actorObj.name} 施展單人突刺連擊！對 ${monster.name} 造成 ${damage} 點傷害。`);
       }
-      actorObj.mp -= 30;
-      damage = Math.max(40, Math.round(75 - monster.defense * 0.3));
-      logEntries.push(`✨ ${actorObj.name}、yv、jumbo 三人默契爆發！聯手施展「友情大連擊」！對 ${monster.name} 造成了毀滅性的 ${damage} 點傷害！`);
       nextState.monsterHp = Math.max(0, nextState.monsterHp - damage);
     }
 
@@ -246,7 +318,6 @@ export const CombatProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       }
       actorObj.mp -= 12;
       
-      // 尋找目標
       let target: any;
       if (targetMember === 'emilia') target = nextState.party.emilia;
       else if (targetMember === 'yv') target = nextState.party.yv;
@@ -254,8 +325,13 @@ export const CombatProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       else target = actorObj;
 
       if (target) {
-        target.hp = Math.min(target.maxHp, target.hp + 45);
-        logEntries.push(`💚 yv 施展「聖光治癒」，回復 ${target.name} 45 點生命值！`);
+        const healAmt = actorObj.weapon === 'old_lute' ? 60 : 45;
+        target.hp = Math.min(target.maxHp, target.hp + healAmt);
+        if (actorObj.weapon === 'old_lute') {
+          logEntries.push(`💚 yv 彈奏魯特琴施展「聖光治癒」，回復 ${target.name} ${healAmt} 點生命值！（琴音悠揚治癒加成 +15！）`);
+        } else {
+          logEntries.push(`💚 yv 施展「聖光治癒」，回復 ${target.name} ${healAmt} 點生命值！`);
+        }
       }
     }
 
@@ -267,8 +343,12 @@ export const CombatProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         return;
       }
       actorObj.mp -= 15;
-      damage = 38;
-      logEntries.push(`💥 yv 吟唱法術，噴射烈焰火球！對 ${monster.name} 造成 ${damage} 點魔法傷害！`);
+      damage = actorObj.weapon === 'old_lute' ? 53 : 38;
+      if (actorObj.weapon === 'old_lute') {
+        logEntries.push(`💥 yv 彈奏魯特琴釋放音波火球！對 ${monster.name} 造成 ${damage} 點魔法傷害！（魯特琴魔法加成 +15）`);
+      } else {
+        logEntries.push(`💥 yv 吟唱法術，噴射烈焰火球！對 ${monster.name} 造成 ${damage} 點魔法傷害！`);
+      }
       nextState.monsterHp = Math.max(0, nextState.monsterHp - damage);
     }
 
@@ -292,8 +372,17 @@ export const CombatProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         return;
       }
       actorObj.mp -= 15;
-      damage = Math.max(15, Math.round(35 - monster.defense * 0.4));
-      logEntries.push(`🔨 jumbo 重擊地面，碎石橫飛！對 ${monster.name} 造成 ${damage} 點碎甲傷害！`);
+      
+      if (actorObj.weapon === 'giant_hammer') {
+        damage = Math.max(25, Math.round(70 - monster.defense * 0.4));
+        logEntries.push(`🔨 jumbo 揮舞「三十公分的錘子」砸向地面！釋放大地裂波，對 ${monster.name} 造成 ${damage} 點碎甲大傷害！`);
+      } else if (actorObj.weapon === 'steel_sword') {
+        damage = Math.max(20, Math.round(50 - monster.defense * 0.4));
+        logEntries.push(`⚔️ jumbo 揮舞「古雅十字鐵劍」使出重力橫掃！對 ${monster.name} 造成 ${damage} 點傷害！`);
+      } else {
+        damage = Math.max(15, Math.round(35 - monster.defense * 0.4));
+        logEntries.push(`🔨 jumbo 重擊地面，碎石橫飛！對 ${monster.name} 造成 ${damage} 點碎甲傷害！`);
+      }
       nextState.monsterHp = Math.max(0, nextState.monsterHp - damage);
     }
 

@@ -1046,5 +1046,27 @@ export const AVG_EVENTS: Record<string, AVGEvent> = {
         nextId: undefined
       }
     }
+  },
+  prologue: {
+    id: 'prologue',
+    title: '序章：蔚藍崩裂之夜',
+    startNodeId: 'start',
+    nodes: {
+      start: {
+        speaker: '旁白',
+        text: '那是王國歷史上最為黑暗的夜晚。蔚藍海岸的要塞燃起大火，皇家城堡在帝國軍的猛烈攻勢下崩塌。',
+        nextId: 'step2'
+      },
+      step2: {
+        speaker: '旁白',
+        text: '為了保護年幼的王女們，忠誠的家臣們護送她們逃出重圍。最終，王女們分散各地，隱姓埋名，被交付給了忠心耿耿的養父，在偏遠小鎮開始了培育生活……',
+        nextId: 'step3'
+      },
+      step3: {
+        speaker: '養父',
+        text: '孩子，別害怕。從今天起，這裡就是妳的新家。雖然王國已逝，但我會傾盡全力，撫養妳長大成人。努力變強，去追尋妳的命運吧！',
+        nextId: undefined
+      }
+    }
   }
 };

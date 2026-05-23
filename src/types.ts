@@ -119,7 +119,7 @@ export interface AdventureMapNode {
   id: string;
   layer: number; // 0 (起點) 到 5 (Boss)
   index: number; // 同一層的橫向排列位置
-  type: 'start' | 'battle' | 'event' | 'rest' | 'shop' | 'hidden' | 'boss';
+  type: 'start' | 'battle' | 'event' | 'rest' | 'shop' | 'hidden' | 'boss' | 'chest' | 'spring';
   name: string;
   cleared: boolean;
   connectedTo: string[]; // 下一層所連接的節點 ID 列表
@@ -133,6 +133,8 @@ export interface PartyMember {
   maxHp: number;
   mp: number;
   maxMp: number;
+  weapon?: string;
+  armor?: string;
 }
 
 export type AdventureAreaId = 'betel_forest' | 'naval_border' | 'royal_ruins';

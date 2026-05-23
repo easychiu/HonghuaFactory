@@ -28,9 +28,50 @@ export const AVGDialog: React.FC = () => {
   // Apply hair color filter for Emilia
   const applyEmiliaFilter = daughter.characterId === 'emilia' && isDaughter;
 
+  const getEventBackgroundImage = () => {
+    if (!currentEvent) return null;
+    const id = currentEvent.id;
+    if (id === 'prologue') return '01. 序章：蔚藍崩裂之夜.jpg';
+    if (id === 'hidden_fortress') return '02. 騎士老爸專屬：隱密要塞.jpg';
+    if (id === 'hidden_library') return '03. 文臣老爸專屬：地下皇家圖書館.jpg';
+    if (id === 'hidden_blackmarket') return '04. 商人老爸專屬：黑市走私營地.jpg';
+    if (id === 'hidden_fairy') return '05. 詩人老爸專屬：精靈的妖精之環.jpg';
+    return null;
+  };
+
+  const base = import.meta.env.BASE_URL || '/';
+  const prefix = base.endsWith('/') ? base : `${base}/`;
+  const bgImg = getEventBackgroundImage();
+  const bgVideo = currentEvent.id === 'prologue' ? '01. 序章：蔚藍崩裂之夜.mp4' : null;
+
   return (
-    <div className="fixed inset-0 bg-black/85 backdrop-blur-[4px] flex items-center justify-center z-50 p-4 animate-fade-in">
-      <div className="glass-panel w-full max-w-xl p-6 md:p-8 animate-slide-up border-2 border-[#d4af37]/45 shadow-[0_0_40px_rgba(212,175,55,0.3)] flex flex-col gap-6">
+    <div className="fixed inset-0 bg-black/75 backdrop-blur-[2px] flex items-center justify-center z-50 p-4 animate-fade-in overflow-hidden">
+      {/* Background Video */}
+      {bgVideo && (
+        <video 
+          src={`${prefix}${bgVideo}`} 
+          autoPlay 
+          muted 
+          loop 
+          className="absolute inset-0 w-full h-full object-cover opacity-50 z-0 pointer-events-none"
+        />
+      )}
+      
+      {/* Background Image */}
+      {!bgVideo && bgImg && (
+        <img 
+          src={`${prefix}${bgImg}`} 
+          alt="Event background" 
+          className="absolute inset-0 w-full h-full object-cover opacity-45 z-0 pointer-events-none"
+        />
+      )}
+      
+      {/* Dark gradient overlay */}
+      {(bgVideo || bgImg) && (
+        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-black/80 z-0 pointer-events-none" />
+      )}
+
+      <div className="glass-panel w-full max-w-xl p-6 md:p-8 animate-slide-up border-2 border-[#d4af37]/45 shadow-[0_0_40px_rgba(212,175,55,0.3)] flex flex-col gap-6 z-10 relative bg-slate-900/90 backdrop-blur-[3px]">
         
         {/* Event Header Banner */}
         <div className="flex items-center gap-2 border-b border-slate-800 pb-3 text-[#ffd700] font-bold text-sm tracking-wider">

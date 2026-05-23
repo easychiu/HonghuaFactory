@@ -1,11 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { useGame } from '../contexts/GameContext';
+import { useGame, ITEMS } from '../contexts/GameContext';
 import { useCombat } from '../contexts/CombatContext';
 import { useAdventure } from '../hooks/useAdventure';
 import { Swords, Heart, LogOut, Backpack, AlertCircle } from 'lucide-react';
 
 export const AdventureMap: React.FC = () => {
-  const { state, resolveCombatVictory, resolveCombatDefeat, eatRiceCake, consumeItem, resolveCombatReunion } = useGame();
+  const { state, resolveCombatVictory, resolveCombatDefeat, eatRiceCake, consumeItem, resolveCombatReunion, equipMember } = useGame();
   const { combatState, startCombat, executePlayerAction, resolveEnemyTurn, endCombat, failFleeAttempt } = useCombat();
   const { daughter, inventory } = state;
   
@@ -33,10 +33,10 @@ export const AdventureMap: React.FC = () => {
     if (adventure && adventure.status === 'fighting' && !combatState.isActive) {
       const activeNode = adventure.nodes.find(n => n.id === adventure.currentNodeId);
       if (activeNode && activeNode.monster) {
-        startCombat(activeNode.monster, daughter, adventure.satiated || false, inventory);
+        startCombat(activeNode.monster, daughter, adventure.satiated || false, inventory, adventure.party);
       }
     }
-  }, [adventure?.status, adventure?.currentNodeId, combatState.isActive, adventure?.satiated, inventory, daughter, startCombat]);
+  }, [adventure?.status, adventure?.currentNodeId, combatState.isActive, adventure?.satiated, inventory, daughter, startCombat, adventure?.party]);
 
   // Auto resolve enemy turn after a delay
   useEffect(() => {
@@ -74,6 +74,8 @@ export const AdventureMap: React.FC = () => {
     if (type === 'shop') return '🛒';
     if (type === 'hidden') return '❓';
     if (type === 'boss') return '👑';
+    if (type === 'chest') return '🎁';
+    if (type === 'spring') return '⛲';
     return '❓';
   };
 
@@ -298,6 +300,97 @@ export const AdventureMap: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Party Equipment Panel for JRPG multi-character mode */}
+      {adventure && adventure.status === 'exploring' && adventure.party && (() => {
+        const party = adventure.party;
+        return (
+          <div className="glass-panel p-5 mb-6 bg-slate-950/40 border border-slate-900 rounded-2xl flex flex-col gap-4 animate-fade-in">
+            <h3 className="text-xs font-bold text-[#ffd700] uppercase tracking-wider flex items-center gap-1.5 border-b border-slate-900 pb-2">
+              ⚔️ 冒險小隊整備 (獨立裝備槽)
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* yv */}
+              <div className="p-4 bg-slate-900/40 rounded-xl border border-slate-850 flex flex-col gap-2.5 text-left">
+                <div className="flex justify-between items-center border-b border-slate-850/50 pb-1.5">
+                  <span className="text-xs font-bold text-indigo-300">yv (賢者)</span>
+                  <span className="text-[10px] text-slate-400 font-semibold bg-slate-950/40 py-0.5 px-1.5 rounded border border-slate-850">
+                    當前裝備: {party.yv.weapon ? (ITEMS.find(i => i.id === party.yv.weapon)?.name || party.yv.weapon) : '無'}
+                  </span>
+                </div>
+                <div className="flex gap-2 flex-wrap">
+                  {inventory.includes('old_lute') && party.yv.weapon !== 'old_lute' && (
+                    <button 
+                      onClick={() => equipMember('yv', 'old_lute')}
+                      className="btn-fantasy-sec text-[10px] py-1.5 px-2.5"
+                    >
+                      🎸 裝備古舊的魯特琴 (+15 治療/火球)
+                    </button>
+                  )}
+                  {inventory.includes('holy_water') && party.yv.weapon !== 'holy_water' && (
+                    <button 
+                      onClick={() => equipMember('yv', 'holy_water')}
+                      className="btn-fantasy-sec text-[10px] py-1.5 px-2.5"
+                    >
+                      🧪 裝備私房聖水 (+20 Max MP)
+                    </button>
+                  )}
+                  {!inventory.includes('old_lute') && !inventory.includes('holy_water') && (
+                    <span className="text-[10px] text-slate-500 italic">背包內無可用法術裝備</span>
+                  )}
+                  {party.yv.weapon && (
+                    <button 
+                      onClick={() => equipMember('yv', '')}
+                      className="text-red-400 text-[10px] font-bold hover:underline ml-auto"
+                    >
+                      卸下
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* jumbo */}
+              <div className="p-4 bg-slate-900/40 rounded-xl border border-slate-850 flex flex-col gap-2.5 text-left">
+                <div className="flex justify-between items-center border-b border-slate-850/50 pb-1.5">
+                  <span className="text-xs font-bold text-amber-300">jumbo (守護者)</span>
+                  <span className="text-[10px] text-slate-400 font-semibold bg-slate-950/40 py-0.5 px-1.5 rounded border border-slate-850">
+                    當前裝備: {party.jumbo.weapon ? (ITEMS.find(i => i.id === party.jumbo.weapon)?.name || party.jumbo.weapon) : '無'}
+                  </span>
+                </div>
+                <div className="flex gap-2 flex-wrap">
+                  {inventory.includes('giant_hammer') && party.jumbo.weapon !== 'giant_hammer' && (
+                    <button 
+                      onClick={() => equipMember('jumbo', 'giant_hammer')}
+                      className="btn-fantasy-sec text-[10px] py-1.5 px-2.5"
+                    >
+                      🔨 裝備三十公分錘子 (物理/碎石擊+35)
+                    </button>
+                  )}
+                  {inventory.includes('steel_sword') && party.jumbo.weapon !== 'steel_sword' && (
+                    <button 
+                      onClick={() => equipMember('jumbo', 'steel_sword')}
+                      className="btn-fantasy-sec text-[10px] py-1.5 px-2.5"
+                    >
+                      ⚔️ 裝備十字鐵劍 (物理+20, 重掃+15)
+                    </button>
+                  )}
+                  {!inventory.includes('giant_hammer') && !inventory.includes('steel_sword') && (
+                    <span className="text-[10px] text-slate-500 italic">背包內無可用重武器</span>
+                  )}
+                  {party.jumbo.weapon && (
+                    <button 
+                      onClick={() => equipMember('jumbo', '')}
+                      className="text-red-400 text-[10px] font-bold hover:underline ml-auto"
+                    >
+                      卸下
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Combat UI Screen (Fighting state) */}
       {adventure.status === 'fighting' && combatState.isActive && combatState.monster && (
@@ -627,13 +720,31 @@ export const AdventureMap: React.FC = () => {
                                 🔍 仔細觀察
                               </button>
                             ) : (
-                              <button 
-                                onClick={() => executePlayerAction('emilia', 'skill_combo')}
-                                disabled={combatState.party.emilia.mp < 30}
-                                className="btn-fantasy text-[10px] py-2 bg-gradient-to-r from-amber-500 to-red-500 border-none disabled:opacity-40"
-                              >
-                                ✨ 友情三連擊 (30)
-                              </button>
+                              (() => {
+                                const hasTrio = combatState.party.emilia && combatState.party.yv && combatState.party.jumbo && combatState.party.yv.hp > 0 && combatState.party.jumbo.hp > 0;
+                                if (hasTrio) {
+                                  const disabled = combatState.party.emilia.mp < 12 || (combatState.party.yv?.mp || 0) < 12 || (combatState.party.jumbo?.mp || 0) < 12;
+                                  return (
+                                    <button 
+                                      onClick={() => executePlayerAction('emilia', 'skill_combo')}
+                                      disabled={disabled}
+                                      className="btn-fantasy text-[10px] py-2 bg-gradient-to-r from-violet-500 via-[#ffd700] to-red-500 border-none disabled:opacity-40 animate-pulse font-bold text-white shadow-[0_0_8px_rgba(255,215,0,0.4)]"
+                                    >
+                                      ✨ 友情大連擊 (三人12)
+                                    </button>
+                                  );
+                                } else {
+                                  return (
+                                    <button 
+                                      onClick={() => executePlayerAction('emilia', 'skill_combo')}
+                                      disabled={combatState.party.emilia.mp < 30}
+                                      className="btn-fantasy text-[10px] py-2 bg-gradient-to-r from-amber-500 to-red-500 border-none disabled:opacity-40 text-white font-semibold"
+                                    >
+                                      ✨ 單人連擊 (30)
+                                    </button>
+                                  );
+                                }
+                              })()
                             )}
                           </div>
                         </div>

@@ -22,6 +22,36 @@ export const ExecutionScreen: React.FC = () => {
     getAnimationProps,
   } = useScheduleLoop();
 
+  const getBackgroundImage = () => {
+    if (!schedule) return null;
+    const actId = schedule[currentSlot];
+    const isCourse = COURSES.some(c => c.id === actId);
+    if (isCourse) {
+      return '07. 皇家學院教室.jpg';
+    }
+    if (actId === 'woodshop') {
+      return '08. 胡村姑的木工作坊.jpg';
+    }
+    if (actId === 'guesthouse_helper') {
+      return '\u200b06. 提莫的民宿.jpg';
+    }
+    return null;
+  };
+
+  const bgImg = getBackgroundImage();
+  const base = import.meta.env.BASE_URL || '/';
+  const prefix = base.endsWith('/') ? base : `${base}/`;
+  const bgStyle = bgImg 
+    ? {
+        backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.65)), url("${prefix}${bgImg}")`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        border: '1px solid rgba(212,175,55,0.15)'
+      }
+    : {
+        background: 'radial-gradient(circle at center, #1b1633 0%, #080612 100%)',
+        border: '1px solid rgba(212,175,55,0.1)'
+      };
   const anim = getAnimationProps();
 
   return (
@@ -48,11 +78,8 @@ export const ExecutionScreen: React.FC = () => {
 
         {/* Animation Chamber */}
         <div 
-          className="w-full h-64 rounded-xl flex items-center justify-center relative overflow-hidden"
-          style={{
-            background: 'radial-gradient(circle at center, #1b1633 0%, #080612 100%)',
-            border: '1px solid rgba(212,175,55,0.1)'
-          }}
+          className="w-full h-64 rounded-xl flex items-center justify-center relative overflow-hidden transition-all duration-500"
+          style={bgStyle}
         >
           {/* Decorative fantasy rings background */}
           <div className="absolute w-48 h-48 rounded-full border border-[rgba(212,175,55,0.03)] border-dashed animate-spin duration-10000" />
