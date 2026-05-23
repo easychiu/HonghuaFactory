@@ -3,10 +3,11 @@ import { useGame } from '../contexts/GameContext';
 import { StatPanel } from './StatPanel';
 import { SaveLoadPanel } from './SaveLoadPanel';
 import { getAvatarPath } from '../utils/avatar';
+import { getPersonalityType, PERSONALITY_INFO } from '../utils/personality';
 import { 
   Sparkles, Calendar, Coins, Save, RefreshCw, 
-  MessageSquare, ShoppingCart, Compass, ToggleLeft, ToggleRight, 
-  History, Crown, Lock, Check, ChevronDown, ChevronUp
+  ShoppingCart, Compass, ToggleLeft, ToggleRight, 
+  History, Crown, Lock, Check, ChevronDown, ChevronUp, Heart, Award
 } from 'lucide-react';
 
 const OUTFIT_NAMES = {
@@ -21,6 +22,32 @@ const OUTFIT_BORDER_COLORS = {
   dress: 'rgba(212, 175, 55, 0.6)',
   armor: 'rgba(192, 192, 192, 0.6)',
   summer: 'rgba(0, 180, 216, 0.6)'
+};
+
+// All ending titles - mirror EndingGallery's ALL_ENDINGS list
+const ENDING_TITLE_MAP: Record<string, string> = {
+  infinite_observer: '命運之神',
+  binlang_monopoly: '歐陸提神產業帝國總裁',
+  lucky_lay_flat: '強運登基者',
+  shadow_cabinet: '幕後支配者',
+  phantom_thief_triplets: '義賊怪盜三胞胎',
+  clover_mercenary: '蔚藍傭兵團雙劍團長',
+  shanshan_court_aide: '王都智囊院首席策士',
+  xuewu_magic_tower: '星海塔隱居魔導師',
+  royal_return: '蔚藍海岸王國女王',
+  three_revolution: '蔚藍共和國執政官',
+  three_shelter: '蔚藍庇護所創始人',
+  duet_adventurers: '流浪雙子冒險者',
+  prince_marriage: '帝國王妃',
+  court_official: '內宮大管家',
+  valkyrie_hero: '傳奇勇者',
+  holy_nun: '神之代言人',
+  bounty_hunter: '荒野孤狼',
+  famous_painter: '藝術巨匠',
+  mob_boss: '地下教父',
+  courtesan: '蔚藍海岸交際花',
+  beggar: '街頭乞討者',
+  housewife: '普通市民',
 };
 
 export const MainPanel: React.FC = () => {
@@ -39,6 +66,17 @@ export const MainPanel: React.FC = () => {
   const [isClosetOpen, setIsClosetOpen] = useState(false);
   const [isSavePanelOpen, setIsSavePanelOpen] = useState(false);
   const [isStatPanelOpen, setIsStatPanelOpen] = useState(false);
+
+  const personality = getPersonalityType(daughter);
+  const personalityInfo = PERSONALITY_INFO[personality];
+  const isRebellious = daughter.attributes.morality < 50 && daughter.attributes.stress > 80;
+  const isSick = !!daughter.isSick;
+  const hasInteractedThisMonth = state.lastFatherInteractionMonth === time.month;
+
+  // Earned titles from completed endings
+  const earnedTitles = (state.completedEndings || [])
+    .map(id => ENDING_TITLE_MAP[id])
+    .filter(Boolean);
 
   const getAvatarStyle = (charId: string) => {
     if (charId === 'emilia') {
@@ -139,8 +177,12 @@ export const MainPanel: React.FC = () => {
           <div 
             className="w-full max-w-[280px] h-[340px] rounded-xl relative overflow-hidden flex flex-col items-center justify-end p-4"
             style={{
-              background: 'radial-gradient(circle at center, #1b1633 0%, #0d0a1b 100%)',
-              border: `2px solid ${OUTFIT_BORDER_COLORS[daughter.outfit] || 'rgba(255,255,255,0.1)'}`,
+              background: isRebellious
+                ? 'radial-gradient(circle at center, #2d1111 0%, #0f0404 100%)'
+                : isSick
+                ? 'radial-gradient(circle at center, #111a28 0%, #060a10 100%)'
+                : 'radial-gradient(circle at center, #1b1633 0%, #0d0a1b 100%)',
+              border: `2px solid ${isRebellious ? 'rgba(239,68,68,0.6)' : isSick ? 'rgba(96,165,250,0.5)' : (OUTFIT_BORDER_COLORS[daughter.outfit] || 'rgba(255,255,255,0.1)')}`,
               boxShadow: 'inset 0 0 20px rgba(0,0,0,0.8)'
             }}
           >
@@ -159,7 +201,12 @@ export const MainPanel: React.FC = () => {
                 bottom: '16px',
                 left: 0,
                 right: 0,
-                ...getAvatarStyle(daughter.characterId)
+                ...getAvatarStyle(daughter.characterId),
+                filter: isSick
+                  ? `${getAvatarStyle(daughter.characterId).filter || ''} brightness(0.7) saturate(0.4) hue-rotate(200deg)`.trim()
+                  : isRebellious
+                  ? `${getAvatarStyle(daughter.characterId).filter || ''} brightness(0.8) saturate(0.6) hue-rotate(340deg)`.trim()
+                  : getAvatarStyle(daughter.characterId).filter
               }}
             >
               <img 
@@ -175,11 +222,20 @@ export const MainPanel: React.FC = () => {
             {/* Decorative frame inside */}
             <div className="absolute inset-2 border border-[rgba(212,175,55,0.08)] pointer-events-none rounded-lg" />
             
+            {/* Rebellious Overlay */}
+            {isRebellious && (
+              <div className="absolute inset-0 bg-red-950/50 backdrop-blur-[1px] flex items-center justify-center z-20">
+                <span className="px-3 py-1.5 bg-red-700 text-white font-bold rounded-lg border border-red-400 text-xs animate-bounce shadow-lg">
+                  😤 叛逆狀態 (道德低落)
+                </span>
+              </div>
+            )}
+
             {/* Sickness Overlay */}
-            {daughter.attributes.stress > daughter.attributes.stamina && (
-              <div className="absolute inset-0 bg-red-950/40 backdrop-blur-[1px] flex items-center justify-center z-20">
-                <span className="px-3 py-1.5 bg-red-600 text-white font-bold rounded-lg border border-red-400 text-xs animate-bounce shadow-lg">
-                  🤒 疲勞過度 (生病危險)
+            {isSick && !isRebellious && (
+              <div className="absolute inset-0 bg-blue-950/40 backdrop-blur-[1px] flex items-center justify-center z-20">
+                <span className="px-3 py-1.5 bg-blue-800 text-white font-bold rounded-lg border border-blue-400 text-xs animate-bounce shadow-lg">
+                  🤒 生病中 (活動效果↓)
                 </span>
               </div>
             )}
@@ -193,6 +249,18 @@ export const MainPanel: React.FC = () => {
             <div className="absolute top-3 right-3 bg-black/60 border border-slate-700/50 backdrop-blur px-2.5 py-1 rounded text-xs text-white font-bold z-20">
               🎂 {daughter.age} 歲
             </div>
+
+            {/* Personality badge */}
+            <div
+              className="absolute top-3 left-3 px-2 py-1 rounded text-xs font-bold z-20 border backdrop-blur"
+              style={{
+                background: 'rgba(0,0,0,0.65)',
+                borderColor: personalityInfo.color + '80',
+                color: personalityInfo.color
+              }}
+            >
+              {personalityInfo.emoji} {personality}
+            </div>
           </div>
 
           {/* Quick info bar */}
@@ -202,38 +270,96 @@ export const MainPanel: React.FC = () => {
               <p className="text-lg font-bold text-[#ffd700]">{daughter.relationship} / 100</p>
             </div>
             <div className="bg-[rgba(255,255,255,0.02)] border border-slate-800 p-2.5 rounded-lg">
-              <p className="text-xs text-slate-400">持有裝備</p>
-              <p className="text-sm font-bold text-slate-200 mt-1 truncate">
-                {daughter.outfit === 'default' ? '無戰術裝備' : OUTFIT_NAMES[daughter.outfit]}
+              <p className="text-xs text-slate-400">性格傾向</p>
+              <p className="text-xs font-bold mt-1" style={{ color: personalityInfo.color }}>
+                {personalityInfo.emoji} {personality}
               </p>
+              <p className="text-[10px] text-slate-500 mt-0.5 leading-tight">{personalityInfo.desc}</p>
             </div>
           </div>
 
+          {/* Earned Titles Display */}
+          {earnedTitles.length > 0 && (
+            <div className="w-full bg-[rgba(212,175,55,0.04)] border border-[rgba(212,175,55,0.2)] rounded-lg p-3">
+              <p className="text-[10px] font-bold text-[#d4af37] uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                <Award size={12} /> 已獲封號
+              </p>
+              <div className="flex flex-wrap gap-1.5">
+                {earnedTitles.map((title, i) => (
+                  <span
+                    key={i}
+                    className="px-2 py-0.5 bg-[rgba(212,175,55,0.1)] border border-[rgba(212,175,55,0.3)] rounded text-[10px] text-[#f3e5ab] font-semibold"
+                  >
+                    【{title}】
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Father-Daughter Interactivity */}
-          <div className="w-full mt-2">
-            <p className="text-xs font-bold text-[#ffd700] uppercase tracking-wider mb-2 flex items-center gap-1.5 justify-center">
-              <MessageSquare size={14} /> 與女兒互動對話
-            </p>
-            <div className="grid grid-cols-3 gap-2 mb-4">
+          <div className="w-full mt-1">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-xs font-bold text-[#ffd700] uppercase tracking-wider flex items-center gap-1.5">
+                <Heart size={14} /> 父女互動（每月一次）
+              </p>
+              {hasInteractedThisMonth && !cheatMode && (
+                <span className="text-[10px] text-slate-500 border border-slate-700 px-2 py-0.5 rounded">
+                  本月已互動
+                </span>
+              )}
+            </div>
+            <div className="grid grid-cols-2 gap-2 mb-2">
               <button 
                 onClick={() => talkToDaughter('gentle')} 
-                className="py-2 text-xs bg-[rgba(255,255,255,0.03)] border border-slate-700 hover:border-pink-500 hover:text-pink-400 rounded-lg transition-all"
+                disabled={hasInteractedThisMonth && !cheatMode}
+                className="py-2 text-xs bg-[rgba(255,255,255,0.03)] border border-slate-700 hover:border-pink-500 hover:text-pink-400 rounded-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 💬 溫柔談心
               </button>
               <button 
                 onClick={() => talkToDaughter('praise')} 
-                className="py-2 text-xs bg-[rgba(255,255,255,0.03)] border border-slate-700 hover:border-[#ffd700] hover:text-[#ffd700] rounded-lg transition-all"
+                disabled={hasInteractedThisMonth && !cheatMode}
+                className="py-2 text-xs bg-[rgba(255,255,255,0.03)] border border-slate-700 hover:border-[#ffd700] hover:text-[#ffd700] rounded-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 👍 誇獎表揚
               </button>
               <button 
                 onClick={() => talkToDaughter('scold')} 
-                className="py-2 text-xs bg-[rgba(255,255,255,0.03)] border border-slate-700 hover:border-red-500 hover:text-red-400 rounded-lg transition-all"
+                disabled={hasInteractedThisMonth && !cheatMode}
+                className={`py-2 text-xs bg-[rgba(255,255,255,0.03)] border rounded-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed ${
+                  isRebellious
+                    ? 'border-red-500 text-red-400 hover:bg-red-950/20 animate-pulse'
+                    : 'border-slate-700 hover:border-red-500 hover:text-red-400'
+                }`}
               >
-                ⚠️ 嚴厲訓導
+                ⚠️ 嚴厲訓導{isRebellious ? ' !' : ''}
+              </button>
+              <button 
+                onClick={() => talkToDaughter('headpat')} 
+                disabled={hasInteractedThisMonth && !cheatMode}
+                className="py-2 text-xs bg-[rgba(255,255,255,0.03)] border border-slate-700 hover:border-amber-400 hover:text-amber-400 rounded-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                🤲 溫柔摸頭
               </button>
             </div>
+            <button
+              onClick={() => talkToDaughter('allowance')}
+              disabled={hasInteractedThisMonth && !cheatMode}
+              className="w-full py-2 text-xs bg-[rgba(255,215,0,0.05)] border border-[rgba(212,175,55,0.3)] hover:border-[#ffd700] hover:text-[#ffd700] rounded-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              💰 給零用錢（+80G+, 關係+6）
+            </button>
+            {isRebellious && (
+              <p className="text-[10px] text-red-400/80 mt-1.5 text-center">
+                ⚠️ 叛逆中：道德過低，日程活動有機率被拒絕。請使用「嚴厲訓導」提升道德！
+              </p>
+            )}
+            {isSick && (
+              <p className="text-[10px] text-blue-400/80 mt-1 text-center">
+                🤒 生病中：活動效果大幅下降，請前往商店購買【聖水】或多次選擇休息恢復！
+              </p>
+            )}
           </div>
 
           {/* Closet Button */}

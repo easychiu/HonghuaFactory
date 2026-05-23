@@ -41,6 +41,7 @@ export interface Daughter {
     shanshan: number;
     xuewu: number;
   };
+  isSick?: boolean; // 生病狀態（疲勞超過體力上限觸發）
 }
 
 export type PeriodType = 'early' | 'mid' | 'late';
@@ -174,4 +175,5 @@ export interface GameState {
   unlockedCharacters: CharacterId[]; // 已解鎖角色列表（NG+ 用）
   completedEndings: string[]; // 已達成結局列表
   unlockedAchievements: string[]; // 已解鎖成就
+  lastFatherInteractionMonth?: number; // 老爸最後一次與女兒互動的月份（用於每月限制）
 }
