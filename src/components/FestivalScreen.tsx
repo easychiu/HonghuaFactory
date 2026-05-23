@@ -216,7 +216,7 @@ export const FestivalScreen: React.FC = () => {
   const { label: currentLabel } = getTrackScore(selectedTrack, useSpecialItem);
 
   return (
-    <div className="flex-1 flex items-center justify-center p-4 md:p-6 min-h-[85vh]">
+    <div className="flex-1 flex items-center justify-center p-3 sm:p-4 md:p-6 min-h-[85vh]">
       
       {/* Component Styles (Isolated stylesheet logic) */}
       <style dangerouslySetInnerHTML={{__html: `
@@ -231,15 +231,26 @@ export const FestivalScreen: React.FC = () => {
         }
         .festival-banner {
           width: 100%;
-          height: 180px;
+          height: 120px;
           object-fit: cover;
           border-bottom: 2px solid rgba(212, 175, 55, 0.3);
         }
+        @media (min-width: 640px) {
+          .festival-banner {
+            height: 180px;
+          }
+        }
         .track-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-          gap: 16px;
+          grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+          gap: 12px;
           margin-top: 16px;
+        }
+        @media (min-width: 640px) {
+          .track-grid {
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+          }
         }
         .track-item {
           padding: 16px;
@@ -273,18 +284,25 @@ export const FestivalScreen: React.FC = () => {
           background: #080612;
           border: 1px solid rgba(255, 255, 255, 0.05);
           border-radius: 12px;
-          height: 300px;
+          height: 220px;
           overflow-y: auto;
-          padding: 16px;
+          padding: 12px;
           font-family: 'Outfit', sans-serif;
           display: flex;
           flex-direction: column;
-          gap: 12px;
+          gap: 10px;
           box-shadow: inset 0 2px 10px rgba(0,0,0,0.8);
         }
+        @media (min-width: 640px) {
+          .simulation-box {
+            height: 300px;
+            padding: 16px;
+            gap: 12px;
+          }
+        }
         .simulation-line {
-          font-size: 0.95rem;
-          line-height: 1.6;
+          font-size: 0.85rem;
+          line-height: 1.5;
           color: #e2e8f0;
           animation: fade-in-line 0.5s ease forwards;
         }
@@ -310,10 +328,10 @@ export const FestivalScreen: React.FC = () => {
             }}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-[#141026] to-transparent" />
-          <div className="absolute bottom-4 left-6 flex items-center gap-3">
-            <Trophy className="text-[#d4af37] w-8 h-8 float-animation" />
+          <div className="absolute bottom-3 sm:bottom-4 left-3 sm:left-6 flex items-center gap-2 sm:gap-3">
+            <Trophy className="text-[#d4af37] w-6 h-6 sm:w-8 sm:h-8 float-animation" />
             <div>
-              <h1 className="text-2xl md:text-3xl font-extrabold text-[#ffd700] m-0">十月年度收穫祭</h1>
+              <h1 className="text-lg sm:text-2xl md:text-3xl font-extrabold text-[#ffd700] m-0">十月年度收穫祭</h1>
               <p className="text-xs text-slate-300 font-semibold mt-1">
                 第 {time.year} 年的王國盛會 - 展現培育成果、爭奪無上榮耀！
               </p>
@@ -323,7 +341,7 @@ export const FestivalScreen: React.FC = () => {
 
         {/* Phase 1: Track Selection */}
         {step === 'select' && (
-          <div className="p-6 md:p-8 flex flex-col gap-6">
+          <div className="p-4 sm:p-6 md:p-8 flex flex-col gap-4 sm:gap-6">
             
             <div className="bg-[rgba(255,255,255,0.02)] border border-slate-800 p-4 rounded-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
               <div className="flex items-center gap-3">
@@ -503,7 +521,7 @@ export const FestivalScreen: React.FC = () => {
 
         {/* Phase 2: Live Ticker Simulation */}
         {step === 'simulating' && (
-          <div className="p-6 md:p-8 flex flex-col gap-6">
+          <div className="p-4 sm:p-6 md:p-8 flex flex-col gap-4 sm:gap-6">
             <div className="flex items-center justify-between border-b border-slate-800 pb-3">
               <span className="flex items-center gap-2 text-sm text-[#ffd700] font-bold">
                 <Sparkles className="animate-spin text-amber-400" size={18} />
@@ -537,7 +555,7 @@ export const FestivalScreen: React.FC = () => {
 
         {/* Phase 3: Results & Rewards */}
         {step === 'result' && (
-          <div className="p-6 md:p-8 flex flex-col gap-6 text-center animate-slide-up">
+          <div className="p-4 sm:p-6 md:p-8 flex flex-col gap-4 sm:gap-6 text-center animate-slide-up">
             
             {(() => {
               const { score } = getTrackScore(selectedTrack, useSpecialItem);
@@ -548,12 +566,12 @@ export const FestivalScreen: React.FC = () => {
                 <div className="flex flex-col items-center gap-4 py-6">
                   
                   {/* Crown / Trophy Overlay */}
-                  <div className={`p-5 rounded-full ${isVictor ? 'bg-amber-500/10 border-2 border-amber-400 animate-pulse' : 'bg-slate-800 border-2 border-slate-700'}`}>
-                    <Trophy className={`w-16 h-16 ${isVictor ? 'text-[#ffd700]' : 'text-slate-400'}`} />
+                  <div className={`p-3 sm:p-5 rounded-full ${isVictor ? 'bg-amber-500/10 border-2 border-amber-400 animate-pulse' : 'bg-slate-800 border-2 border-slate-700'}`}>
+                    <Trophy className={`w-10 h-10 sm:w-16 sm:h-16 ${isVictor ? 'text-[#ffd700]' : 'text-slate-400'}`} />
                   </div>
 
                   <div>
-                    <h2 className="text-3xl font-black mt-2 tracking-widest uppercase">
+                    <h2 className="text-xl sm:text-3xl font-black mt-2 tracking-widest uppercase">
                       {isVictor ? '👑 奪得冠軍 👑' : '🎗️ 榮獲優勝 🎗️'}
                     </h2>
                     <p className="text-sm text-slate-400 mt-1 max-w-md mx-auto">
@@ -564,15 +582,15 @@ export const FestivalScreen: React.FC = () => {
                   </div>
 
                   {/* Score breakdown badge */}
-                  <div className="glass-panel py-3 px-8 rounded-full border border-slate-800 flex items-center gap-6 mt-4">
+                  <div className="glass-panel py-2 sm:py-3 px-4 sm:px-8 rounded-full border border-slate-800 flex items-center gap-3 sm:gap-6 mt-4">
                     <div>
-                      <span className="text-[10px] text-slate-400 block font-semibold uppercase tracking-wider">女兒最終評分</span>
-                      <span className="text-2xl font-black text-white">{finalScore} 分</span>
+                      <span className="text-[9px] sm:text-[10px] text-slate-400 block font-semibold uppercase tracking-wider">女兒最終評分</span>
+                      <span className="text-lg sm:text-2xl font-black text-white">{finalScore} 分</span>
                     </div>
-                    <div className="h-8 w-px bg-slate-800" />
+                    <div className="h-6 sm:h-8 w-px bg-slate-800" />
                     <div>
-                      <span className="text-[10px] text-slate-400 block font-semibold uppercase tracking-wider">大會勝出標準</span>
-                      <span className="text-2xl font-black text-[#d4af37]">{targetScore} 分</span>
+                      <span className="text-[9px] sm:text-[10px] text-slate-400 block font-semibold uppercase tracking-wider">大會勝出標準</span>
+                      <span className="text-lg sm:text-2xl font-black text-[#d4af37]">{targetScore} 分</span>
                     </div>
                   </div>
 

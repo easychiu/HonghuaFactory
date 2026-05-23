@@ -52,23 +52,23 @@ export const MainPanel: React.FC = () => {
     daughter.age <= 15 ? 0.94 : 1.0;
 
   return (
-    <div className="flex-1 flex flex-col gap-6 p-4 md:p-6 w-full max-w-7xl mx-auto animate-slide-up">
+    <div className="flex-1 flex flex-col gap-4 sm:gap-6 p-3 sm:p-4 md:p-6 w-full max-w-7xl mx-auto animate-slide-up">
       {/* Header Bar */}
-      <div className="glass-panel p-4 flex flex-col md:flex-row items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-[rgba(212,175,55,0.15)] rounded-lg text-[#d4af37] border border-[rgba(212,175,55,0.3)]">
-            <Sparkles size={24} />
+      <div className="glass-panel p-3 sm:p-4 flex flex-col md:flex-row items-center justify-between gap-3 sm:gap-4">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <div className="p-1.5 sm:p-2 bg-[rgba(212,175,55,0.15)] rounded-lg text-[#d4af37] border border-[rgba(212,175,55,0.3)]">
+            <Sparkles size={20} className="sm:w-6 sm:h-6" />
           </div>
           <div>
-            <h1 className="text-xl md:text-2xl font-bold bg-gradient-to-r from-amber-400 to-[#d4af37] bg-clip-text text-transparent">
+            <h1 className="text-lg sm:text-xl md:text-2xl font-bold bg-gradient-to-r from-amber-400 to-[#d4af37] bg-clip-text text-transparent">
               蔚藍海岸的王女們
             </h1>
-            <p className="text-xs text-slate-400">養育王女的成長軌跡 ({daughter.name})</p>
+            <p className="text-[10px] sm:text-xs text-slate-400">養育王女的成長軌跡 ({daughter.name})</p>
           </div>
         </div>
 
         {/* Date and Gold Display */}
-        <div className="flex flex-wrap items-center gap-3 md:gap-6">
+        <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 md:gap-6">
           {/* Time Display */}
           <div className="flex items-center gap-2 px-3 py-1.5 bg-[rgba(255,255,255,0.03)] border border-slate-700/50 rounded-lg text-sm">
             <Calendar className="text-[#d4af37]" size={16} />
@@ -108,7 +108,7 @@ export const MainPanel: React.FC = () => {
       </div>
 
       {/* Main Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 items-start">
         
         {/* Left Side: Attributes Panel */}
         <div className="lg:col-span-4 order-3 lg:order-1 flex flex-col gap-4 w-full">
@@ -116,14 +116,14 @@ export const MainPanel: React.FC = () => {
         </div>
 
         {/* Center: Character Chamber Display */}
-        <div className="glass-panel p-6 lg:col-span-5 order-1 lg:order-2 flex flex-col gap-4 items-center">
-          <h2 className="text-lg font-bold border-b border-[rgba(212,175,55,0.2)] pb-2 w-full text-center text-slate-200">
+        <div className="glass-panel p-4 sm:p-6 lg:col-span-5 order-1 lg:order-2 flex flex-col gap-3 sm:gap-4 items-center">
+          <h2 className="text-base sm:text-lg font-bold border-b border-[rgba(212,175,55,0.2)] pb-2 w-full text-center text-slate-200">
             {daughter.name} 的起居室
           </h2>
 
           {/* Portrait Container */}
           <div 
-            className="w-full max-w-[280px] h-[340px] rounded-xl relative overflow-hidden flex flex-col items-center justify-end p-4"
+            className="w-full max-w-[220px] sm:max-w-[280px] h-[260px] sm:h-[340px] rounded-xl relative overflow-hidden flex flex-col items-center justify-end p-3 sm:p-4"
             style={{
               background: 'radial-gradient(circle at center, #1b1633 0%, #0d0a1b 100%)',
               border: `2px solid ${OUTFIT_BORDER_COLORS[daughter.outfit] || 'rgba(255,255,255,0.1)'}`,
@@ -139,10 +139,10 @@ export const MainPanel: React.FC = () => {
                 display: 'flex',
                 alignItems: 'end',
                 justifyContent: 'center',
-                height: '270px',
+                height: '200px',
                 width: '100%',
                 position: 'absolute',
-                bottom: '20px',
+                bottom: '16px',
                 left: 0,
                 right: 0,
                 ...getAvatarStyle(daughter.characterId)
@@ -151,7 +151,7 @@ export const MainPanel: React.FC = () => {
               <img 
                 src={getAvatarPath(daughter.age, daughter.outfit, daughter.avatarUrl)} 
                 alt={daughter.name} 
-                className="h-[250px] w-auto object-contain float-animation"
+                className="h-[180px] sm:h-[250px] w-auto object-contain float-animation"
                 onError={(e) => {
                   (e.target as HTMLElement).style.display = 'none';
                 }}
@@ -182,13 +182,13 @@ export const MainPanel: React.FC = () => {
           </div>
 
           {/* Quick info bar */}
-          <div className="w-full grid grid-cols-2 gap-4 text-center mt-2">
-            <div className="bg-[rgba(255,255,255,0.02)] border border-slate-800 p-2.5 rounded-lg">
-              <p className="text-xs text-slate-400">父親親密度</p>
-              <p className="text-lg font-bold text-[#ffd700]">{daughter.relationship} / 100</p>
+          <div className="w-full grid grid-cols-2 gap-2 sm:gap-4 text-center mt-2">
+            <div className="bg-[rgba(255,255,255,0.02)] border border-slate-800 p-2 sm:p-2.5 rounded-lg">
+              <p className="text-[10px] sm:text-xs text-slate-400">父親親密度</p>
+              <p className="text-base sm:text-lg font-bold text-[#ffd700]">{daughter.relationship} / 100</p>
             </div>
-            <div className="bg-[rgba(255,255,255,0.02)] border border-slate-800 p-2.5 rounded-lg">
-              <p className="text-xs text-slate-400">持有裝備</p>
+            <div className="bg-[rgba(255,255,255,0.02)] border border-slate-800 p-2 sm:p-2.5 rounded-lg">
+              <p className="text-[10px] sm:text-xs text-slate-400">持有裝備</p>
               <p className="text-sm font-bold text-slate-200 mt-1 truncate">
                 {daughter.outfit === 'default' ? '無戰術裝備' : OUTFIT_NAMES[daughter.outfit]}
               </p>
@@ -234,29 +234,29 @@ export const MainPanel: React.FC = () => {
         </div>
 
         {/* Right Side: Command Center / Actions Panel */}
-        <div className="glass-panel p-6 lg:col-span-3 order-2 lg:order-3 flex flex-col gap-4">
-          <h2 className="text-lg font-bold border-b border-[rgba(212,175,55,0.2)] pb-2 mb-2 flex items-center gap-2 text-slate-200">
-            <Coins size={18} /> 行動指揮中心
+        <div className="glass-panel p-4 sm:p-6 lg:col-span-3 order-2 lg:order-3 flex flex-col gap-3 sm:gap-4">
+          <h2 className="text-base sm:text-lg font-bold border-b border-[rgba(212,175,55,0.2)] pb-2 mb-1 sm:mb-2 flex items-center gap-2 text-slate-200">
+            <Coins size={16} className="sm:w-[18px] sm:h-[18px]" /> 行動指揮中心
           </h2>
 
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-2 sm:gap-3">
             <button 
               onClick={() => setScreen('scheduler')} 
-              className="btn-fantasy w-full py-4 text-sm flex items-center justify-center gap-2"
+              className="btn-fantasy w-full py-3 sm:py-4 text-xs sm:text-sm flex items-center justify-center gap-2"
             >
               <Calendar size={18} /> 制定本月日程
             </button>
 
             <button 
               onClick={() => setScreen('store')} 
-              className="btn-fantasy-sec w-full py-3.5 text-sm flex items-center justify-center gap-2 hover:border-[#d4af37] hover:text-[#d4af37]"
+              className="btn-fantasy-sec w-full py-3 sm:py-3.5 text-xs sm:text-sm flex items-center justify-center gap-2 hover:border-[#d4af37] hover:text-[#d4af37]"
             >
               <ShoppingCart size={18} /> 拜訪武器禮品店
             </button>
 
             <button 
               onClick={startAdventure} 
-              className="btn-fantasy-sec w-full py-3.5 text-sm flex items-center justify-center gap-2 hover:border-emerald-500 hover:text-emerald-400"
+              className="btn-fantasy-sec w-full py-3 sm:py-3.5 text-xs sm:text-sm flex items-center justify-center gap-2 hover:border-emerald-500 hover:text-emerald-400"
             >
               <Compass size={18} /> 前往幽暗森林修行
             </button>
@@ -290,12 +290,12 @@ export const MainPanel: React.FC = () => {
       </div>
 
       {/* Log Feed Display */}
-      <div className="glass-panel p-5 flex flex-col gap-3">
-        <h3 className="text-sm font-bold flex items-center gap-2 text-slate-300">
-          <History size={16} /> 養育事件日誌
+      <div className="glass-panel p-3 sm:p-5 flex flex-col gap-2 sm:gap-3">
+        <h3 className="text-xs sm:text-sm font-bold flex items-center gap-2 text-slate-300">
+          <History size={14} className="sm:w-4 sm:h-4" /> 養育事件日誌
         </h3>
         
-        <div className="h-40 overflow-y-auto bg-slate-950/80 border border-slate-900/60 rounded-lg p-3 space-y-2 text-xs font-mono">
+        <div className="h-32 sm:h-40 overflow-y-auto bg-slate-950/80 border border-slate-900/60 rounded-lg p-2 sm:p-3 space-y-2 text-[10px] sm:text-xs font-mono">
           {logs.length === 0 ? (
             <p className="text-slate-500 text-center italic mt-12">尚無養育日誌，請開始制定日程運作遊戲。</p>
           ) : (
