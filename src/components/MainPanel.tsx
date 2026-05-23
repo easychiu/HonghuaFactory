@@ -111,12 +111,12 @@ export const MainPanel: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         
         {/* Left Side: Attributes Panel */}
-        <div className="lg:col-span-4 flex flex-col gap-4 w-full">
+        <div className="lg:col-span-4 order-3 lg:order-1 flex flex-col gap-4 w-full">
           <StatPanel daughter={daughter} />
         </div>
 
         {/* Center: Character Chamber Display */}
-        <div className="glass-panel p-6 lg:col-span-5 flex flex-col gap-4 items-center">
+        <div className="glass-panel p-6 lg:col-span-5 order-1 lg:order-2 flex flex-col gap-4 items-center">
           <h2 className="text-lg font-bold border-b border-[rgba(212,175,55,0.2)] pb-2 w-full text-center text-slate-200">
             {daughter.name} 的起居室
           </h2>
@@ -234,7 +234,7 @@ export const MainPanel: React.FC = () => {
         </div>
 
         {/* Right Side: Command Center / Actions Panel */}
-        <div className="glass-panel p-6 lg:col-span-3 flex flex-col gap-4">
+        <div className="glass-panel p-6 lg:col-span-3 order-2 lg:order-3 flex flex-col gap-4">
           <h2 className="text-lg font-bold border-b border-[rgba(212,175,55,0.2)] pb-2 mb-2 flex items-center gap-2 text-slate-200">
             <Coins size={18} /> 行動指揮中心
           </h2>

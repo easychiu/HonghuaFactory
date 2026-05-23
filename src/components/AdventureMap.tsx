@@ -406,11 +406,11 @@ export const AdventureMap: React.FC = () => {
               {/* Team Party Members */}
               <div className="flex flex-col gap-4 w-full md:w-auto">
                 <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest text-center md:text-left">王女小隊</h3>
-                <div className="flex flex-row md:flex-col gap-3 justify-center">
+                <div className="flex flex-col sm:flex-row md:flex-col gap-3 justify-center items-center w-full">
                   
                   {/* Single player daughter */}
                   {combatState.party.solo && (
-                    <div className={`flex items-center gap-3 p-3 rounded-xl border ${combatState.turn === 'player' ? 'border-emerald-500/40 bg-emerald-950/10' : 'border-slate-800 bg-slate-900/40'} min-w-[200px]`}>
+                    <div className={`flex items-center gap-3 p-3 rounded-xl border ${combatState.turn === 'player' ? 'border-emerald-500/40 bg-emerald-950/10' : 'border-slate-800 bg-slate-900/40'} w-full max-w-[240px] md:min-w-[200px]`}>
                       <img 
                         src={daughterAvatar} 
                         alt={daughter.name} 
@@ -452,7 +452,7 @@ export const AdventureMap: React.FC = () => {
                     <>
                       {/* Emilia */}
                       {combatState.party.emilia && (
-                        <div className={`flex items-center gap-3 p-3 rounded-xl border ${combatState.party.emilia.hp <= 0 ? 'border-red-950 bg-red-950/10 opacity-50' : 'border-slate-800 bg-slate-900/40'} min-w-[200px]`}>
+                        <div className={`flex items-center gap-3 p-3 rounded-xl border ${combatState.party.emilia.hp <= 0 ? 'border-red-950 bg-red-950/10 opacity-50' : 'border-slate-800 bg-slate-900/40'} w-full max-w-[240px] md:min-w-[200px]`}>
                           <img 
                             src={daughterAvatar} 
                             alt={daughter.name} 
@@ -489,7 +489,7 @@ export const AdventureMap: React.FC = () => {
 
                       {/* yv */}
                       {combatState.party.yv && (
-                        <div className={`flex items-center gap-3 p-3 rounded-xl border ${combatState.party.yv.hp <= 0 ? 'border-red-950 bg-red-950/10 opacity-50' : 'border-slate-800 bg-slate-900/40'} min-w-[200px]`}>
+                        <div className={`flex items-center gap-3 p-3 rounded-xl border ${combatState.party.yv.hp <= 0 ? 'border-red-950 bg-red-950/10 opacity-50' : 'border-slate-800 bg-slate-900/40'} w-full max-w-[240px] md:min-w-[200px]`}>
                           <img 
                             src={yvAvatar} 
                             alt="yv" 
@@ -525,7 +525,7 @@ export const AdventureMap: React.FC = () => {
 
                       {/* jumbo */}
                       {combatState.party.jumbo && (
-                        <div className={`flex items-center gap-3 p-3 rounded-xl border ${combatState.party.jumbo.hp <= 0 ? 'border-red-950 bg-red-950/10 opacity-50' : 'border-slate-800 bg-slate-900/40'} min-w-[200px]`}>
+                        <div className={`flex items-center gap-3 p-3 rounded-xl border ${combatState.party.jumbo.hp <= 0 ? 'border-red-950 bg-red-950/10 opacity-50' : 'border-slate-800 bg-slate-900/40'} w-full max-w-[240px] md:min-w-[200px]`}>
                           <img 
                             src={jumboAvatar} 
                             alt="jumbo" 
@@ -698,7 +698,7 @@ export const AdventureMap: React.FC = () => {
                       {combatState.party.emilia && combatState.party.emilia.hp > 0 && (
                         <div className="p-3 bg-slate-900/30 rounded-xl border border-slate-850 flex flex-col md:flex-row md:items-center gap-3">
                           <span className="font-bold text-white text-xs md:w-20">艾蜜莉亞:</span>
-                          <div className="flex-1 grid grid-cols-3 gap-2">
+                          <div className="flex-1 grid grid-cols-2 sm:grid-cols-3 gap-2">
                             <button 
                               onClick={() => executePlayerAction('emilia', 'attack')}
                               className="btn-fantasy text-[10px] py-2"
@@ -715,7 +715,7 @@ export const AdventureMap: React.FC = () => {
                             {combatState.monster?.sisterId ? (
                               <button 
                                 onClick={() => executePlayerAction('emilia', 'observe')}
-                                className="btn-fantasy text-[10px] py-2 border-amber-500/50 text-amber-300 hover:bg-amber-950/15"
+                                className="btn-fantasy text-[10px] py-2 border-amber-500/50 text-amber-300 hover:bg-amber-950/15 col-span-2 sm:col-span-1"
                               >
                                 🔍 仔細觀察
                               </button>
@@ -728,7 +728,7 @@ export const AdventureMap: React.FC = () => {
                                     <button 
                                       onClick={() => executePlayerAction('emilia', 'skill_combo')}
                                       disabled={disabled}
-                                      className="btn-fantasy text-[10px] py-2 bg-gradient-to-r from-violet-500 via-[#ffd700] to-red-500 border-none disabled:opacity-40 animate-pulse font-bold text-white shadow-[0_0_8px_rgba(255,215,0,0.4)]"
+                                      className="btn-fantasy text-[10px] py-2 bg-gradient-to-r from-violet-500 via-[#ffd700] to-red-500 border-none disabled:opacity-40 animate-pulse font-bold text-white shadow-[0_0_8px_rgba(255,215,0,0.4)] col-span-2 sm:col-span-1"
                                     >
                                       ✨ 友情大連擊 (三人12)
                                     </button>
@@ -738,7 +738,7 @@ export const AdventureMap: React.FC = () => {
                                     <button 
                                       onClick={() => executePlayerAction('emilia', 'skill_combo')}
                                       disabled={combatState.party.emilia.mp < 30}
-                                      className="btn-fantasy text-[10px] py-2 bg-gradient-to-r from-amber-500 to-red-500 border-none disabled:opacity-40 text-white font-semibold"
+                                      className="btn-fantasy text-[10px] py-2 bg-gradient-to-r from-amber-500 to-red-500 border-none disabled:opacity-40 text-white font-semibold col-span-2 sm:col-span-1"
                                     >
                                       ✨ 單人連擊 (30)
                                     </button>
@@ -756,7 +756,7 @@ export const AdventureMap: React.FC = () => {
                           <span className="font-bold text-indigo-300 text-xs md:w-20">yv (賢者):</span>
                           
                           {healTargetSelect ? (
-                            <div className="flex-1 flex gap-2 items-center">
+                            <div className="flex-1 flex flex-wrap gap-2 items-center">
                               <span className="text-[10px] text-slate-400">選擇治癒目標:</span>
                               <button 
                                 onClick={() => { executePlayerAction('yv', 'skill_heal', 'emilia'); setHealTargetSelect(false); }}
@@ -784,7 +784,7 @@ export const AdventureMap: React.FC = () => {
                               </button>
                             </div>
                           ) : (
-                            <div className="flex-1 grid grid-cols-3 gap-2">
+                            <div className="flex-1 grid grid-cols-2 sm:grid-cols-3 gap-2">
                               <button 
                                 onClick={() => executePlayerAction('yv', 'attack')}
                                 className="btn-fantasy text-[10px] py-2"
@@ -801,7 +801,7 @@ export const AdventureMap: React.FC = () => {
                               <button 
                                 onClick={() => setHealTargetSelect(true)}
                                 disabled={combatState.party.yv.mp < 12}
-                                className="btn-fantasy-sec text-[10px] py-2 disabled:opacity-40 text-emerald-300"
+                                className="btn-fantasy-sec text-[10px] py-2 disabled:opacity-40 text-emerald-300 col-span-2 sm:col-span-1"
                               >
                                 💚 治癒術 (12)
                               </button>
@@ -814,7 +814,7 @@ export const AdventureMap: React.FC = () => {
                       {combatState.party.jumbo && combatState.party.jumbo.hp > 0 && (
                         <div className="p-3 bg-slate-900/30 rounded-xl border border-slate-850 flex flex-col md:flex-row md:items-center gap-3">
                           <span className="font-bold text-amber-300 text-xs md:w-20">jumbo:</span>
-                          <div className="flex-1 grid grid-cols-3 gap-2">
+                          <div className="flex-1 grid grid-cols-2 sm:grid-cols-3 gap-2">
                             <button 
                               onClick={() => executePlayerAction('jumbo', 'attack')}
                               className="btn-fantasy text-[10px] py-2"
@@ -831,7 +831,7 @@ export const AdventureMap: React.FC = () => {
                             <button 
                               onClick={() => executePlayerAction('jumbo', 'skill_smash')}
                               disabled={combatState.party.jumbo.mp < 15}
-                              className="btn-fantasy-sec text-[10px] py-2 disabled:opacity-40"
+                              className="btn-fantasy-sec text-[10px] py-2 disabled:opacity-40 col-span-2 sm:col-span-1"
                             >
                               🔨 碎石擊 (15)
                             </button>

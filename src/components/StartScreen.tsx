@@ -40,45 +40,54 @@ export const StartScreen: React.FC = () => {
     <div className="flex-1 flex items-center justify-center p-4 md:p-8 min-h-[95vh] w-full max-w-5xl mx-auto">
       <div className="glass-panel w-full p-6 md:p-10 animate-slide-up border-2 border-[#d4af37]/35 shadow-[0_0_35px_rgba(212,175,55,0.2)]">
         
-        {/* Game Title */}
-        <div className="text-center mb-8 relative">
-          <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-[#ffd700] via-[#ffb703] to-[#e9c46a] bg-clip-text text-transparent drop-shadow-md">
-            《蔚藍海岸的王女們》
-          </h1>
-          <p className="text-xs font-semibold tracking-widest text-[#a855f7] uppercase mt-2">
-            Multi-Protagonist (NG+) Princess Maker Web Simulation
-          </p>
-          <button
-            type="button"
-            onClick={() => {
-              unlockAllProtagonists();
-              alert('已解鎖全部王女！現在可以點選艾莉卡或艾蜜莉亞進行遊戲！');
-            }}
-            className="absolute top-0 right-0 text-[10px] text-[#a855f7] hover:text-[#c084fc] border border-[#a855f7]/30 hover:border-[#c084fc]/50 bg-[#a855f7]/5 hover:bg-[#a855f7]/10 px-2.5 py-1 rounded transition-all flex items-center gap-1 font-mono uppercase"
-          >
-            🔓 Debug Unlock
-          </button>
+        {/* Game Title & Top Buttons Bar */}
+        <div className="flex flex-col items-center justify-center gap-4 mb-8 pb-6 border-b border-slate-900/60 relative">
+          <div className="flex flex-col md:flex-row items-center justify-between w-full gap-4">
+            {/* Left Button Group (Gallery & Achievements) */}
+            <div className="flex flex-wrap items-center justify-center gap-2 order-2 md:order-1">
+              {completedEndings.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setShowGallery(true)}
+                  className="text-[10px] text-[#ffd700] hover:text-[#ffe566] border border-[#d4af37]/30 hover:border-[#ffd700]/50 bg-[#d4af37]/5 hover:bg-[#d4af37]/10 px-2.5 py-1.5 rounded transition-all flex items-center gap-1.5 uppercase font-semibold"
+                >
+                  <Trophy size={12} /> 結局圖鑑 ({completedEndings.length})
+                </button>
+              )}
 
-          {/* Ending Gallery Button */}
-          {completedEndings.length > 0 && (
-            <button
-              type="button"
-              onClick={() => setShowGallery(true)}
-              className="absolute top-0 left-0 text-[10px] text-[#ffd700] hover:text-[#ffe566] border border-[#d4af37]/30 hover:border-[#ffd700]/50 bg-[#d4af37]/5 hover:bg-[#d4af37]/10 px-2.5 py-1 rounded transition-all flex items-center gap-1 uppercase"
-            >
-              <Trophy size={12} /> 結局圖鑑 ({completedEndings.length})
-            </button>
-          )}
+              <button
+                type="button"
+                onClick={() => setShowAchievements(true)}
+                className="text-[10px] text-purple-400 hover:text-purple-300 border border-purple-500/30 hover:border-purple-400/50 bg-purple-500/5 hover:bg-purple-500/10 px-2.5 py-1.5 rounded transition-all flex items-center gap-1.5 uppercase font-semibold"
+              >
+                <Trophy size={12} /> 榮譽成就 ({state.unlockedAchievements?.length || 0})
+              </button>
+            </div>
 
-          {/* Achievements Button */}
-          <button
-            type="button"
-            onClick={() => setShowAchievements(true)}
-            className="absolute top-0 left-0 text-[10px] text-purple-400 hover:text-purple-300 border border-purple-500/30 hover:border-purple-400/50 bg-purple-500/5 hover:bg-purple-500/10 px-2.5 py-1 rounded transition-all flex items-center gap-1 uppercase"
-            style={completedEndings.length > 0 ? { left: '115px' } : undefined}
-          >
-            <Trophy size={12} /> 榮譽成就 ({state.unlockedAchievements?.length || 0})
-          </button>
+            {/* Title Center */}
+            <div className="text-center order-1 md:order-2 flex-1">
+              <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-[#ffd700] via-[#ffb703] to-[#e9c46a] bg-clip-text text-transparent drop-shadow-md tracking-wide">
+                《蔚藍海岸的王女們》
+              </h1>
+              <p className="text-[10px] font-semibold tracking-widest text-[#a855f7] uppercase mt-1">
+                Multi-Protagonist (NG+) Princess Maker Web Simulation
+              </p>
+            </div>
+
+            {/* Right Button Group (Debug Unlock) */}
+            <div className="flex items-center order-3">
+              <button
+                type="button"
+                onClick={() => {
+                  unlockAllProtagonists();
+                  alert('已解鎖全部王女！現在可以點選艾莉卡或艾蜜莉亞進行遊戲！');
+                }}
+                className="text-[10px] text-[#a855f7] hover:text-[#c084fc] border border-[#a855f7]/30 hover:border-[#c084fc]/50 bg-[#a855f7]/5 hover:bg-[#a855f7]/10 px-2.5 py-1.5 rounded transition-all flex items-center gap-1.5 font-mono uppercase font-semibold"
+              >
+                🔓 Debug Unlock
+              </button>
+            </div>
+          </div>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-8">
@@ -173,15 +182,15 @@ export const StartScreen: React.FC = () => {
                   onClick={() => handleCharSelect('erica')}
                   className={`p-3.5 rounded-xl border transition-all flex items-center gap-4 relative ${
                     !unlockedCharacters.includes('erica') 
-                      ? 'opacity-40 cursor-not-allowed bg-slate-950/60 border-slate-950' 
+                      ? 'border-slate-950' 
                       : selectedChar === 'erica'
                       ? 'bg-[rgba(212,175,55,0.06)] border-[#ffd700] shadow-[0_0_12px_rgba(212,175,55,0.08)] cursor-pointer' 
                       : 'bg-slate-950/30 border-slate-900 hover:border-slate-800 cursor-pointer'
                   }`}
                 >
                   {!unlockedCharacters.includes('erica') && (
-                    <div className="absolute inset-0 bg-slate-950/20 rounded-xl flex items-center justify-end pr-4 z-10">
-                      <span className="text-[10px] text-red-400 font-bold flex items-center gap-1 bg-red-950/30 border border-red-900/30 px-2 py-0.5 rounded shadow-sm">
+                    <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-[1.5px] rounded-xl flex items-center justify-center z-10">
+                      <span className="text-[10px] text-red-400 font-bold flex items-center gap-1 bg-red-950/80 border border-red-900/30 px-3 py-1 rounded shadow-sm">
                         <Lock size={10} /> 達成任意結局解鎖
                       </span>
                     </div>
@@ -205,15 +214,15 @@ export const StartScreen: React.FC = () => {
                   onClick={() => handleCharSelect('emilia')}
                   className={`p-3.5 rounded-xl border transition-all flex items-center gap-4 relative ${
                     !unlockedCharacters.includes('emilia') 
-                      ? 'opacity-40 cursor-not-allowed bg-slate-950/60 border-slate-950' 
+                      ? 'border-slate-950' 
                       : selectedChar === 'emilia'
                       ? 'bg-[rgba(212,175,55,0.06)] border-[#ffd700] shadow-[0_0_12px_rgba(212,175,55,0.08)] cursor-pointer' 
                       : 'bg-slate-950/30 border-slate-900 hover:border-slate-800 cursor-pointer'
                   }`}
                 >
                   {!unlockedCharacters.includes('emilia') && (
-                    <div className="absolute inset-0 bg-slate-950/20 rounded-xl flex items-center justify-end pr-4 z-10">
-                      <span className="text-[10px] text-red-400 font-bold flex items-center gap-1 bg-red-950/30 border border-red-900/30 px-2 py-0.5 rounded shadow-sm">
+                    <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-[1.5px] rounded-xl flex items-center justify-center z-10">
+                      <span className="text-[10px] text-red-400 font-bold flex items-center gap-1 bg-red-950/80 border border-red-900/30 px-3 py-1 rounded shadow-sm">
                         <Lock size={10} /> 達成認親或主線結局解鎖
                       </span>
                     </div>

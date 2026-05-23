@@ -92,7 +92,7 @@ export const StatPanel: React.FC<StatPanelProps> = ({ daughter }) => {
           基礎屬性面板
         </span>
         
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-1 gap-x-4 gap-y-2.5">
           {Object.entries(ATTRIBUTE_LABELS).map(([key, item]) => {
             const val = daughter.attributes[key as AttributeKey] || 0;
             const max = item.max;

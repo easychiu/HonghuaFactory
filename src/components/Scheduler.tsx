@@ -104,61 +104,61 @@ export const Scheduler: React.FC = () => {
         {/* Left Slot Selection Panel (lg:col-span-2) */}
         <div className="lg:col-span-2 flex flex-col gap-6">
           {/* Timeline Slots */}
-          <div className="glass-panel p-6 grid grid-cols-3 gap-4 text-center">
+          <div className="glass-panel p-3 sm:p-6 grid grid-cols-3 gap-2 sm:gap-4 text-center">
             {/* Early Slot */}
             <div 
               onClick={() => setActiveSlot(0)}
-              className={`p-4 rounded-xl border cursor-pointer transition-all ${
+              className={`p-2 sm:p-4 rounded-xl border cursor-pointer transition-all ${
                 activeSlot === 0 
                   ? 'bg-[rgba(212,175,55,0.1)] border-[#d4af37] shadow-[0_0_15px_rgba(212,175,55,0.15)]' 
                   : 'bg-[rgba(255,255,255,0.02)] border-slate-800 hover:border-slate-700'
               }`}
             >
-              <div className="text-[10px] text-[#ffd700] uppercase font-bold tracking-wider mb-1">上旬 (1日 - 10日)</div>
-              <div className="text-sm font-bold text-white truncate">
+              <div className="text-[9px] sm:text-[10px] text-[#ffd700] uppercase font-bold tracking-wider mb-1">上旬</div>
+              <div className="text-xs sm:text-sm font-bold text-white truncate">
                 {allList.find(a => a.id === selected[0])?.name || '未選擇'}
               </div>
-              <div className="text-[10px] text-slate-400 mt-2 truncate">
-                {allList.find(a => a.id === selected[0])?.type === 'work' ? '打工賺錢' : 
-                 allList.find(a => a.id === selected[0])?.type === 'study' ? '學習課業' : '修養身心'}
+              <div className="text-[8px] sm:text-[10px] text-slate-400 mt-1 sm:mt-2 truncate">
+                {allList.find(a => a.id === selected[0])?.type === 'work' ? '打工' : 
+                 allList.find(a => a.id === selected[0])?.type === 'study' ? '學習' : '休息'}
               </div>
             </div>
 
             {/* Mid Slot */}
             <div 
               onClick={() => setActiveSlot(1)}
-              className={`p-4 rounded-xl border cursor-pointer transition-all ${
+              className={`p-2 sm:p-4 rounded-xl border cursor-pointer transition-all ${
                 activeSlot === 1 
                   ? 'bg-[rgba(212,175,55,0.1)] border-[#d4af37] shadow-[0_0_15px_rgba(212,175,55,0.15)]' 
                   : 'bg-[rgba(255,255,255,0.02)] border-slate-800 hover:border-slate-700'
               }`}
             >
-              <div className="text-[10px] text-[#ffd700] uppercase font-bold tracking-wider mb-1">中旬 (11日 - 20日)</div>
-              <div className="text-sm font-bold text-white truncate">
+              <div className="text-[9px] sm:text-[10px] text-[#ffd700] uppercase font-bold tracking-wider mb-1">中旬</div>
+              <div className="text-xs sm:text-sm font-bold text-white truncate">
                 {allList.find(a => a.id === selected[1])?.name || '未選擇'}
               </div>
-              <div className="text-[10px] text-slate-400 mt-2 truncate">
-                {allList.find(a => a.id === selected[1])?.type === 'work' ? '打工賺錢' : 
-                 allList.find(a => a.id === selected[1])?.type === 'study' ? '學習課業' : '修養身心'}
+              <div className="text-[8px] sm:text-[10px] text-slate-400 mt-1 sm:mt-2 truncate">
+                {allList.find(a => a.id === selected[1])?.type === 'work' ? '打工' : 
+                 allList.find(a => a.id === selected[1])?.type === 'study' ? '學習' : '休息'}
               </div>
             </div>
 
             {/* Late Slot */}
             <div 
               onClick={() => setActiveSlot(2)}
-              className={`p-4 rounded-xl border cursor-pointer transition-all ${
+              className={`p-2 sm:p-4 rounded-xl border cursor-pointer transition-all ${
                 activeSlot === 2 
                   ? 'bg-[rgba(212,175,55,0.1)] border-[#d4af37] shadow-[0_0_15px_rgba(212,175,55,0.15)]' 
                   : 'bg-[rgba(255,255,255,0.02)] border-slate-800 hover:border-slate-700'
               }`}
             >
-              <div className="text-[10px] text-[#ffd700] uppercase font-bold tracking-wider mb-1">下旬 (21日 - 30日)</div>
-              <div className="text-sm font-bold text-white truncate">
+              <div className="text-[9px] sm:text-[10px] text-[#ffd700] uppercase font-bold tracking-wider mb-1">下旬</div>
+              <div className="text-xs sm:text-sm font-bold text-white truncate">
                 {allList.find(a => a.id === selected[2])?.name || '未選擇'}
               </div>
-              <div className="text-[10px] text-slate-400 mt-2 truncate">
-                {allList.find(a => a.id === selected[2])?.type === 'work' ? '打工賺錢' : 
-                 allList.find(a => a.id === selected[2])?.type === 'study' ? '學習課業' : '修養身心'}
+              <div className="text-[8px] sm:text-[10px] text-slate-400 mt-1 sm:mt-2 truncate">
+                {allList.find(a => a.id === selected[2])?.type === 'work' ? '打工' : 
+                 allList.find(a => a.id === selected[2])?.type === 'study' ? '學習' : '休息'}
               </div>
             </div>
           </div>
