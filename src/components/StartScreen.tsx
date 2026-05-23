@@ -162,6 +162,7 @@ export const StartScreen: React.FC = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (isCharLocked) return;
     const finalCharacterId: CharacterId = isFirstPlaythrough ? 'honghua' : selectedChar;
     const finalName = name || (finalCharacterId === 'honghua' ? '紅花' : finalCharacterId === 'erica' ? '艾莉卡' : '艾蜜莉亞');
     initGame(finalName, birthMonth, birthDay, finalCharacterId, selectedFather);
@@ -501,7 +502,8 @@ export const StartScreen: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="w-full sm:w-auto btn-fantasy py-3 text-base font-bold flex items-center justify-center gap-2 shadow-lg px-6"
+                  disabled={isCharLocked}
+                  className={`w-full sm:w-auto btn-fantasy py-3 text-base font-bold flex items-center justify-center gap-2 shadow-lg px-6 ${isCharLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
                   <Sparkles size={20} /> 展開王女養育之旅
                 </button>
