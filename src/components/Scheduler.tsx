@@ -2,13 +2,12 @@ import React, { useState } from 'react';
 import { useGame, ACTIVITIES } from '../contexts/GameContext';
 import { COURSES } from '../data/courses';
 import type { Activity } from '../types';
-import { Calendar, AlertCircle, Coins, BookOpen, Smile, Sparkles, ChevronDown, ChevronUp } from 'lucide-react';
+import { Calendar, AlertCircle, Coins, BookOpen, Smile, Sparkles } from 'lucide-react';
 
 export const Scheduler: React.FC = () => {
   const { state, setSchedule, startScheduleExecution, setScreen } = useGame();
   const { daughter } = state;
 
-  // Filter activities: only show street_performance if the father is a bard
   const availableActivities = ACTIVITIES.filter(act => {
     if (act.id === 'street_performance') {
       return daughter.fatherBackground === 'bard';
@@ -18,21 +17,32 @@ export const Scheduler: React.FC = () => {
 
   const allList = [...availableActivities, ...COURSES];
 
-  // Selected activities for [early, mid, late]
-  const [selected, setSelected] = useState<[string, string, string]>([
-    allList.find(a => a.type === 'work')?.id || 'farm',
-    COURSES[0].id,
-    allList.find(a => a.id === 'rest_home')?.id || 'rest_home'
-  ]);
-
-  // Which period we are currently choosing for (0: early, 1: mid, 2: late)
+  const [selected, setSelected] = useState<[string, string, string]>(['', '', '']);
   const [activeSlot, setActiveSlot] = useState<0 | 1 | 2>(0);
+  const [selectedTypeBySlot, setSelectedTypeBySlot] = useState<[
+    Activity['type'] | null,
+    Activity['type'] | null,
+    Activity['type'] | null
+  ]>([null, null, null]);
 
-  // Which category accordion is open (null = all collapsed)
-  const [openCategory, setOpenCategory] = useState<'work' | 'study' | 'rest' | null>(null);
+  const resolveActivity = (id: string) => allList.find(a => a.id === id);
+  const getActivityType = (id: string): Activity['type'] | null => resolveActivity(id)?.type ?? null;
 
-  const toggleCategory = (cat: 'work' | 'study' | 'rest') => {
-    setOpenCategory(prev => (prev === cat ? null : cat));
+  const handleSelectType = (activityType: Activity['type']) => {
+    setSelectedTypeBySlot(prev => {
+      const copy = [...prev] as [Activity['type'] | null, Activity['type'] | null, Activity['type'] | null];
+      copy[activeSlot] = activityType;
+      return copy;
+    });
+
+    setSelected(prev => {
+      const copy = [...prev] as [string, string, string];
+      const currentType = getActivityType(copy[activeSlot]);
+      if (currentType !== activityType) {
+        copy[activeSlot] = '';
+      }
+      return copy;
+    });
   };
 
   const handleSelectActivity = (activityId: string) => {
@@ -41,23 +51,24 @@ export const Scheduler: React.FC = () => {
       copy[activeSlot] = activityId;
       return copy;
     });
-    // Auto advance slot to make selection fluid
+
     if (activeSlot < 2) {
       setActiveSlot((activeSlot + 1) as 0 | 1 | 2);
     }
   };
 
+  const isScheduleComplete = selected.every(id => id !== '');
+
   const handleConfirm = () => {
+    if (!isScheduleComplete) return;
     setSchedule(selected[0], selected[1], selected[2]);
     startScheduleExecution();
   };
 
-  // Calculate total Gold cost vs reward for the month
   const totalCost = selected.reduce((sum, id) => {
     const act = allList.find(a => a.id === id);
     if (!act) return sum;
     let cost = act.cost;
-    // Scholar discount on humanities courses
     if (daughter.fatherBackground === 'scholar' && act.type === 'study') {
       const isHumanities = ['rhetoric', 'history', 'music_poetry', 'theology_art', 'etiquette'].includes(act.id);
       if (isHumanities) {
@@ -71,12 +82,9 @@ export const Scheduler: React.FC = () => {
     const act = allList.find(a => a.id === id);
     if (!act) return sum;
     let reward = act.reward;
-    // Merchant bonus on work
     if (daughter.fatherBackground === 'merchant' && act.type === 'work') {
       reward = Math.round(reward * 1.2);
     }
-    // Lute performance base reward is 35, plus art bonus (calculated in context)
-    // Here we give a preview of the performance reward
     if (act.id === 'street_performance') {
       reward += Math.round(daughter.attributes.art * 0.15);
     }
@@ -84,179 +92,152 @@ export const Scheduler: React.FC = () => {
   }, 0);
 
   const netGold = totalReward - totalCost;
+  const activeType = selectedTypeBySlot[activeSlot];
+  const visibleActivities = activeType
+    ? activeType === 'study'
+      ? COURSES
+      : availableActivities.filter(a => a.type === activeType)
+    : [];
 
   return (
     <div className="flex-1 flex flex-col gap-6 p-4 md:p-6 w-full max-w-5xl mx-auto animate-slide-up">
-      {/* Header */}
       <div className="glass-panel p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
             <Calendar size={22} className="text-[#ffd700]" /> 制定本月日程
           </h1>
           <p className="text-xs text-slate-400 mt-1">
-            為女兒規劃上旬、中旬及下旬的活動，以培育不同的心智與體魄。
+            先選上旬/中旬/下旬，再選類型，最後選課程、打工或休息內容。
           </p>
         </div>
-        <button 
-          onClick={() => setScreen('main')} 
+        <button
+          onClick={() => setScreen('main')}
           className="btn-fantasy-sec text-xs"
         >
           返回起居室
         </button>
       </div>
 
-      {/* Grid: Slots + Preview */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
-        {/* Left Slot Selection Panel (lg:col-span-2) */}
         <div className="lg:col-span-2 flex flex-col gap-6">
-          {/* Timeline Slots */}
           <div className="glass-panel p-6 grid grid-cols-3 gap-4 text-center">
-            {/* Early Slot */}
-            <div 
+            <div
               onClick={() => setActiveSlot(0)}
               className={`p-4 rounded-xl border cursor-pointer transition-all ${
-                activeSlot === 0 
-                  ? 'bg-[rgba(212,175,55,0.1)] border-[#d4af37] shadow-[0_0_15px_rgba(212,175,55,0.15)]' 
+                activeSlot === 0
+                  ? 'bg-[rgba(212,175,55,0.1)] border-[#d4af37] shadow-[0_0_15px_rgba(212,175,55,0.15)]'
                   : 'bg-[rgba(255,255,255,0.02)] border-slate-800 hover:border-slate-700'
               }`}
             >
               <div className="text-[10px] text-[#ffd700] uppercase font-bold tracking-wider mb-1">上旬</div>
               <div className="text-sm font-bold text-white truncate">
-                {allList.find(a => a.id === selected[0])?.name || '未選擇'}
+                {resolveActivity(selected[0])?.name || '未選擇'}
               </div>
               <div className="text-[10px] text-slate-400 mt-2 truncate">
-                {allList.find(a => a.id === selected[0])?.type === 'work' ? '打工' : 
-                 allList.find(a => a.id === selected[0])?.type === 'study' ? '學習' : '休息'}
+                {selectedTypeBySlot[0] === 'work' ? '打工' : selectedTypeBySlot[0] === 'study' ? '學習' : selectedTypeBySlot[0] === 'rest' ? '休息' : '尚未設定'}
               </div>
             </div>
 
-            {/* Mid Slot */}
-            <div 
+            <div
               onClick={() => setActiveSlot(1)}
               className={`p-4 rounded-xl border cursor-pointer transition-all ${
-                activeSlot === 1 
-                  ? 'bg-[rgba(212,175,55,0.1)] border-[#d4af37] shadow-[0_0_15px_rgba(212,175,55,0.15)]' 
+                activeSlot === 1
+                  ? 'bg-[rgba(212,175,55,0.1)] border-[#d4af37] shadow-[0_0_15px_rgba(212,175,55,0.15)]'
                   : 'bg-[rgba(255,255,255,0.02)] border-slate-800 hover:border-slate-700'
               }`}
             >
               <div className="text-[10px] text-[#ffd700] uppercase font-bold tracking-wider mb-1">中旬</div>
               <div className="text-sm font-bold text-white truncate">
-                {allList.find(a => a.id === selected[1])?.name || '未選擇'}
+                {resolveActivity(selected[1])?.name || '未選擇'}
               </div>
               <div className="text-[10px] text-slate-400 mt-2 truncate">
-                {allList.find(a => a.id === selected[1])?.type === 'work' ? '打工' : 
-                 allList.find(a => a.id === selected[1])?.type === 'study' ? '學習' : '休息'}
+                {selectedTypeBySlot[1] === 'work' ? '打工' : selectedTypeBySlot[1] === 'study' ? '學習' : selectedTypeBySlot[1] === 'rest' ? '休息' : '尚未設定'}
               </div>
             </div>
 
-            {/* Late Slot */}
-            <div 
+            <div
               onClick={() => setActiveSlot(2)}
               className={`p-4 rounded-xl border cursor-pointer transition-all ${
-                activeSlot === 2 
-                  ? 'bg-[rgba(212,175,55,0.1)] border-[#d4af37] shadow-[0_0_15px_rgba(212,175,55,0.15)]' 
+                activeSlot === 2
+                  ? 'bg-[rgba(212,175,55,0.1)] border-[#d4af37] shadow-[0_0_15px_rgba(212,175,55,0.15)]'
                   : 'bg-[rgba(255,255,255,0.02)] border-slate-800 hover:border-slate-700'
               }`}
             >
               <div className="text-[10px] text-[#ffd700] uppercase font-bold tracking-wider mb-1">下旬</div>
               <div className="text-sm font-bold text-white truncate">
-                {allList.find(a => a.id === selected[2])?.name || '未選擇'}
+                {resolveActivity(selected[2])?.name || '未選擇'}
               </div>
               <div className="text-[10px] text-slate-400 mt-2 truncate">
-                {allList.find(a => a.id === selected[2])?.type === 'work' ? '打工' : 
-                 allList.find(a => a.id === selected[2])?.type === 'study' ? '學習' : '休息'}
+                {selectedTypeBySlot[2] === 'work' ? '打工' : selectedTypeBySlot[2] === 'study' ? '學習' : selectedTypeBySlot[2] === 'rest' ? '休息' : '尚未設定'}
               </div>
             </div>
           </div>
 
-          {/* Activity Category Accordion */}
-          <div className="glass-panel overflow-hidden flex flex-col">
-            {/* Jobs Group */}
-            <div className="border-b border-slate-800/60">
-              <button
-                onClick={() => toggleCategory('work')}
-                className="w-full flex items-center justify-between p-4 hover:bg-[rgba(255,255,255,0.02)] transition-colors text-left"
-              >
-                <span className="text-sm font-bold text-[#d4af37] flex items-center gap-1.5 uppercase tracking-wider">
-                  <Coins size={14} /> Part-time Jobs / 打工賺錢
-                </span>
-                {openCategory === 'work' ? <ChevronUp size={16} className="text-slate-400" /> : <ChevronDown size={16} className="text-slate-400" />}
-              </button>
-              {openCategory === 'work' && (
-                <div className="px-4 pb-4 grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {availableActivities.filter(a => a.type === 'work').map(act => (
-                    <ActivityCard 
-                      key={act.id} 
-                      act={act} 
-                      onSelect={handleSelectActivity}
-                      active={selected[activeSlot] === act.id}
-                      fatherBackground={daughter.fatherBackground}
-                    />
-                  ))}
-                </div>
-              )}
+          <div className="glass-panel overflow-hidden flex flex-col p-4 gap-4">
+            <div className="text-xs text-slate-300">
+              目前設定：
+              <span className="text-[#ffd700] font-bold ml-1">
+                {activeSlot === 0 ? '上旬' : activeSlot === 1 ? '中旬' : '下旬'}
+              </span>
             </div>
 
-            {/* Studies Group */}
-            <div className="border-b border-slate-800/60">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
               <button
-                onClick={() => toggleCategory('study')}
-                className="w-full flex items-center justify-between p-4 hover:bg-[rgba(255,255,255,0.02)] transition-colors text-left"
+                onClick={() => handleSelectType('work')}
+                className={`p-3 rounded-lg border text-left text-sm transition-all ${
+                  activeType === 'work'
+                    ? 'bg-[rgba(212,175,55,0.08)] border-[#d4af37] text-[#ffd700]'
+                    : 'bg-[rgba(255,255,255,0.01)] border-slate-800 hover:border-slate-700 text-slate-300'
+                }`}
               >
-                <span className="text-sm font-bold text-[#d4af37] flex items-center gap-1.5 uppercase tracking-wider">
-                  <BookOpen size={14} /> Study Classes / 學習課程
-                </span>
-                {openCategory === 'study' ? <ChevronUp size={16} className="text-slate-400" /> : <ChevronDown size={16} className="text-slate-400" />}
+                <span className="font-bold flex items-center gap-1.5"><Coins size={14} /> 打工</span>
               </button>
-              {openCategory === 'study' && (
-                <div className="px-4 pb-4 grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {COURSES.map(act => (
-                    <ActivityCard 
-                      key={act.id} 
-                      act={act} 
-                      onSelect={handleSelectActivity}
-                      active={selected[activeSlot] === act.id}
-                      fatherBackground={daughter.fatherBackground}
-                    />
-                  ))}
-                </div>
-              )}
+              <button
+                onClick={() => handleSelectType('study')}
+                className={`p-3 rounded-lg border text-left text-sm transition-all ${
+                  activeType === 'study'
+                    ? 'bg-[rgba(212,175,55,0.08)] border-[#d4af37] text-[#ffd700]'
+                    : 'bg-[rgba(255,255,255,0.01)] border-slate-800 hover:border-slate-700 text-slate-300'
+                }`}
+              >
+                <span className="font-bold flex items-center gap-1.5"><BookOpen size={14} /> 學習</span>
+              </button>
+              <button
+                onClick={() => handleSelectType('rest')}
+                className={`p-3 rounded-lg border text-left text-sm transition-all ${
+                  activeType === 'rest'
+                    ? 'bg-[rgba(212,175,55,0.08)] border-[#d4af37] text-[#ffd700]'
+                    : 'bg-[rgba(255,255,255,0.01)] border-slate-800 hover:border-slate-700 text-slate-300'
+                }`}
+              >
+                <span className="font-bold flex items-center gap-1.5"><Smile size={14} /> 休息</span>
+              </button>
             </div>
 
-            {/* Rest Group */}
-            <div>
-              <button
-                onClick={() => toggleCategory('rest')}
-                className="w-full flex items-center justify-between p-4 hover:bg-[rgba(255,255,255,0.02)] transition-colors text-left"
-              >
-                <span className="text-sm font-bold text-[#d4af37] flex items-center gap-1.5 uppercase tracking-wider">
-                  <Smile size={14} /> Leisure Rest / 休息度假
-                </span>
-                {openCategory === 'rest' ? <ChevronUp size={16} className="text-slate-400" /> : <ChevronDown size={16} className="text-slate-400" />}
-              </button>
-              {openCategory === 'rest' && (
-                <div className="px-4 pb-4 grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {availableActivities.filter(a => a.type === 'rest').map(act => (
-                    <ActivityCard 
-                      key={act.id} 
-                      act={act} 
-                      onSelect={handleSelectActivity}
-                      active={selected[activeSlot] === act.id}
-                      fatherBackground={daughter.fatherBackground}
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
+            {activeType ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {visibleActivities.map(act => (
+                  <ActivityCard
+                    key={act.id}
+                    act={act}
+                    onSelect={handleSelectActivity}
+                    active={selected[activeSlot] === act.id}
+                    fatherBackground={daughter.fatherBackground}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="p-3 rounded-lg border border-slate-800 bg-slate-950/40 text-xs text-slate-400">
+                請先為目前旬別選擇類型，才會顯示對應的課程、打工或休息內容。
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Right Financial & Confirmation Panel (lg:col-span-1) */}
         <div className="flex flex-col gap-6">
           <div className="glass-panel p-6 flex flex-col gap-4">
             <h2 className="text-lg font-bold border-b border-[rgba(212,175,55,0.2)] pb-2 text-[#ffd700]">本月預算清算</h2>
-            
+
             <div className="space-y-3 text-sm">
               <div className="flex justify-between">
                 <span className="text-slate-400">目前持有金幣</span>
@@ -286,16 +267,21 @@ export const Scheduler: React.FC = () => {
                 </span>
               </div>
             )}
-            
-            <button 
+
+            <button
               onClick={handleConfirm}
-              className="btn-fantasy w-full py-4 text-base mt-2 flex items-center justify-center gap-2"
+              disabled={!isScheduleComplete}
+              className={`btn-fantasy w-full py-4 text-base mt-2 flex items-center justify-center gap-2 ${
+                !isScheduleComplete ? 'opacity-50 cursor-not-allowed' : ''
+              }`}
             >
               <Sparkles size={18} /> 開始執行日程
             </button>
+            {!isScheduleComplete && (
+              <div className="text-[11px] text-amber-300">請先完成上旬、中旬、下旬三個時段的類型與內容選擇。</div>
+            )}
           </div>
-          
-          {/* Quick Daughter Status info */}
+
           <div className="glass-panel p-6">
             <h3 className="text-sm font-bold border-b border-[rgba(212,175,55,0.15)] pb-2 mb-3">當前狀態提醒</h3>
             <div className="space-y-2 text-xs leading-normal">
@@ -329,7 +315,6 @@ interface ActivityCardProps {
 
 const ActivityCard: React.FC<ActivityCardProps> = ({ act, onSelect, active, fatherBackground }) => {
   let cost = act.cost;
-  // Apply Scholar discount on humanities courses in budget display
   if (fatherBackground === 'scholar' && act.type === 'study') {
     const isHumanities = ['rhetoric', 'history', 'music_poetry', 'theology_art', 'etiquette'].includes(act.id);
     if (isHumanities) {
@@ -338,17 +323,16 @@ const ActivityCard: React.FC<ActivityCardProps> = ({ act, onSelect, active, fath
   }
 
   let reward = act.reward;
-  // Apply Merchant bonus on work in budget display
   if (fatherBackground === 'merchant' && act.type === 'work') {
     reward = Math.round(reward * 1.2);
   }
 
   return (
-    <div 
+    <div
       onClick={() => onSelect(act.id)}
       className={`p-3.5 rounded-lg border cursor-pointer transition-all flex flex-col justify-between ${
-        active 
-          ? 'bg-[rgba(212,175,55,0.06)] border-[#d4af37] shadow-[0_0_10px_rgba(212,175,55,0.08)]' 
+        active
+          ? 'bg-[rgba(212,175,55,0.06)] border-[#d4af37] shadow-[0_0_10px_rgba(212,175,55,0.08)]'
           : 'bg-[rgba(255,255,255,0.01)] border-slate-800/80 hover:border-slate-700 hover:bg-[rgba(255,255,255,0.03)]'
       }`}
     >
