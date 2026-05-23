@@ -49,9 +49,9 @@ export const StoreScreen: React.FC = () => {
   };
 
   return (
-    <div className="flex-1 flex flex-col gap-6 p-4 md:p-6 w-full max-w-5xl mx-auto animate-slide-up">
+    <div className="flex-1 flex flex-col gap-4 sm:gap-6 p-3 sm:p-4 md:p-6 w-full max-w-5xl mx-auto animate-slide-up">
       {/* Header */}
-      <div className="glass-panel p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div className="glass-panel p-3 sm:p-4 flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
         <div className="flex items-center gap-2">
           <ShoppingCart size={22} className="text-[#d4af37]" />
           <div>
@@ -89,7 +89,7 @@ export const StoreScreen: React.FC = () => {
       )}
 
       {/* Items Shelf */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
         {ITEMS.filter((item) => {
           if (item.id.startsWith('bm_')) {
             return state.inventory.includes('black_market_unlocked');

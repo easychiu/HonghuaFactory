@@ -37,8 +37,8 @@ export const StartScreen: React.FC = () => {
   };
 
   return (
-    <div className="flex-1 flex items-center justify-center p-4 md:p-8 min-h-[95vh] w-full max-w-5xl mx-auto">
-      <div className="glass-panel w-full p-6 md:p-10 animate-slide-up border-2 border-[#d4af37]/35 shadow-[0_0_35px_rgba(212,175,55,0.2)]">
+    <div className="flex-1 flex items-center justify-center p-3 sm:p-4 md:p-8 min-h-[95vh] w-full max-w-5xl mx-auto">
+      <div className="glass-panel w-full p-4 sm:p-6 md:p-10 animate-slide-up border-2 border-[#d4af37]/35 shadow-[0_0_35px_rgba(212,175,55,0.2)]">
         
         {/* Game Title & Top Buttons Bar */}
         <div className="flex flex-col items-center justify-center gap-4 mb-8 pb-6 border-b border-slate-900/60 relative">
@@ -66,7 +66,7 @@ export const StartScreen: React.FC = () => {
 
             {/* Title Center */}
             <div className="text-center order-1 md:order-2 flex-1">
-              <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-[#ffd700] via-[#ffb703] to-[#e9c46a] bg-clip-text text-transparent drop-shadow-md tracking-wide">
+              <h1 className="text-xl sm:text-3xl md:text-5xl font-black bg-gradient-to-r from-[#ffd700] via-[#ffb703] to-[#e9c46a] bg-clip-text text-transparent drop-shadow-md tracking-wide">
                 《蔚藍海岸的王女們》
               </h1>
               <p className="text-[10px] font-semibold tracking-widest text-[#a855f7] uppercase mt-1">
@@ -252,7 +252,7 @@ export const StartScreen: React.FC = () => {
               <Shield size={14} /> 選擇父親的身份背景 (決定初始資源與修行隱藏節點)
             </h2>
             
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               
               {/* Lost Knight */}
               <div 

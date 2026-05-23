@@ -55,8 +55,8 @@ export const ExecutionScreen: React.FC = () => {
   const anim = getAnimationProps();
 
   return (
-    <div className="flex-1 flex items-center justify-center p-4 md:p-6 min-h-[85vh]">
-      <div className="glass-panel w-full max-w-2xl p-6 md:p-8 animate-slide-up text-center flex flex-col gap-6">
+    <div className="flex-1 flex items-center justify-center p-3 sm:p-4 md:p-6 min-h-[85vh]">
+      <div className="glass-panel w-full max-w-2xl p-4 sm:p-6 md:p-8 animate-slide-up text-center flex flex-col gap-4 sm:gap-6">
         
         {/* Date Timeline */}
         <div className="flex items-center justify-between border-b border-[rgba(212,175,55,0.2)] pb-4">
@@ -78,7 +78,7 @@ export const ExecutionScreen: React.FC = () => {
 
         {/* Animation Chamber */}
         <div 
-          className="w-full h-64 rounded-xl flex items-center justify-center relative overflow-hidden transition-all duration-500"
+          className="w-full h-48 sm:h-64 rounded-xl flex items-center justify-center relative overflow-hidden transition-all duration-500"
           style={bgStyle}
         >
           {/* Decorative fantasy rings background */}
@@ -104,13 +104,13 @@ export const ExecutionScreen: React.FC = () => {
                     display: 'flex',
                     alignItems: 'end',
                     justifyContent: 'center',
-                    height: '140px'
+                    height: '110px'
                   }}
                 >
                   <img 
                     src={getAvatarPath(daughter.age, daughter.outfit, daughter.avatarUrl)} 
                     alt="Daughter" 
-                    className={`h-32 object-contain ${anim.className}`} 
+                    className={`h-24 sm:h-32 object-contain ${anim.className}`} 
                     style={{
                       filter: daughter.characterId === 'emilia' ? 'hue-rotate(330deg) saturate(0.8) sepia(0.5)' : undefined
                     }}
@@ -145,7 +145,7 @@ export const ExecutionScreen: React.FC = () => {
         </div>
 
         {/* Activity Summary Cards */}
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
           {schedule?.map((actId, idx) => {
             let act = ACTIVITIES.find(a => a.id === actId);
             if (!act) {

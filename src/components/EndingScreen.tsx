@@ -104,15 +104,15 @@ export const EndingScreen: React.FC = () => {
   const vis = getEndingVisuals(matchedEnding.id);
 
   return (
-    <div className="flex-1 flex items-center justify-center p-4 md:p-6 min-h-[90vh]">
-      <div className="glass-panel w-full max-w-4xl p-6 md:p-8 animate-slide-up flex flex-col gap-8 text-center pulse-border">
+    <div className="flex-1 flex items-center justify-center p-3 sm:p-4 md:p-6 min-h-[90vh]">
+      <div className="glass-panel w-full max-w-4xl p-4 sm:p-6 md:p-8 animate-slide-up flex flex-col gap-6 sm:gap-8 text-center pulse-border">
         
         {/* Title */}
         <div>
           <span className="text-xs font-bold text-[#ffd700] uppercase tracking-widest mb-1 flex items-center gap-1.5 justify-center">
             <Trophy size={14} /> 育女養成期滿 - 結局解鎖
           </span>
-          <h1 className="text-3xl md:text-4xl font-extrabold" style={{ color: vis.color }}>
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold" style={{ color: vis.color }}>
             {matchedEnding.name}
           </h1>
         </div>
@@ -121,7 +121,7 @@ export const EndingScreen: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
           {/* Left Side: Portrait with dynamic filters */}
           <div 
-            className="w-full max-w-[280px] h-[340px] rounded-xl relative overflow-hidden flex flex-col items-center justify-center p-4 mx-auto"
+            className="w-full max-w-[220px] sm:max-w-[280px] h-[260px] sm:h-[340px] rounded-xl relative overflow-hidden flex flex-col items-center justify-center p-3 sm:p-4 mx-auto"
             style={{
               background: vis.bg,
               border: `2.5px solid ${vis.color}`,
@@ -144,7 +144,7 @@ export const EndingScreen: React.FC = () => {
               <img 
                 src={getAvatarPath(18, daughter.outfit, daughter.avatarUrl)} 
                 alt={daughter.name} 
-                className="h-[240px] w-auto object-contain float-animation z-10"
+                className="h-[180px] sm:h-[240px] w-auto object-contain float-animation z-10"
                 style={{
                   filter: daughter.characterId === 'emilia' ? 'hue-rotate(330deg) saturate(0.8) sepia(0.5)' : undefined
                 }}

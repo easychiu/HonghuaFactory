@@ -215,6 +215,41 @@ h1, h2, h3, .fantasy-font {
   background: var(--gold-accent);
 }
 
+/* Mobile Responsive Utilities */
+@media (max-width: 640px) {
+  html {
+    font-size: 14px;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    overflow-x: hidden;
+  }
+
+  /* Ensure touch targets are at least 44px */
+  button, a, select, input {
+    min-height: 36px;
+  }
+
+  /* Limit images to container width */
+  img {
+    max-width: 100%;
+    height: auto;
+  }
+
+  /* Make glass panels not overflow */
+  .glass-panel {
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  /* Hide scrollbar on mobile for cleaner look */
+  ::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+}
+
 /* Card Styling */
 .stat-card {
   display: flex;

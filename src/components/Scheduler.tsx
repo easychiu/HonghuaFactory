@@ -79,9 +79,9 @@ export const Scheduler: React.FC = () => {
   const netGold = totalReward - totalCost;
 
   return (
-    <div className="flex-1 flex flex-col gap-6 p-4 md:p-6 w-full max-w-5xl mx-auto animate-slide-up">
+    <div className="flex-1 flex flex-col gap-4 sm:gap-6 p-3 sm:p-4 md:p-6 w-full max-w-5xl mx-auto animate-slide-up">
       {/* Header */}
-      <div className="glass-panel p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div className="glass-panel p-3 sm:p-4 flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
         <div>
           <h1 className="text-xl md:text-2xl font-bold flex items-center gap-2">
             <Calendar size={22} className="text-[#ffd700]" /> 制定本月日程
@@ -99,10 +99,10 @@ export const Scheduler: React.FC = () => {
       </div>
 
       {/* Grid: Slots + Preview */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
         
         {/* Left Slot Selection Panel (lg:col-span-2) */}
-        <div className="lg:col-span-2 flex flex-col gap-6">
+        <div className="lg:col-span-2 flex flex-col gap-4 sm:gap-6">
           {/* Timeline Slots */}
           <div className="glass-panel p-3 sm:p-6 grid grid-cols-3 gap-2 sm:gap-4 text-center">
             {/* Early Slot */}
@@ -164,7 +164,7 @@ export const Scheduler: React.FC = () => {
           </div>
 
           {/* Activity Category Selection Grid */}
-          <div className="glass-panel p-6 flex flex-col gap-6">
+          <div className="glass-panel p-3 sm:p-6 flex flex-col gap-4 sm:gap-6">
             {/* Jobs Group */}
             <div>
               <h3 className="text-sm font-bold text-[#d4af37] mb-3 flex items-center gap-1.5 uppercase tracking-wider">
@@ -222,8 +222,8 @@ export const Scheduler: React.FC = () => {
         </div>
 
         {/* Right Financial & Confirmation Panel (lg:col-span-1) */}
-        <div className="flex flex-col gap-6">
-          <div className="glass-panel p-6 flex flex-col gap-4">
+        <div className="flex flex-col gap-4 sm:gap-6">
+          <div className="glass-panel p-4 sm:p-6 flex flex-col gap-3 sm:gap-4">
             <h2 className="text-lg font-bold border-b border-[rgba(212,175,55,0.2)] pb-2 text-[#ffd700]">本月預算清算</h2>
             
             <div className="space-y-3 text-sm">
@@ -265,7 +265,7 @@ export const Scheduler: React.FC = () => {
           </div>
           
           {/* Quick Daughter Status info */}
-          <div className="glass-panel p-6">
+          <div className="glass-panel p-4 sm:p-6">
             <h3 className="text-sm font-bold border-b border-[rgba(212,175,55,0.15)] pb-2 mb-3">當前狀態提醒</h3>
             <div className="space-y-2 text-xs leading-normal">
               <div className="flex justify-between">

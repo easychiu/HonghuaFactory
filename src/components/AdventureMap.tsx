@@ -147,9 +147,9 @@ export const AdventureMap: React.FC = () => {
   };
 
   return (
-    <div className="flex-1 flex flex-col gap-6 p-4 md:p-6 w-full max-w-5xl mx-auto animate-slide-up">
+    <div className="flex-1 flex flex-col gap-4 sm:gap-6 p-3 sm:p-4 md:p-6 w-full max-w-5xl mx-auto animate-slide-up">
       {/* Header Panel */}
-      <div className="glass-panel p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div className="glass-panel p-3 sm:p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
         <div>
           <h1 className="text-xl md:text-2xl font-bold flex items-center gap-2 text-emerald-400">
             <Swords size={22} /> 野外修行：{adventure.areaName}
@@ -165,7 +165,7 @@ export const AdventureMap: React.FC = () => {
         </div>
 
         {/* HP & Actions */}
-        <div className="flex items-center gap-4 w-full sm:w-auto">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 w-full sm:w-auto">
           <div className="flex flex-col gap-1 w-full sm:min-w-[160px]">
             <div className="flex justify-between items-center text-xs">
               <span className="font-semibold text-slate-300 flex items-center gap-1">
@@ -208,11 +208,11 @@ export const AdventureMap: React.FC = () => {
 
       {/* Slay the Spire Map (Exploring state) */}
       {adventure.status === 'exploring' && (
-        <div className="glass-panel p-6 flex flex-col items-center justify-center relative overflow-hidden">
-          <h2 className="text-sm font-bold text-[#ffd700] mb-4 uppercase tracking-wider">📜 {adventure.areaName} 修行路徑圖</h2>
+        <div className="glass-panel p-3 sm:p-6 flex flex-col items-center justify-center relative overflow-hidden">
+          <h2 className="text-xs sm:text-sm font-bold text-[#ffd700] mb-3 sm:mb-4 uppercase tracking-wider">📜 {adventure.areaName} 修行路徑圖</h2>
           
-          <div className="relative w-full max-w-[600px] overflow-x-auto bg-slate-950/40 rounded-2xl border border-slate-900/60 p-4 shadow-inner">
-            <svg width="600" height="500" className="mx-auto block">
+          <div className="relative w-full max-w-[600px] overflow-x-auto overflow-y-hidden bg-slate-950/40 rounded-2xl border border-slate-900/60 p-2 sm:p-4 shadow-inner -webkit-overflow-scrolling-touch">
+            <svg width="600" height="500" viewBox="0 0 600 500" className="mx-auto block min-w-[400px]">
               {/* Draw connections */}
               {adventure.nodes.map((node) => {
                 const { x: x1, y: y1 } = getCoordinates(node.layer, node.index);
@@ -400,7 +400,7 @@ export const AdventureMap: React.FC = () => {
           <div className="lg:col-span-2 flex flex-col gap-6">
             
             {/* Arena board: Monster vs Party */}
-            <div className="glass-panel p-6 flex flex-col md:flex-row items-center justify-around gap-6 bg-slate-950/20 border-2 border-[#d4af37]/35 min-h-[300px] relative overflow-hidden">
+            <div className="glass-panel p-3 sm:p-6 flex flex-col md:flex-row items-center justify-around gap-4 sm:gap-6 bg-slate-950/20 border-2 border-[#d4af37]/35 min-h-[240px] sm:min-h-[300px] relative overflow-hidden">
               <div className="absolute inset-0 bg-radial-gradient opacity-10 pointer-events-none" />
               
               {/* Team Party Members */}

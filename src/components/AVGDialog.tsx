@@ -71,7 +71,7 @@ export const AVGDialog: React.FC = () => {
         <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-black/80 z-0 pointer-events-none" />
       )}
 
-      <div className="glass-panel w-full max-w-xl p-6 md:p-8 animate-slide-up border-2 border-[#d4af37]/45 shadow-[0_0_40px_rgba(212,175,55,0.3)] flex flex-col gap-6 z-10 relative bg-slate-900/90 backdrop-blur-[3px]">
+      <div className="glass-panel w-full max-w-xl p-4 sm:p-6 md:p-8 animate-slide-up border-2 border-[#d4af37]/45 shadow-[0_0_40px_rgba(212,175,55,0.3)] flex flex-col gap-4 sm:gap-6 z-10 relative bg-slate-900/90 backdrop-blur-[3px]">
         
         {/* Event Header Banner */}
         <div className="flex items-center gap-2 border-b border-slate-800 pb-3 text-[#ffd700] font-bold text-sm tracking-wider">

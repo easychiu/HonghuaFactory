@@ -45,7 +45,7 @@ export const StatPanel: React.FC<StatPanelProps> = ({ daughter }) => {
   const focusPercent = Math.min(100, (daughter.focus / daughter.maxFocus) * 100);
 
   return (
-    <div className="glass-panel p-6 flex flex-col gap-5 w-full">
+    <div className="glass-panel p-4 sm:p-6 flex flex-col gap-4 sm:gap-5 w-full">
       {/* Profile Header */}
       <div className="border-b border-[rgba(255,255,255,0.08)] pb-4 flex flex-col gap-2">
         <div className="flex justify-between items-center">
@@ -92,7 +92,7 @@ export const StatPanel: React.FC<StatPanelProps> = ({ daughter }) => {
           基礎屬性面板
         </span>
         
-        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-1 gap-x-4 gap-y-2.5">
+        <div className="grid grid-cols-2 gap-x-3 sm:gap-x-4 gap-y-2 sm:gap-y-2.5">
           {Object.entries(ATTRIBUTE_LABELS).map(([key, item]) => {
             const val = daughter.attributes[key as AttributeKey] || 0;
             const max = item.max;

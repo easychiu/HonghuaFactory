@@ -93,7 +93,7 @@ export const EndingGallery: React.FC<{ onClose: () => void }> = ({ onClose }) =>
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4" onClick={onClose}>
       <div
-        className="glass-panel w-full max-w-4xl p-6 animate-slide-up border-2 border-[#d4af37]/35 shadow-[0_0_35px_rgba(212,175,55,0.2)] max-h-[90vh] overflow-y-auto"
+        className="glass-panel w-full max-w-4xl p-4 sm:p-6 animate-slide-up border-2 border-[#d4af37]/35 shadow-[0_0_35px_rgba(212,175,55,0.2)] max-h-[90vh] overflow-y-auto"
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}

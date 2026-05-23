@@ -80,7 +80,7 @@ const GameContent: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen flex flex-col justify-between py-6">
+    <div className="min-h-screen flex flex-col justify-between py-3 sm:py-6">
       <SoundToggle />
       
       {/* Dynamic Screen Routing */}
