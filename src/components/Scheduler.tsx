@@ -58,6 +58,31 @@ export const Scheduler: React.FC = () => {
     }
   };
 
+  const handleCopyPreviousSlot = () => {
+    if (activeSlot === 0) return;
+
+    const previousActivityId = selected[activeSlot - 1];
+    if (!previousActivityId) return;
+
+    const previousType = selectedTypeBySlot[activeSlot - 1] ?? getActivityType(previousActivityId);
+
+    setSelected(prev => {
+      const copy = [...prev] as [string, string, string];
+      copy[activeSlot] = previousActivityId;
+      return copy;
+    });
+
+    setSelectedTypeBySlot(prev => {
+      const copy = [...prev] as [Activity['type'] | null, Activity['type'] | null, Activity['type'] | null];
+      copy[activeSlot] = previousType;
+      return copy;
+    });
+
+    if (activeSlot < 2) {
+      setActiveSlot((activeSlot + 1) as 0 | 1 | 2);
+    }
+  };
+
   const isScheduleComplete = selected.every(id => id !== '');
 
   const handleConfirm = () => {
@@ -94,6 +119,11 @@ export const Scheduler: React.FC = () => {
 
   const netGold = totalReward - totalCost;
   const activeType = selectedTypeBySlot[activeSlot];
+  const canCopyPreviousSlot = activeSlot > 0 && selected[activeSlot - 1] !== '';
+  const staminaPercent = Math.max(0, Math.min(100, (daughter.attributes.stamina / 999) * 100));
+  const stressPercentByStamina = daughter.attributes.stamina > 0
+    ? Math.max(0, Math.min(100, (daughter.attributes.stress / daughter.attributes.stamina) * 100))
+    : 0;
   const visibleActivities = activeType
     ? activeType === 'study'
       ? COURSES
@@ -143,10 +173,26 @@ export const Scheduler: React.FC = () => {
 
           <div className="glass-panel overflow-hidden flex flex-col p-4 gap-4">
             <div className="text-xs text-slate-300">
-              目前設定：
-              <span className="text-[#ffd700] font-bold ml-1">
-                {activeSlot === 0 ? '上旬' : activeSlot === 1 ? '中旬' : '下旬'}
-              </span>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                <div>
+                  目前設定：
+                  <span className="text-[#ffd700] font-bold ml-1">
+                    {activeSlot === 0 ? '上旬' : activeSlot === 1 ? '中旬' : '下旬'}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleCopyPreviousSlot}
+                  disabled={!canCopyPreviousSlot}
+                  className={`px-3 py-1.5 rounded-md border text-[11px] transition-all ${
+                    canCopyPreviousSlot
+                      ? 'border-slate-700 bg-slate-900/70 text-slate-200 hover:border-[#d4af37] hover:text-[#ffd700]'
+                      : 'border-slate-800 bg-slate-900/40 text-slate-500 cursor-not-allowed'
+                  }`}
+                >
+                  同上週
+                </button>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
@@ -253,15 +299,31 @@ export const Scheduler: React.FC = () => {
           <div className="glass-panel p-6">
             <h3 className="text-sm font-bold border-b border-[rgba(212,175,55,0.15)] pb-2 mb-3">當前狀態提醒</h3>
             <div className="space-y-2 text-xs leading-normal">
-              <div className="flex justify-between">
-                <span className="text-slate-400">體力限制：</span>
-                <span className="font-bold text-slate-200">{daughter.attributes.stamina}</span>
+              <div className="space-y-1.5">
+                <div className="flex justify-between">
+                  <span className="text-slate-400">體力：</span>
+                  <span className="font-bold text-slate-200">{daughter.attributes.stamina}</span>
+                </div>
+                <div className="w-full h-2.5 bg-slate-900/80 rounded-full overflow-hidden border border-slate-800/40 p-[1px]">
+                  <div
+                    className="h-full rounded-full bg-rose-500 transition-all duration-500 ease-out"
+                    style={{ width: `${staminaPercent}%` }}
+                  />
+                </div>
               </div>
-              <div className="flex justify-between">
-                <span className="text-slate-400">當前疲勞值：</span>
-                <span className={`font-bold ${daughter.attributes.stress > daughter.attributes.stamina ? 'text-red-400' : 'text-slate-200'}`}>
-                  {daughter.attributes.stress}
-                </span>
+              <div className="space-y-1.5">
+                <div className="flex justify-between">
+                  <span className="text-slate-400">疲勞度：</span>
+                  <span className={`font-bold ${daughter.attributes.stress > daughter.attributes.stamina ? 'text-red-400' : 'text-slate-200'}`}>
+                    {daughter.attributes.stress} / {daughter.attributes.stamina}
+                  </span>
+                </div>
+                <div className="w-full h-2.5 bg-slate-900/80 rounded-full overflow-hidden border border-slate-800/40 p-[1px]">
+                  <div
+                    className={`h-full rounded-full transition-all duration-500 ease-out ${daughter.attributes.stress > daughter.attributes.stamina ? 'bg-red-500' : 'bg-slate-400'}`}
+                    style={{ width: `${stressPercentByStamina}%` }}
+                  />
+                </div>
               </div>
               <div className="mt-2 text-[10px] text-slate-500">
                 ※ 提示：如果疲勞值（Stress）超過了體力（Stamina），女兒下個月有機率生病住院，將額外扣除 60 G 醫療費且減少體力！請適度安排休息。
