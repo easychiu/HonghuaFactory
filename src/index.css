@@ -307,3 +307,236 @@ h1, h2, h3, .fantasy-font {
   font-size: 1.1rem;
   z-index: 50;
 }
+
+.schedule-slot-button {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  width: 100%;
+  min-height: 118px;
+  padding: 1rem;
+  text-align: left;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02)),
+    rgba(14, 12, 28, 0.92);
+  color: var(--text-main);
+  cursor: pointer;
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.schedule-slot-button:hover {
+  transform: translateY(-2px);
+  border-color: rgba(212, 175, 55, 0.45);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.22);
+}
+
+.schedule-slot-button:focus-visible {
+  outline: none;
+  border-color: #ffe58a;
+  box-shadow:
+    0 0 0 2px rgba(255, 229, 138, 0.28),
+    0 0 22px rgba(255, 215, 0, 0.32);
+}
+
+.schedule-slot-button.is-active {
+  border-color: var(--gold-accent);
+  background:
+    linear-gradient(180deg, rgba(255, 233, 138, 0.18), rgba(84, 54, 8, 0.2)),
+    rgba(25, 18, 9, 0.96);
+  box-shadow:
+    0 0 0 1px rgba(255, 215, 0, 0.32),
+    0 0 26px rgba(212, 175, 55, 0.28),
+    inset 0 0 20px rgba(255, 223, 130, 0.1);
+  transform: translateY(-2px) scale(1.01);
+}
+
+.schedule-slot-label {
+  font-size: 0.72rem;
+  letter-spacing: 0.22em;
+  color: #ffe58a;
+  font-weight: 700;
+}
+
+.schedule-slot-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #fff8dc;
+  line-height: 1.35;
+}
+
+.schedule-slot-meta {
+  font-size: 0.76rem;
+  color: #c6bdd9;
+}
+
+.dq-battle-layout {
+  align-items: stretch;
+}
+
+.dq-battle-stage,
+.dq-command-panel,
+.dq-log-panel {
+  background:
+    linear-gradient(180deg, rgba(40, 78, 155, 0.96), rgba(12, 28, 79, 0.98)),
+    #091537;
+  border: 4px solid #f8f8ff;
+  box-shadow:
+    inset 0 0 0 3px #102e86,
+    0 12px 32px rgba(3, 9, 28, 0.45);
+}
+
+.dq-battle-stage {
+  position: relative;
+}
+
+.dq-battle-stage::after {
+  content: '';
+  position: absolute;
+  inset: auto 20px 20px;
+  height: 38%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.12) 0%, rgba(86, 140, 255, 0.08) 42%, transparent 75%);
+  pointer-events: none;
+}
+
+.dq-battle-stage-glow {
+  background: radial-gradient(circle at center, rgba(140, 196, 255, 0.22) 0%, transparent 72%);
+}
+
+.dq-section-title,
+.dq-turn-banner {
+  font-family: 'Courier New', monospace;
+  color: #f7f9ff;
+  text-shadow: 2px 2px 0 rgba(6, 11, 31, 0.6);
+  letter-spacing: 0.14em;
+}
+
+.dq-party-roster {
+  position: relative;
+  z-index: 1;
+}
+
+.dq-party-card {
+  background: linear-gradient(180deg, rgba(13, 20, 49, 0.94), rgba(8, 12, 29, 0.96));
+  border: 2px solid rgba(231, 238, 255, 0.25);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+
+.dq-party-card.is-active {
+  border-color: #9af6c7;
+  box-shadow:
+    inset 0 0 0 1px rgba(154, 246, 199, 0.28),
+    0 0 18px rgba(64, 210, 138, 0.24);
+}
+
+.dq-party-card.is-down {
+  opacity: 0.55;
+  border-color: rgba(255, 129, 129, 0.35);
+  filter: saturate(0.72);
+}
+
+.dq-versus-badge {
+  font-family: 'Courier New', monospace;
+  color: #ffffff;
+  border: 3px solid #ffffff;
+  border-radius: 999px;
+  padding: 0.4rem 1rem;
+  background: radial-gradient(circle, rgba(255, 232, 154, 0.28), rgba(23, 50, 125, 0.94));
+  box-shadow: 0 0 18px rgba(255, 240, 189, 0.25);
+}
+
+.dq-enemy-card {
+  z-index: 1;
+  min-width: 250px;
+  background:
+    linear-gradient(180deg, rgba(34, 45, 92, 0.96), rgba(10, 16, 38, 0.98)),
+    #101d47;
+  border: 3px solid #ffffff;
+  box-shadow:
+    inset 0 0 0 2px #203d95,
+    0 14px 30px rgba(0, 0, 0, 0.3);
+}
+
+.dq-enemy-sprite {
+  font-size: 4rem;
+  line-height: 1;
+  text-shadow:
+    0 0 16px rgba(255, 164, 164, 0.32),
+    3px 3px 0 rgba(6, 11, 31, 0.6);
+  animation: float 3.2s ease-in-out infinite;
+}
+
+.dq-hp-track {
+  background: #050912;
+  border: 2px solid rgba(255, 255, 255, 0.28);
+}
+
+.dq-hp-fill {
+  background: linear-gradient(90deg, #f94144, #ff7b54);
+  box-shadow: 0 0 10px rgba(249, 65, 68, 0.35);
+}
+
+.dq-command-panel,
+.dq-log-panel {
+  color: #f7f9ff;
+}
+
+.dq-command-button {
+  border-radius: 12px;
+  border-width: 2px;
+  border-color: rgba(255, 255, 255, 0.75);
+  background: linear-gradient(180deg, rgba(16, 34, 94, 0.94), rgba(8, 19, 63, 0.98));
+  color: #ffffff;
+  box-shadow: inset 0 0 0 2px rgba(103, 145, 255, 0.22);
+}
+
+.dq-command-button:hover:not(:disabled),
+.dq-command-button:focus-visible {
+  border-color: #ffe58a;
+  box-shadow:
+    inset 0 0 0 2px rgba(255, 229, 138, 0.18),
+    0 0 16px rgba(255, 229, 138, 0.22);
+}
+
+.dq-command-button:focus-visible {
+  outline: none;
+}
+
+.dq-command-button--special {
+  border-color: rgba(255, 248, 220, 0.92);
+  box-shadow:
+    inset 0 0 0 2px rgba(255, 248, 220, 0.18),
+    0 0 18px rgba(255, 215, 0, 0.24);
+}
+
+.dq-ally-command-row {
+  background: rgba(7, 14, 43, 0.72);
+  border: 2px solid rgba(255, 255, 255, 0.18);
+  box-shadow: inset 0 0 0 1px rgba(99, 129, 216, 0.16);
+}
+
+.dq-log-window {
+  background:
+    linear-gradient(180deg, rgba(8, 17, 53, 0.98), rgba(5, 11, 34, 0.98)),
+    #081135;
+  border: 3px solid rgba(255, 255, 255, 0.88);
+  box-shadow: inset 0 0 0 2px rgba(69, 100, 191, 0.42);
+  color: #f7f9ff;
+}
+
+@media (max-width: 768px) {
+  .schedule-slot-button {
+    min-height: 100px;
+    padding: 0.85rem;
+  }
+
+  .dq-enemy-card {
+    min-width: 100%;
+  }
+
+  .dq-versus-badge {
+    margin: 0.25rem 0;
+  }
+}

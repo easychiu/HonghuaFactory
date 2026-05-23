@@ -7,6 +7,7 @@ import { Calendar, AlertCircle, Coins, BookOpen, Smile, Sparkles } from 'lucide-
 export const Scheduler: React.FC = () => {
   const { state, setSchedule, startScheduleExecution, setScreen } = useGame();
   const { daughter } = state;
+  const slotLabels = ['上旬', '中旬', '下旬'] as const;
 
   const availableActivities = ACTIVITIES.filter(act => {
     if (act.id === 'street_performance') {
@@ -121,56 +122,23 @@ export const Scheduler: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 flex flex-col gap-6">
           <div className="glass-panel p-6 grid grid-cols-3 gap-4 text-center">
-            <div
-              onClick={() => setActiveSlot(0)}
-              className={`p-4 rounded-xl border cursor-pointer transition-all ${
-                activeSlot === 0
-                  ? 'bg-[rgba(212,175,55,0.1)] border-[#d4af37] shadow-[0_0_15px_rgba(212,175,55,0.15)]'
-                  : 'bg-[rgba(255,255,255,0.02)] border-slate-800 hover:border-slate-700'
-              }`}
-            >
-              <div className="text-[10px] text-[#ffd700] uppercase font-bold tracking-wider mb-1">上旬</div>
-              <div className="text-sm font-bold text-white truncate">
-                {resolveActivity(selected[0])?.name || '未選擇'}
-              </div>
-              <div className="text-[10px] text-slate-400 mt-2 truncate">
-                {selectedTypeBySlot[0] === 'work' ? '打工' : selectedTypeBySlot[0] === 'study' ? '學習' : selectedTypeBySlot[0] === 'rest' ? '休息' : '尚未設定'}
-              </div>
-            </div>
-
-            <div
-              onClick={() => setActiveSlot(1)}
-              className={`p-4 rounded-xl border cursor-pointer transition-all ${
-                activeSlot === 1
-                  ? 'bg-[rgba(212,175,55,0.1)] border-[#d4af37] shadow-[0_0_15px_rgba(212,175,55,0.15)]'
-                  : 'bg-[rgba(255,255,255,0.02)] border-slate-800 hover:border-slate-700'
-              }`}
-            >
-              <div className="text-[10px] text-[#ffd700] uppercase font-bold tracking-wider mb-1">中旬</div>
-              <div className="text-sm font-bold text-white truncate">
-                {resolveActivity(selected[1])?.name || '未選擇'}
-              </div>
-              <div className="text-[10px] text-slate-400 mt-2 truncate">
-                {selectedTypeBySlot[1] === 'work' ? '打工' : selectedTypeBySlot[1] === 'study' ? '學習' : selectedTypeBySlot[1] === 'rest' ? '休息' : '尚未設定'}
-              </div>
-            </div>
-
-            <div
-              onClick={() => setActiveSlot(2)}
-              className={`p-4 rounded-xl border cursor-pointer transition-all ${
-                activeSlot === 2
-                  ? 'bg-[rgba(212,175,55,0.1)] border-[#d4af37] shadow-[0_0_15px_rgba(212,175,55,0.15)]'
-                  : 'bg-[rgba(255,255,255,0.02)] border-slate-800 hover:border-slate-700'
-              }`}
-            >
-              <div className="text-[10px] text-[#ffd700] uppercase font-bold tracking-wider mb-1">下旬</div>
-              <div className="text-sm font-bold text-white truncate">
-                {resolveActivity(selected[2])?.name || '未選擇'}
-              </div>
-              <div className="text-[10px] text-slate-400 mt-2 truncate">
-                {selectedTypeBySlot[2] === 'work' ? '打工' : selectedTypeBySlot[2] === 'study' ? '學習' : selectedTypeBySlot[2] === 'rest' ? '休息' : '尚未設定'}
-              </div>
-            </div>
+            {slotLabels.map((label, index) => (
+              <button
+                key={label}
+                type="button"
+                onClick={() => setActiveSlot(index as 0 | 1 | 2)}
+                aria-pressed={activeSlot === index}
+                className={`schedule-slot-button ${activeSlot === index ? 'is-active' : ''}`}
+              >
+                <div className="schedule-slot-label">{label}</div>
+                <div className="schedule-slot-title">
+                  {resolveActivity(selected[index])?.name || '未選擇'}
+                </div>
+                <div className="schedule-slot-meta">
+                  {selectedTypeBySlot[index] === 'work' ? '打工' : selectedTypeBySlot[index] === 'study' ? '學習' : selectedTypeBySlot[index] === 'rest' ? '休息' : '尚未設定'}
+                </div>
+              </button>
+            ))}
           </div>
 
           <div className="glass-panel overflow-hidden flex flex-col p-4 gap-4">
