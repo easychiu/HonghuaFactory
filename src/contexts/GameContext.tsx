@@ -619,6 +619,76 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }));
   }, [state.unlockedCharacters, state.completedEndings, state.unlockedAchievements]);
 
+  const checkAchievements = (
+    daughter: Daughter,
+    inventory: string[],
+    unlockedAchievements: string[],
+    logs: any[],
+    year: number,
+    month: number,
+    period: PeriodType
+  ): { unlocked: string[]; logs: any[]; updated: boolean } => {
+    let updated = false;
+    const newUnlocked = [...unlockedAchievements];
+    const newLogs = [...logs];
+
+    const trigger = (id: string, nameText: string, desc: string, bonus: string) => {
+      if (!newUnlocked.includes(id)) {
+        newUnlocked.push(id);
+        updated = true;
+        newLogs.push({
+          id: Math.random().toString(),
+          year,
+          month,
+          period,
+          text: `🏆 解鎖成就：【${nameText}】（${desc}）！下次開局將獲得加成效果：${bonus}！`,
+          type: 'event' as const
+        });
+      }
+    };
+
+    // 1. 第一次當爸爸
+    trigger('第一次當爸爸', '第一次當爸爸', '養育女兒的第一步！進入遊戲並完成角色初始化。', '開局金幣 +100');
+
+    // 2. 海路放行者
+    if (inventory.includes('royal_saber')) {
+      trigger('海路放行者', '海路放行者', '在冒險中免戰說服傑克斯少校，或在正面戰鬥中將其擊敗。', '初始戰術/戰技 +10');
+    }
+
+    // 3. 三王王女重聚
+    const sistersCount = 1 + (inventory.includes('erica_reunited') ? 1 : 0) + (inventory.includes('emilia_reunited') ? 1 : 0) + (inventory.includes('honghua_reunited') ? 1 : 0);
+    if (sistersCount === 3) {
+      trigger('三王女重聚', '三王女重聚', '在單次培育中將三胞胎姊妹全部認親重聚。', '開局全屬性 +10');
+    }
+
+    // 4. 蔚藍大富翁
+    if (daughter.gold >= 8000) {
+      trigger('蔚藍大富翁', '蔚藍大富翁', '在培育過程中，女兒的持有金幣達到 8,000 以上。', '開局金幣 +300');
+    }
+
+    // 5. 良師友誼
+    if ((daughter.bonds?.clover || 0) >= 100) {
+      trigger('良師友誼', '良師友誼', '與同窗好友「四葉草」的好感度達到 100。', '初始力量/體力 +15');
+    }
+
+    // 6. 永遠的學院生
+    if ((daughter.bonds?.xuewu || 0) >= 100) {
+      trigger('永遠的學院生', '永遠的學院生', '與同窗好友「雪舞」的好感度達到 100。', '初始感受/魔法技術 +15');
+    }
+
+    // 7. 皇家圖書館學伴
+    if ((daughter.bonds?.shanshan || 0) >= 100) {
+      trigger('皇家圖書館學伴', '皇家圖書館學伴', '與同窗好友「珊珊」的好感度達到 100。', '初始智力/氣質 +15');
+    }
+
+    // 8. 逆天改命
+    if (inventory.includes('casino_property')) {
+      trigger('逆天改命', '逆天改命', '艾莉卡在驛站觸發的「黑鑽賭局」中憑強運盲擲獲勝，贏得賭場產權。', '初始防禦 +10，大成功率額外 +5%');
+    }
+
+    return { unlocked: newUnlocked, logs: newLogs, updated };
+  };
+
   const setScreen = (screen: GameState['activeScreen']) => {
     setState((prev) => ({ ...prev, activeScreen: screen }));
   };
@@ -635,12 +705,73 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const prefix = base.endsWith('/') ? base : `${base}/`;
     const defaultAvatar = `${prefix}sprites/daughter_10_default.png`;
 
+    let goldBonus = 0;
+    let statBonus = 0;
+    let reputationBonus = 0;
+    let combatSkillBonus = 0;
+    let intelligenceBonus = 0;
+    let magicSkillBonus = 0;
+    let sensitivityBonus = 0;
+    let strengthBonus = 0;
+    let staminaBonus = 0;
+    let eleganceBonus = 0;
+
+    const unlocked = state.unlockedAchievements || [];
+
+    if (unlocked.includes('第一次當爸爸')) {
+      goldBonus += 100;
+    }
+    if (unlocked.includes('海路放行者')) {
+      intelligenceBonus += 10;
+      combatSkillBonus += 10;
+    }
+    if (unlocked.includes('三王女重聚')) {
+      statBonus += 10;
+    }
+    if (unlocked.includes('蔚藍大富翁')) {
+      goldBonus += 300;
+    }
+    if (unlocked.includes('良師友誼')) {
+      strengthBonus += 15;
+      staminaBonus += 15;
+    }
+    if (unlocked.includes('永遠的學院生')) {
+      sensitivityBonus += 15;
+      magicSkillBonus += 15;
+    }
+    if (unlocked.includes('皇家圖書館學伴')) {
+      intelligenceBonus += 15;
+      eleganceBonus += 15;
+    }
+    if (unlocked.includes('逆天改命')) {
+      staminaBonus += 15;
+      reputationBonus += 20;
+    }
+    if (unlocked.includes('收穫祭之霸')) {
+      reputationBonus += 50;
+    }
+
     const freshDaughter: Daughter = {
       name: name || (characterId === 'honghua' ? '紅花' : characterId === 'erica' ? '艾莉卡' : '艾蜜莉亞'),
       age: 10,
       birthMonth: birthMonth || 5,
       birthDay: birthDay || 20,
-      attributes: { ...DEFAULT_ATTRIBUTES },
+      attributes: {
+        stamina: DEFAULT_ATTRIBUTES.stamina + statBonus + staminaBonus,
+        strength: DEFAULT_ATTRIBUTES.strength + statBonus + strengthBonus,
+        intelligence: DEFAULT_ATTRIBUTES.intelligence + statBonus + intelligenceBonus,
+        charisma: DEFAULT_ATTRIBUTES.charisma + statBonus,
+        morality: DEFAULT_ATTRIBUTES.morality + statBonus,
+        piety: DEFAULT_ATTRIBUTES.piety + statBonus,
+        sensitivity: DEFAULT_ATTRIBUTES.sensitivity + statBonus + sensitivityBonus,
+        stress: DEFAULT_ATTRIBUTES.stress,
+        combatSkill: DEFAULT_ATTRIBUTES.combatSkill + statBonus + combatSkillBonus,
+        magicSkill: DEFAULT_ATTRIBUTES.magicSkill + statBonus + magicSkillBonus,
+        reputation: DEFAULT_ATTRIBUTES.reputation + reputationBonus,
+        sin: DEFAULT_ATTRIBUTES.sin,
+        elegance: DEFAULT_ATTRIBUTES.elegance + statBonus + eleganceBonus,
+        art: DEFAULT_ATTRIBUTES.art + statBonus
+      },
       gold: 1500,
       relationship: 50,
       outfit: 'default',
@@ -685,8 +816,17 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
       freshDaughter.attributes.sensitivity += 100;
     }
 
+    // 套用成就解鎖金幣加成
+    freshDaughter.gold += goldBonus;
+
     freshDaughter.combatHp = freshDaughter.attributes.stamina;
     freshDaughter.combatMp = freshDaughter.attributes.magicSkill * 2 + 10;
+
+    // 自動解鎖第一檔成就「第一次當爸爸」
+    const nextAchievements = [...unlocked];
+    if (!nextAchievements.includes('第一次當爸爸')) {
+      nextAchievements.push('第一次當爸爸');
+    }
 
     setState((prev) => ({
       ...prev,
@@ -703,7 +843,11 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
           period: 'early',
           text: `收養了可愛的女兒 ${freshDaughter.name}。起點年齡：10歲。父親職業為【${
             fatherBackground === 'knight' ? '失落的騎士' : fatherBackground === 'scholar' ? '失落的文臣' : fatherBackground === 'merchant' ? '行商人' : '吟遊詩人'
-          }】。開始培育妳的王女吧！`,
+          }】。開始培育妳的王女吧！${
+            goldBonus > 0 || statBonus > 0 || strengthBonus > 0 || staminaBonus > 0 || intelligenceBonus > 0 || eleganceBonus > 0 || magicSkillBonus > 0 || sensitivityBonus > 0
+              ? `（已套用多週目成就傳承加成！）`
+              : ''
+          }`,
           type: 'info'
         }
       ],
@@ -711,7 +855,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
       currentEventStep: null,
       adventure: null,
       cheatMode: false,
-      unlockedAchievements: prev.unlockedAchievements || []
+      unlockedAchievements: nextAchievements
     }));
   };
 
@@ -998,27 +1142,24 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     newDaughter.combatMp = newDaughter.attributes.magicSkill * 2 + 10;
 
     setState(prev => {
-      const newUnlocked = [...(prev.unlockedAchievements || [])];
-      if (newDaughter.bonds && newDaughter.bonds.xuewu >= 100 && !newUnlocked.includes('永遠的學院生')) {
-        newUnlocked.push('永遠的學院生');
-        newLogs.push({
-          id: Math.random().toString(),
-          year: prev.time.year,
-          month: prev.time.month,
-          period: currentPeriod,
-          text: `🏆 解鎖成就：【永遠的學院生】（與雪舞好感度達到 100）！`,
-          type: 'event'
-        });
-      }
+      const { unlocked, logs: checkedLogs } = checkAchievements(
+        newDaughter,
+        newInventory,
+        prev.unlockedAchievements || [],
+        newLogs,
+        prev.time.year,
+        prev.time.month,
+        currentPeriod
+      );
       return {
         ...prev,
         daughter: newDaughter,
-        logs: newLogs,
+        logs: checkedLogs,
         inventory: newInventory,
         time: { ...prev.time, period: nextPeriod },
         currentEvent: triggeredAVGEvent ? AVG_EVENTS[triggeredAVGEvent] : prev.currentEvent,
         currentEventStep: triggeredAVGEvent ? 'start' : prev.currentEventStep,
-        unlockedAchievements: newUnlocked
+        unlockedAchievements: unlocked
       };
     });
 
@@ -1130,6 +1271,31 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
           newUnlocked.push('emilia');
         }
 
+        const { unlocked: achUnlocked, logs: checkedLogs } = checkAchievements(
+          updatedDaughter,
+          newInventory,
+          prev.unlockedAchievements || [],
+          newLogs,
+          prev.time.year,
+          prev.time.month,
+          'late'
+        );
+
+        // 保存解鎖與主線結局成就
+        const finalUnlockedAchievements = [...achUnlocked];
+        const sistersCount = 1 + (newInventory.includes('erica_reunited') ? 1 : 0) + (newInventory.includes('emilia_reunited') ? 1 : 0) + (newInventory.includes('honghua_reunited') ? 1 : 0);
+        if (sistersCount === 3 && !finalUnlockedAchievements.includes('三王女重聚')) {
+          finalUnlockedAchievements.push('三王女重聚');
+          checkedLogs.push({
+            id: Math.random().toString(),
+            year: prev.time.year,
+            month: prev.time.month,
+            period: 'late',
+            text: `🏆 解鎖成就：【三王女重聚】（在單次培育中將三胞胎姊妹全部認親重聚）！`,
+            type: 'event'
+          });
+        }
+
         // 回傳大結局狀態
         return {
           ...prev,
@@ -1138,9 +1304,10 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
           time: { year: nextYear, month: nextMonth, period: 'early' },
           activeScreen: 'ending',
           schedule: null,
-          logs: newLogs,
+          logs: checkedLogs,
           completedEndings: newCompleted,
-          unlockedCharacters: newUnlocked
+          unlockedCharacters: newUnlocked,
+          unlockedAchievements: finalUnlockedAchievements
         };
       }
 
@@ -1192,6 +1359,16 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       }
 
+      const { unlocked: achUnlocked, logs: checkedLogs } = checkAchievements(
+        updatedDaughter,
+        newInventory,
+        prev.unlockedAchievements || [],
+        newLogs,
+        prev.time.year,
+        prev.time.month,
+        'late'
+      );
+
       return {
         ...prev,
         daughter: updatedDaughter,
@@ -1201,7 +1378,8 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
         currentEventStep: nextMonth === 10 ? null : eventStep,
         schedule: null,
         activeScreen: nextMonth === 10 ? 'festival' : 'main',
-        logs: newLogs
+        logs: checkedLogs,
+        unlockedAchievements: achUnlocked
       };
     });
   };
@@ -1652,29 +1830,27 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
         });
       }
 
-      // 檢查並解鎖好感度成就
-      const newUnlockedAchievements = [...(prev.unlockedAchievements || [])];
-      if (newDaughter.bonds) {
-        if (newDaughter.bonds.clover >= 100 && !newUnlockedAchievements.includes('良師友誼')) {
-          newUnlockedAchievements.push('良師友誼');
-          updatedLogs.push({
+      const { unlocked: achUnlocked, logs: checkedLogs } = checkAchievements(
+        newDaughter,
+        newInventory,
+        prev.unlockedAchievements || [],
+        updatedLogs,
+        prev.time.year,
+        prev.time.month,
+        prev.time.period
+      );
+
+      const finalUnlockedAchievements = [...achUnlocked];
+      if (isEnd && prev.currentEvent && prev.currentEvent.id === 'jaks_patrol' && updatedAdventure && updatedAdventure.status === 'exploring') {
+        if (!finalUnlockedAchievements.includes('海路放行者')) {
+          finalUnlockedAchievements.push('海路放行者');
+          checkedLogs.push({
             id: Math.random().toString(),
             year: prev.time.year,
             month: prev.time.month,
             period: prev.time.period,
-            text: `🏆 解鎖成就：【良師友誼】（與四葉草好感度達到 100）！`,
-            type: 'event'
-          });
-        }
-        if (newDaughter.bonds.xuewu >= 100 && !newUnlockedAchievements.includes('永遠的學院生')) {
-          newUnlockedAchievements.push('永遠的學院生');
-          updatedLogs.push({
-            id: Math.random().toString(),
-            year: prev.time.year,
-            month: prev.time.month,
-            period: prev.time.period,
-            text: `🏆 解鎖成就：【永遠的學院生】（與雪舞好感度達到 100）！`,
-            type: 'event'
+            text: `🏆 解鎖成就：【海路放行者】（在冒險中免戰說服傑克斯少校，或在正面戰鬥中將其擊敗）！`,
+            type: 'event' as const
           });
         }
       }
@@ -1684,10 +1860,10 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
         daughter: newDaughter,
         inventory: newInventory,
         activeScreen: newScreen,
-        logs: updatedLogs,
+        logs: checkedLogs,
         currentEvent: isEnd ? null : prev.currentEvent,
         currentEventStep: isEnd ? null : nextStep,
-        unlockedAchievements: newUnlockedAchievements,
+        unlockedAchievements: finalUnlockedAchievements,
         adventure: updatedAdventure
       };
     });
@@ -1871,6 +2047,13 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
       let logs = [...prev.logs];
       let updatedAdventure: any = nextAdv;
 
+      const newInventory = [...prev.inventory];
+      const monsterName = currentNode?.monster?.name;
+      if (monsterName === '海軍少校 傑克斯' && !newInventory.includes('royal_saber')) {
+        newInventory.push('royal_saber');
+        nextAdv.combatLog.push(`🎁 戰利品：獲得傑克斯少校的【皇家海軍軍刀】！`);
+      }
+
       if (isBoss) {
         logs.push({
           id: Math.random().toString(),
@@ -1887,12 +2070,24 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
         updatedAdventure = null;
       }
 
+      const { unlocked: achUnlocked, logs: checkedLogs } = checkAchievements(
+        newDaughter,
+        newInventory,
+        prev.unlockedAchievements || [],
+        logs,
+        prev.time.year,
+        prev.time.month,
+        prev.time.period
+      );
+
       return {
         ...prev,
         daughter: newDaughter,
+        inventory: newInventory,
         adventure: updatedAdventure,
         activeScreen: newScreen,
-        logs
+        logs: checkedLogs,
+        unlockedAchievements: achUnlocked
       };
     });
   };
@@ -1943,7 +2138,8 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const nextMonth = 11;
       const nextYear = prev.time.year;
       
-      const newLogs = [...prev.logs, {
+      let newUnlockedAchievements = [...(prev.unlockedAchievements || [])];
+      let newLogs = [...prev.logs, {
         id: logId,
         year: prev.time.year,
         month: prev.time.month,
@@ -1952,13 +2148,36 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
         type: 'event' as const
       }];
 
+      if (_victory && !newUnlockedAchievements.includes('收穫祭之霸')) {
+        newUnlockedAchievements.push('收穫祭之霸');
+        newLogs.push({
+          id: Math.random().toString(),
+          year: prev.time.year,
+          month: prev.time.month,
+          period: 'late' as const,
+          text: `🏆 解鎖成就：【收穫祭之霸】（在年度 10 月收穫祭中，任一賽道獲得第一名冠軍。）！下次開局將獲得加成效果：初始王國名望 +50！`,
+          type: 'event' as const
+        });
+      }
+
+      const { unlocked: achUnlocked, logs: checkedLogs } = checkAchievements(
+        newDaughter,
+        newInventory,
+        newUnlockedAchievements,
+        newLogs,
+        prev.time.year,
+        prev.time.month,
+        'late'
+      );
+
       return {
         ...prev,
         daughter: newDaughter,
         inventory: newInventory,
         time: { year: nextYear, month: nextMonth, period: 'early' as const },
         activeScreen: 'main' as const,
-        logs: newLogs
+        logs: checkedLogs,
+        unlockedAchievements: achUnlocked
       };
     });
   };

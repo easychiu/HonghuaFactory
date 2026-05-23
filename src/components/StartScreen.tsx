@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useGame } from '../contexts/GameContext';
 import { EndingGallery } from './EndingGallery';
+import { AchievementPanel } from './AchievementPanel';
 import { Sparkles, Calendar, User, Shield, BookOpen, Coins, Music, Lock, Trophy } from 'lucide-react';
 import type { CharacterId, FatherBackground } from '../types';
 
@@ -10,6 +11,7 @@ export const StartScreen: React.FC = () => {
 
   const [name, setName] = useState('');
   const [showGallery, setShowGallery] = useState(false);
+  const [showAchievements, setShowAchievements] = useState(false);
   const [birthMonth, setBirthMonth] = useState(5);
   const [birthDay, setBirthDay] = useState(20);
   const [selectedChar, setSelectedChar] = useState<CharacterId>('honghua');
@@ -67,6 +69,16 @@ export const StartScreen: React.FC = () => {
               <Trophy size={12} /> 結局圖鑑 ({completedEndings.length})
             </button>
           )}
+
+          {/* Achievements Button */}
+          <button
+            type="button"
+            onClick={() => setShowAchievements(true)}
+            className="absolute top-0 left-0 text-[10px] text-purple-400 hover:text-purple-300 border border-purple-500/30 hover:border-purple-400/50 bg-purple-500/5 hover:bg-purple-500/10 px-2.5 py-1 rounded transition-all flex items-center gap-1 uppercase"
+            style={completedEndings.length > 0 ? { left: '115px' } : undefined}
+          >
+            <Trophy size={12} /> 榮譽成就 ({state.unlockedAchievements?.length || 0})
+          </button>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-8">
@@ -352,6 +364,9 @@ export const StartScreen: React.FC = () => {
 
       {/* Ending Gallery Modal */}
       {showGallery && <EndingGallery onClose={() => setShowGallery(false)} />}
+
+      {/* Achievement Panel Modal */}
+      {showAchievements && <AchievementPanel onClose={() => setShowAchievements(false)} />}
     </div>
   );
 };
