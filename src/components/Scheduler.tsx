@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useGame, ACTIVITIES } from '../contexts/GameContext';
 import { COURSES } from '../data/courses';
 import type { Activity } from '../types';
-import { Calendar, AlertCircle, Coins, BookOpen, Smile, Sparkles } from 'lucide-react';
+import { Calendar, AlertCircle, Coins, BookOpen, Smile, Sparkles, ChevronDown, ChevronUp } from 'lucide-react';
 
 export const Scheduler: React.FC = () => {
   const { state, setSchedule, startScheduleExecution, setScreen } = useGame();
@@ -27,6 +27,13 @@ export const Scheduler: React.FC = () => {
 
   // Which period we are currently choosing for (0: early, 1: mid, 2: late)
   const [activeSlot, setActiveSlot] = useState<0 | 1 | 2>(0);
+
+  // Which category accordion is open (null = all collapsed)
+  const [openCategory, setOpenCategory] = useState<'work' | 'study' | 'rest' | null>(null);
+
+  const toggleCategory = (cat: 'work' | 'study' | 'rest') => {
+    setOpenCategory(prev => (prev === cat ? null : cat));
+  };
 
   const handleSelectActivity = (activityId: string) => {
     setSelected(prev => {
@@ -79,11 +86,11 @@ export const Scheduler: React.FC = () => {
   const netGold = totalReward - totalCost;
 
   return (
-    <div className="flex-1 flex flex-col gap-4 sm:gap-6 p-3 sm:p-4 md:p-6 w-full max-w-5xl mx-auto animate-slide-up">
+    <div className="flex-1 flex flex-col gap-6 p-4 md:p-6 w-full max-w-5xl mx-auto animate-slide-up">
       {/* Header */}
-      <div className="glass-panel p-3 sm:p-4 flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
+      <div className="glass-panel p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl md:text-2xl font-bold flex items-center gap-2">
+          <h1 className="text-2xl font-bold flex items-center gap-2">
             <Calendar size={22} className="text-[#ffd700]" /> 制定本月日程
           </h1>
           <p className="text-xs text-slate-400 mt-1">
@@ -99,26 +106,26 @@ export const Scheduler: React.FC = () => {
       </div>
 
       {/* Grid: Slots + Preview */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
         {/* Left Slot Selection Panel (lg:col-span-2) */}
-        <div className="lg:col-span-2 flex flex-col gap-4 sm:gap-6">
+        <div className="lg:col-span-2 flex flex-col gap-6">
           {/* Timeline Slots */}
-          <div className="glass-panel p-3 sm:p-6 grid grid-cols-3 gap-2 sm:gap-4 text-center">
+          <div className="glass-panel p-6 grid grid-cols-3 gap-4 text-center">
             {/* Early Slot */}
             <div 
               onClick={() => setActiveSlot(0)}
-              className={`p-2 sm:p-4 rounded-xl border cursor-pointer transition-all ${
+              className={`p-4 rounded-xl border cursor-pointer transition-all ${
                 activeSlot === 0 
                   ? 'bg-[rgba(212,175,55,0.1)] border-[#d4af37] shadow-[0_0_15px_rgba(212,175,55,0.15)]' 
                   : 'bg-[rgba(255,255,255,0.02)] border-slate-800 hover:border-slate-700'
               }`}
             >
-              <div className="text-[9px] sm:text-[10px] text-[#ffd700] uppercase font-bold tracking-wider mb-1">上旬</div>
-              <div className="text-xs sm:text-sm font-bold text-white truncate">
+              <div className="text-[10px] text-[#ffd700] uppercase font-bold tracking-wider mb-1">上旬</div>
+              <div className="text-sm font-bold text-white truncate">
                 {allList.find(a => a.id === selected[0])?.name || '未選擇'}
               </div>
-              <div className="text-[8px] sm:text-[10px] text-slate-400 mt-1 sm:mt-2 truncate">
+              <div className="text-[10px] text-slate-400 mt-2 truncate">
                 {allList.find(a => a.id === selected[0])?.type === 'work' ? '打工' : 
                  allList.find(a => a.id === selected[0])?.type === 'study' ? '學習' : '休息'}
               </div>
@@ -127,17 +134,17 @@ export const Scheduler: React.FC = () => {
             {/* Mid Slot */}
             <div 
               onClick={() => setActiveSlot(1)}
-              className={`p-2 sm:p-4 rounded-xl border cursor-pointer transition-all ${
+              className={`p-4 rounded-xl border cursor-pointer transition-all ${
                 activeSlot === 1 
                   ? 'bg-[rgba(212,175,55,0.1)] border-[#d4af37] shadow-[0_0_15px_rgba(212,175,55,0.15)]' 
                   : 'bg-[rgba(255,255,255,0.02)] border-slate-800 hover:border-slate-700'
               }`}
             >
-              <div className="text-[9px] sm:text-[10px] text-[#ffd700] uppercase font-bold tracking-wider mb-1">中旬</div>
-              <div className="text-xs sm:text-sm font-bold text-white truncate">
+              <div className="text-[10px] text-[#ffd700] uppercase font-bold tracking-wider mb-1">中旬</div>
+              <div className="text-sm font-bold text-white truncate">
                 {allList.find(a => a.id === selected[1])?.name || '未選擇'}
               </div>
-              <div className="text-[8px] sm:text-[10px] text-slate-400 mt-1 sm:mt-2 truncate">
+              <div className="text-[10px] text-slate-400 mt-2 truncate">
                 {allList.find(a => a.id === selected[1])?.type === 'work' ? '打工' : 
                  allList.find(a => a.id === selected[1])?.type === 'study' ? '學習' : '休息'}
               </div>
@@ -146,84 +153,108 @@ export const Scheduler: React.FC = () => {
             {/* Late Slot */}
             <div 
               onClick={() => setActiveSlot(2)}
-              className={`p-2 sm:p-4 rounded-xl border cursor-pointer transition-all ${
+              className={`p-4 rounded-xl border cursor-pointer transition-all ${
                 activeSlot === 2 
                   ? 'bg-[rgba(212,175,55,0.1)] border-[#d4af37] shadow-[0_0_15px_rgba(212,175,55,0.15)]' 
                   : 'bg-[rgba(255,255,255,0.02)] border-slate-800 hover:border-slate-700'
               }`}
             >
-              <div className="text-[9px] sm:text-[10px] text-[#ffd700] uppercase font-bold tracking-wider mb-1">下旬</div>
-              <div className="text-xs sm:text-sm font-bold text-white truncate">
+              <div className="text-[10px] text-[#ffd700] uppercase font-bold tracking-wider mb-1">下旬</div>
+              <div className="text-sm font-bold text-white truncate">
                 {allList.find(a => a.id === selected[2])?.name || '未選擇'}
               </div>
-              <div className="text-[8px] sm:text-[10px] text-slate-400 mt-1 sm:mt-2 truncate">
+              <div className="text-[10px] text-slate-400 mt-2 truncate">
                 {allList.find(a => a.id === selected[2])?.type === 'work' ? '打工' : 
                  allList.find(a => a.id === selected[2])?.type === 'study' ? '學習' : '休息'}
               </div>
             </div>
           </div>
 
-          {/* Activity Category Selection Grid */}
-          <div className="glass-panel p-3 sm:p-6 flex flex-col gap-4 sm:gap-6">
+          {/* Activity Category Accordion */}
+          <div className="glass-panel overflow-hidden flex flex-col">
             {/* Jobs Group */}
-            <div>
-              <h3 className="text-sm font-bold text-[#d4af37] mb-3 flex items-center gap-1.5 uppercase tracking-wider">
-                <Coins size={14} /> Part-time Jobs / 打工賺錢
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {availableActivities.filter(a => a.type === 'work').map(act => (
-                  <ActivityCard 
-                    key={act.id} 
-                    act={act} 
-                    onSelect={handleSelectActivity}
-                    active={selected[activeSlot] === act.id}
-                    fatherBackground={daughter.fatherBackground}
-                  />
-                ))}
-              </div>
+            <div className="border-b border-slate-800/60">
+              <button
+                onClick={() => toggleCategory('work')}
+                className="w-full flex items-center justify-between p-4 hover:bg-[rgba(255,255,255,0.02)] transition-colors text-left"
+              >
+                <span className="text-sm font-bold text-[#d4af37] flex items-center gap-1.5 uppercase tracking-wider">
+                  <Coins size={14} /> Part-time Jobs / 打工賺錢
+                </span>
+                {openCategory === 'work' ? <ChevronUp size={16} className="text-slate-400" /> : <ChevronDown size={16} className="text-slate-400" />}
+              </button>
+              {openCategory === 'work' && (
+                <div className="px-4 pb-4 grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {availableActivities.filter(a => a.type === 'work').map(act => (
+                    <ActivityCard 
+                      key={act.id} 
+                      act={act} 
+                      onSelect={handleSelectActivity}
+                      active={selected[activeSlot] === act.id}
+                      fatherBackground={daughter.fatherBackground}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Studies Group */}
-            <div>
-              <h3 className="text-sm font-bold text-[#d4af37] mb-3 flex items-center gap-1.5 uppercase tracking-wider">
-                <BookOpen size={14} /> Study Classes / 學習課程
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {COURSES.map(act => (
-                  <ActivityCard 
-                    key={act.id} 
-                    act={act} 
-                    onSelect={handleSelectActivity}
-                    active={selected[activeSlot] === act.id}
-                    fatherBackground={daughter.fatherBackground}
-                  />
-                ))}
-              </div>
+            <div className="border-b border-slate-800/60">
+              <button
+                onClick={() => toggleCategory('study')}
+                className="w-full flex items-center justify-between p-4 hover:bg-[rgba(255,255,255,0.02)] transition-colors text-left"
+              >
+                <span className="text-sm font-bold text-[#d4af37] flex items-center gap-1.5 uppercase tracking-wider">
+                  <BookOpen size={14} /> Study Classes / 學習課程
+                </span>
+                {openCategory === 'study' ? <ChevronUp size={16} className="text-slate-400" /> : <ChevronDown size={16} className="text-slate-400" />}
+              </button>
+              {openCategory === 'study' && (
+                <div className="px-4 pb-4 grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {COURSES.map(act => (
+                    <ActivityCard 
+                      key={act.id} 
+                      act={act} 
+                      onSelect={handleSelectActivity}
+                      active={selected[activeSlot] === act.id}
+                      fatherBackground={daughter.fatherBackground}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Rest Group */}
             <div>
-              <h3 className="text-sm font-bold text-[#d4af37] mb-3 flex items-center gap-1.5 uppercase tracking-wider">
-                <Smile size={14} /> Leisure Rest / 休息度假
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {availableActivities.filter(a => a.type === 'rest').map(act => (
-                  <ActivityCard 
-                    key={act.id} 
-                    act={act} 
-                    onSelect={handleSelectActivity}
-                    active={selected[activeSlot] === act.id}
-                    fatherBackground={daughter.fatherBackground}
-                  />
-                ))}
-              </div>
+              <button
+                onClick={() => toggleCategory('rest')}
+                className="w-full flex items-center justify-between p-4 hover:bg-[rgba(255,255,255,0.02)] transition-colors text-left"
+              >
+                <span className="text-sm font-bold text-[#d4af37] flex items-center gap-1.5 uppercase tracking-wider">
+                  <Smile size={14} /> Leisure Rest / 休息度假
+                </span>
+                {openCategory === 'rest' ? <ChevronUp size={16} className="text-slate-400" /> : <ChevronDown size={16} className="text-slate-400" />}
+              </button>
+              {openCategory === 'rest' && (
+                <div className="px-4 pb-4 grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {availableActivities.filter(a => a.type === 'rest').map(act => (
+                    <ActivityCard 
+                      key={act.id} 
+                      act={act} 
+                      onSelect={handleSelectActivity}
+                      active={selected[activeSlot] === act.id}
+                      fatherBackground={daughter.fatherBackground}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>
 
         {/* Right Financial & Confirmation Panel (lg:col-span-1) */}
-        <div className="flex flex-col gap-4 sm:gap-6">
-          <div className="glass-panel p-4 sm:p-6 flex flex-col gap-3 sm:gap-4">
+        <div className="flex flex-col gap-6">
+          <div className="glass-panel p-6 flex flex-col gap-4">
             <h2 className="text-lg font-bold border-b border-[rgba(212,175,55,0.2)] pb-2 text-[#ffd700]">本月預算清算</h2>
             
             <div className="space-y-3 text-sm">
@@ -265,7 +296,7 @@ export const Scheduler: React.FC = () => {
           </div>
           
           {/* Quick Daughter Status info */}
-          <div className="glass-panel p-4 sm:p-6">
+          <div className="glass-panel p-6">
             <h3 className="text-sm font-bold border-b border-[rgba(212,175,55,0.15)] pb-2 mb-3">當前狀態提醒</h3>
             <div className="space-y-2 text-xs leading-normal">
               <div className="flex justify-between">
