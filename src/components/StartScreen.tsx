@@ -8,6 +8,9 @@ import {
 } from 'lucide-react';
 import type { CharacterId, FatherBackground } from '../types';
 import { SaveLoadPanel } from './SaveLoadPanel';
+import { ItemCodexPanel } from './ItemCodexPanel';
+import { HeritageShopPanel } from './HeritageShopPanel';
+import { audioManager } from '../utils/audio';
 
 type StartStep = 'prologue' | 'father' | 'daughter';
 
@@ -119,6 +122,8 @@ export const StartScreen: React.FC = () => {
   const [showGallery, setShowGallery] = useState(false);
   const [showAchievements, setShowAchievements] = useState(false);
   const [showLoadPanel, setShowLoadPanel] = useState(false);
+  const [showCodex, setShowCodex] = useState(false);
+  const [showHeritageShop, setShowHeritageShop] = useState(false);
   const [birthMonth, setBirthMonth] = useState(5);
   const [birthDay, setBirthDay] = useState(20);
   const [selectedChar, setSelectedChar] = useState<CharacterId>('honghua');
@@ -207,6 +212,26 @@ export const StartScreen: React.FC = () => {
                 className="text-xs text-sky-200 hover:text-white border-2 border-sky-500/50 hover:border-sky-400 bg-sky-500/10 hover:bg-sky-500/20 px-4 py-2 rounded-lg transition-all flex items-center gap-2 uppercase font-bold shadow-[0_0_10px_rgba(56,189,248,0.15)] hover:shadow-[0_0_15px_rgba(56,189,248,0.3)]"
               >
                 <FolderOpen size={16} /> 讀取存檔
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  audioManager.playSfx('sfx_click.mp3');
+                  setShowCodex(true);
+                }}
+                className="text-[10px] text-blue-400 hover:text-blue-300 border border-blue-500/30 hover:border-blue-400/50 bg-blue-500/5 hover:bg-blue-500/10 px-2.5 py-1.5 rounded transition-all flex items-center gap-1.5 uppercase font-semibold"
+              >
+                <BookOpen size={12} /> 道具百科 ({state.unlockedItems?.length || 0}/16)
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  audioManager.playSfx('sfx_click.mp3');
+                  setShowHeritageShop(true);
+                }}
+                className="text-[10px] text-teal-400 hover:text-teal-300 border border-teal-500/30 hover:border-teal-400/50 bg-teal-500/5 hover:bg-teal-500/10 px-2.5 py-1.5 rounded transition-all flex items-center gap-1.5 uppercase font-semibold"
+              >
+                <Sparkles size={12} /> 星塵商店 ({state.stardust || 0} 顆)
               </button>
             </div>
 
@@ -525,6 +550,8 @@ export const StartScreen: React.FC = () => {
       {showGallery && <EndingGallery onClose={() => setShowGallery(false)} />}
       {showAchievements && <AchievementPanel onClose={() => setShowAchievements(false)} />}
       {showLoadPanel && <SaveLoadPanel onClose={() => setShowLoadPanel(false)} loadOnly />}
+      {showCodex && <ItemCodexPanel onClose={() => setShowCodex(false)} />}
+      {showHeritageShop && <HeritageShopPanel onClose={() => setShowHeritageShop(false)} />}
     </div>
   );
 };

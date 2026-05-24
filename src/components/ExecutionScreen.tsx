@@ -4,6 +4,7 @@ import { COURSES } from '../data/courses';
 import { getAvatarPath } from '../utils/avatar';
 import { Calendar, Zap, FastForward, Play, Pause, ChevronRight } from 'lucide-react';
 import { useScheduleLoop } from '../hooks/useScheduleLoop';
+import { audioManager } from '../utils/audio';
 
 export const ExecutionScreen: React.FC = () => {
   const { state, finishExecution } = useGame();
@@ -176,7 +177,10 @@ export const ExecutionScreen: React.FC = () => {
             {!isFinished && (
               <>
                 <button 
-                  onClick={() => setIsAutoPlay(!isAutoPlay)}
+                  onClick={() => {
+                    audioManager.playSfx('sfx_click.mp3');
+                    setIsAutoPlay(!isAutoPlay);
+                  }}
                   className="btn-fantasy-sec text-xs py-2 px-3 flex items-center gap-1.5"
                 >
                   {isAutoPlay ? <Pause size={14} /> : <Play size={14} />}
@@ -206,7 +210,10 @@ export const ExecutionScreen: React.FC = () => {
               </button>
             ) : (
               <button 
-                onClick={finishExecution}
+                onClick={() => {
+                  audioManager.playSfx('sfx_click.mp3');
+                  finishExecution();
+                }}
                 className="btn-fantasy text-xs py-2 px-5 flex items-center gap-1.5"
               >
                 <Zap size={14} />

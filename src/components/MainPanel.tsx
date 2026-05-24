@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
-import { useGame } from '../contexts/GameContext';
+import { useGame, ITEMS } from '../contexts/GameContext';
 import { StatPanel } from './StatPanel';
 import { SaveLoadPanel } from './SaveLoadPanel';
-import { getAvatarPath } from '../utils/avatar';
-import { getPersonalityType, PERSONALITY_INFO } from '../utils/personality';
+import { getAvatarPath, getDaughterPersonality } from '../utils/avatar';
+import { audioManager } from '../utils/audio';
 import { 
   Sparkles, Calendar, Coins, Save, RefreshCw, 
-  ShoppingCart, Compass, ToggleLeft, ToggleRight, 
-  History, Crown, Lock, Check, ChevronDown, ChevronUp, Heart, Award
+  MessageSquare, ShoppingCart, Compass, ToggleLeft, ToggleRight, 
+  History, Crown, Lock, Check, ChevronDown, ChevronUp, BookOpen
 } from 'lucide-react';
+import { DiaryPanel } from './DiaryPanel';
 
 const OUTFIT_NAMES = {
   default: '日常便服',
@@ -24,32 +25,6 @@ const OUTFIT_BORDER_COLORS = {
   summer: 'rgba(0, 180, 216, 0.6)'
 };
 
-// All ending titles - mirror EndingGallery's ALL_ENDINGS list
-const ENDING_TITLE_MAP: Record<string, string> = {
-  infinite_observer: '命運之神',
-  binlang_monopoly: '歐陸提神產業帝國總裁',
-  lucky_lay_flat: '強運登基者',
-  shadow_cabinet: '幕後支配者',
-  phantom_thief_triplets: '義賊怪盜三胞胎',
-  clover_mercenary: '蔚藍傭兵團雙劍團長',
-  shanshan_court_aide: '王都智囊院首席策士',
-  xuewu_magic_tower: '星海塔隱居魔導師',
-  royal_return: '蔚藍海岸王國女王',
-  three_revolution: '蔚藍共和國執政官',
-  three_shelter: '蔚藍庇護所創始人',
-  duet_adventurers: '流浪雙子冒險者',
-  prince_marriage: '帝國王妃',
-  court_official: '內宮大管家',
-  valkyrie_hero: '傳奇勇者',
-  holy_nun: '神之代言人',
-  bounty_hunter: '荒野孤狼',
-  famous_painter: '藝術巨匠',
-  mob_boss: '地下教父',
-  courtesan: '蔚藍海岸交際花',
-  beggar: '街頭乞討者',
-  housewife: '普通市民',
-};
-
 export const MainPanel: React.FC = () => {
   const { 
     state, 
@@ -59,30 +34,41 @@ export const MainPanel: React.FC = () => {
     toggleCheatMode,
     restartGame,
     changeOutfit,
-    performStreetPerformance
+    performStreetPerformance,
+    useItem,
+    selectTitle
   } = useGame();
 
   const { daughter, time, logs, cheatMode } = state;
   const [isClosetOpen, setIsClosetOpen] = useState(false);
   const [isSavePanelOpen, setIsSavePanelOpen] = useState(false);
   const [isStatPanelOpen, setIsStatPanelOpen] = useState(false);
+  const [useItemMessage, setUseItemMessage] = useState<string | null>(null);
+  const [showDiary, setShowDiary] = useState(false);
 
-  const personality = getPersonalityType(daughter);
-  const personalityInfo = PERSONALITY_INFO[personality];
-  const isRebellious = daughter.attributes.morality < 50 && daughter.attributes.stress > 80;
-  const isSick = !!daughter.isSick;
-  const hasInteractedThisMonth = state.lastFatherInteractionMonth === time.month;
-
-  // Earned titles from completed endings
-  const earnedTitles = (state.completedEndings || [])
-    .map(id => ENDING_TITLE_MAP[id])
-    .filter(Boolean);
+  const handleUseItem = (itemId: string) => {
+    const res = useItem(itemId);
+    if (res.success) {
+      audioManager.playSfx('sfx_heal.mp3');
+      setUseItemMessage(res.message);
+      setTimeout(() => setUseItemMessage(null), 3000);
+    } else {
+      audioManager.playSfx('sfx_click.mp3');
+      alert(res.message);
+    }
+  };
 
   const getAvatarStyle = (charId: string) => {
+    let filter = '';
     if (charId === 'emilia') {
-      return { filter: 'hue-rotate(330deg) saturate(0.8) sepia(0.5)' };
+      filter += 'hue-rotate(330deg) saturate(0.8) sepia(0.5) ';
     }
-    return {};
+    if (daughter.isSick) {
+      filter += 'grayscale(0.45) sepia(0.25) contrast(0.9) ';
+    } else if (daughter.isRebellious) {
+      filter += 'drop-shadow(0 0 8px rgba(220, 38, 38, 0.7)) ';
+    }
+    return filter ? { filter: filter.trim() } : {};
   };
 
   const scaleFactor = 
@@ -125,15 +111,18 @@ export const MainPanel: React.FC = () => {
           {/* Save/Load / Reset Buttons */}
           <div className="flex items-center gap-2">
             <button 
-              onClick={() => setIsSavePanelOpen(true)} 
+              onClick={() => {
+                audioManager.playSfx('sfx_click.mp3');
+                setIsSavePanelOpen(true);
+              }} 
               title="存檔管理" 
-              className="px-3 py-2 rounded bg-[rgba(255,255,255,0.05)] border border-slate-700 hover:border-[#d4af37] hover:text-[#d4af37] transition-all text-xs font-semibold flex items-center gap-1.5"
+              className="p-2 rounded bg-[rgba(255,255,255,0.05)] border border-slate-700 hover:border-[#d4af37] hover:text-[#d4af37] transition-all"
             >
               <Save size={16} />
-              <span>存/讀檔紀錄</span>
             </button>
             <button 
               onClick={() => {
+                audioManager.playSfx('sfx_click.mp3');
                 if (window.confirm('確定要重新開始遊戲嗎？這會清除所有進度。')) {
                   restartGame();
                 }
@@ -150,7 +139,10 @@ export const MainPanel: React.FC = () => {
       {/* Collapsible Stats Panel */}
       <div className="glass-panel overflow-hidden">
         <button
-          onClick={() => setIsStatPanelOpen(prev => !prev)}
+          onClick={() => {
+            audioManager.playSfx('sfx_click.mp3');
+            setIsStatPanelOpen(prev => !prev);
+          }}
           className="w-full flex items-center justify-between p-4 text-left hover:bg-[rgba(255,255,255,0.02)] transition-colors"
         >
           <span className="text-sm font-bold text-[#d4af37] uppercase tracking-wider flex items-center gap-2">
@@ -165,25 +157,62 @@ export const MainPanel: React.FC = () => {
         )}
       </div>
 
+      {/* Seasonal Event Banner */}
+      {state.seasonalEvent && (
+        <div className="w-full p-3 sm:p-4 rounded-xl border animate-slide-up flex flex-col sm:flex-row items-center justify-between gap-3 shadow-lg bg-indigo-950/20 border-indigo-500/30">
+          <div className="flex items-center gap-3 text-left">
+            <span className="text-2xl">
+              {state.seasonalEvent === 'cold_wave' ? '❄️' :
+               state.seasonalEvent === 'caravan' ? '🐫' :
+               state.seasonalEvent === 'tax' ? '📜' :
+               state.seasonalEvent === 'harvest_blessing' ? '🌾' : '🏰'}
+            </span>
+            <div>
+              <h4 className="text-sm font-bold text-indigo-300">
+                {state.seasonalEvent === 'cold_wave' ? '大寒流襲來' :
+                 state.seasonalEvent === 'caravan' ? '流浪商旅到訪' :
+                 state.seasonalEvent === 'tax' ? '王國臨時徵稅' :
+                 state.seasonalEvent === 'harvest_blessing' ? '豐收女神的祝福' : '皇家特使巡視'}
+              </h4>
+              <p className="text-xs text-slate-300 mt-1">
+                {state.seasonalEvent === 'cold_wave' && '本月異常寒冷！女兒學習課程疲勞額外 +3，但在家靜養的減壓效果增加 5 點。'}
+                {state.seasonalEvent === 'caravan' && '異國商旅抵達！本月皇家武器與禮品商會以及黑市所有商品享有 8 折特惠特價！'}
+                {state.seasonalEvent === 'tax' && '王國徵稅法案！本月所有商店商品漲價 20%，且月底將自動扣除 80 G 稅金（不足扣則壓力+25）。'}
+                {state.seasonalEvent === 'harvest_blessing' && '大地豐饒恩賜！本月女兒進行所有打工活動的薪資回報大幅增加 30%！'}
+                {state.seasonalEvent === 'royal_inspection' && '皇家特使來臨！本月學院課程正面屬性額外 +2，且額外獲得道德感 +3！'}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Main Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
 
         {/* Center: Character Chamber Display */}
-        <div className="glass-panel p-6 lg:col-span-7 order-1 flex flex-col gap-4 items-center">
-          <h2 className="text-lg font-bold border-b border-[rgba(212,175,55,0.2)] pb-2 w-full text-center text-slate-200">
-            {daughter.name} 的起居室
+        <div className="glass-panel p-4 sm:p-6 lg:col-span-7 order-1 flex flex-col gap-4 items-center">
+          <h2 className="text-lg font-bold border-b border-[rgba(212,175,55,0.2)] pb-2 w-full text-center text-slate-200 flex flex-col items-center justify-center gap-1">
+            {daughter.selectedTitle && (
+              <span className="text-[10px] sm:text-xs px-2.5 py-0.5 bg-amber-950/70 border border-amber-500/40 text-[#ffd700] rounded-full font-extrabold tracking-wider animate-pulse shadow-md">
+                🏆 稱號：{daughter.selectedTitle}
+              </span>
+            )}
+            <span>{daughter.name} 的起居室</span>
           </h2>
+
+          {/* Use item message toast */}
+          {useItemMessage && (
+            <div className="w-full p-2.5 bg-emerald-950/80 border border-emerald-500/50 rounded-lg text-emerald-200 text-xs font-semibold text-center animate-pulse">
+              {useItemMessage}
+            </div>
+          )}
 
           {/* Portrait Container */}
           <div 
             className="w-full max-w-[280px] h-[340px] rounded-xl relative overflow-hidden flex flex-col items-center justify-end p-4"
             style={{
-              background: isRebellious
-                ? 'radial-gradient(circle at center, #2d1111 0%, #0f0404 100%)'
-                : isSick
-                ? 'radial-gradient(circle at center, #111a28 0%, #060a10 100%)'
-                : 'radial-gradient(circle at center, #1b1633 0%, #0d0a1b 100%)',
-              border: `2px solid ${isRebellious ? 'rgba(239,68,68,0.6)' : isSick ? 'rgba(96,165,250,0.5)' : (OUTFIT_BORDER_COLORS[daughter.outfit] || 'rgba(255,255,255,0.1)')}`,
+              background: 'radial-gradient(circle at center, #1b1633 0%, #0d0a1b 100%)',
+              border: `2px solid ${OUTFIT_BORDER_COLORS[daughter.outfit] || 'rgba(255,255,255,0.1)'}`,
               boxShadow: 'inset 0 0 20px rgba(0,0,0,0.8)'
             }}
           >
@@ -202,12 +231,7 @@ export const MainPanel: React.FC = () => {
                 bottom: '16px',
                 left: 0,
                 right: 0,
-                ...getAvatarStyle(daughter.characterId),
-                filter: isSick
-                  ? `${getAvatarStyle(daughter.characterId).filter || ''} brightness(0.7) saturate(0.4) hue-rotate(200deg)`.trim()
-                  : isRebellious
-                  ? `${getAvatarStyle(daughter.characterId).filter || ''} brightness(0.8) saturate(0.6) hue-rotate(340deg)`.trim()
-                  : getAvatarStyle(daughter.characterId).filter
+                ...getAvatarStyle(daughter.characterId)
               }}
             >
               <img 
@@ -223,21 +247,33 @@ export const MainPanel: React.FC = () => {
             {/* Decorative frame inside */}
             <div className="absolute inset-2 border border-[rgba(212,175,55,0.08)] pointer-events-none rounded-lg" />
             
-            {/* Rebellious Overlay */}
-            {isRebellious && (
-              <div className="absolute inset-0 bg-red-950/50 backdrop-blur-[1px] flex items-center justify-center z-20">
-                <span className="px-3 py-1.5 bg-red-700 text-white font-bold rounded-lg border border-red-400 text-xs animate-bounce shadow-lg">
-                  😤 叛逆狀態 (道德低落)
+            {/* Sickness Overlay */}
+            {daughter.isSick && (
+              <div className="absolute inset-0 bg-[rgba(15,23,42,0.4)] backdrop-blur-[0.5px] flex items-center justify-center z-20">
+                <span className="px-3 py-1.5 bg-sky-950/90 text-sky-300 font-bold rounded-lg border border-sky-500/50 text-xs animate-pulse shadow-lg flex items-center gap-1.5">
+                  🤢 生病中 (氣色蒼白)
                 </span>
               </div>
             )}
 
-            {/* Sickness Overlay */}
-            {isSick && !isRebellious && (
-              <div className="absolute inset-0 bg-blue-950/40 backdrop-blur-[1px] flex items-center justify-center z-20">
-                <span className="px-3 py-1.5 bg-blue-800 text-white font-bold rounded-lg border border-blue-400 text-xs animate-bounce shadow-lg">
-                  🤒 生病中 (活動效果↓)
+            {/* Sickness Danger (Warning if stress > stamina but not sick yet) */}
+            {!daughter.isSick && daughter.attributes.stress > daughter.attributes.stamina && (
+              <div className="absolute inset-0 bg-red-950/30 backdrop-blur-[0.5px] flex items-center justify-center z-20">
+                <span className="px-3 py-1.5 bg-red-600 text-white font-bold rounded-lg border border-red-400 text-xs animate-bounce shadow-lg">
+                  🤒 疲勞過度 (生病警告)
                 </span>
+              </div>
+            )}
+
+            {/* Personality overlay */}
+            <div className="absolute top-3 left-3 bg-indigo-950/80 border border-indigo-500/50 backdrop-blur px-2.5 py-1 rounded text-[10px] sm:text-xs text-[#c7d2fe] font-bold z-20 shadow-md flex items-center gap-1">
+              ✨ {getDaughterPersonality(daughter.attributes)}
+            </div>
+
+            {/* Rebellion Overlay/Badge */}
+            {daughter.isRebellious && (
+              <div className="absolute top-12 left-3 bg-red-950/90 border border-red-500/50 backdrop-blur px-2.5 py-1 rounded-md text-[10px] text-red-400 font-bold z-20 animate-pulse flex items-center gap-1 shadow-lg">
+                ⚡ 叛逆期 (不服管教)
               </div>
             )}
 
@@ -250,18 +286,6 @@ export const MainPanel: React.FC = () => {
             <div className="absolute top-3 right-3 bg-black/60 border border-slate-700/50 backdrop-blur px-2.5 py-1 rounded text-xs text-white font-bold z-20">
               🎂 {daughter.age} 歲
             </div>
-
-            {/* Personality badge */}
-            <div
-              className="absolute top-3 left-3 px-2 py-1 rounded text-xs font-bold z-20 border backdrop-blur"
-              style={{
-                background: 'rgba(0,0,0,0.65)',
-                borderColor: personalityInfo.color + '80',
-                color: personalityInfo.color
-              }}
-            >
-              {personalityInfo.emoji} {personality}
-            </div>
           </div>
 
           {/* Quick info bar */}
@@ -271,106 +295,161 @@ export const MainPanel: React.FC = () => {
               <p className="text-lg font-bold text-[#ffd700]">{daughter.relationship} / 100</p>
             </div>
             <div className="bg-[rgba(255,255,255,0.02)] border border-slate-800 p-2.5 rounded-lg">
-              <p className="text-xs text-slate-400">性格傾向</p>
-              <p className="text-xs font-bold mt-1" style={{ color: personalityInfo.color }}>
-                {personalityInfo.emoji} {personality}
+              <p className="text-xs text-slate-400">持有裝備</p>
+              <p className="text-sm font-bold text-slate-200 mt-1 truncate">
+                {daughter.outfit === 'default' ? '無戰術裝備' : OUTFIT_NAMES[daughter.outfit]}
               </p>
-              <p className="text-[10px] text-slate-500 mt-0.5 leading-tight">{personalityInfo.desc}</p>
             </div>
           </div>
 
-          {/* Earned Titles Display */}
-          {earnedTitles.length > 0 && (
-            <div className="w-full bg-[rgba(212,175,55,0.04)] border border-[rgba(212,175,55,0.2)] rounded-lg p-3">
-              <p className="text-[10px] font-bold text-[#d4af37] uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                <Award size={12} /> 已獲封號
-              </p>
-              <div className="flex flex-wrap gap-1.5">
-                {earnedTitles.map((title, i) => (
-                  <span
-                    key={i}
-                    className="px-2 py-0.5 bg-[rgba(212,175,55,0.1)] border border-[rgba(212,175,55,0.3)] rounded text-[10px] text-[#f3e5ab] font-semibold"
-                  >
-                    【{title}】
-                  </span>
-                ))}
+          {/* Personality-specific speech bubble */}
+          {(() => {
+            const personality = getDaughterPersonality(daughter.attributes);
+            const quotes = {
+              '元氣女漢子': '「老爸！今天也要打起精神，熱血地揮劍一千次！」',
+              '高冷學霸': '「這本古書很有意思……父親，請保持安靜，我在思考。」',
+              '多愁善感藝術家': '「風拂過荖葉的聲音，聽起來像是王國失落的哀歌……」',
+              '溫柔乖乖女': '「爸爸，今天我幫你泡了茶，要注意身體，不要太累了喔。」',
+              '社交名媛': '「優雅是王女必備的武裝。不論身處何境，都不能失了禮儀。」',
+              '天真少女': '「老爸！今天可以帶我去吃草莓千層蛋糕嗎？」'
+            };
+            return (
+              <div className="w-full bg-[rgba(255,255,255,0.02)] border border-slate-800/80 p-3 rounded-lg text-center relative mt-3 shadow-inner">
+                {/* Little triangle pointing up */}
+                <div className="absolute top-[-5px] left-1/2 -translate-x-1/2 w-2.5 h-2.5 bg-slate-900 border-t border-l border-slate-800/60 rotate-45" />
+                <p className="text-xs text-indigo-200 italic font-medium leading-relaxed">
+                  {daughter.isRebellious ? '「別管我，我想自己待著……」' : quotes[personality] || '「老爸，今天有什麼安排嗎？」'}
+                </p>
               </div>
-            </div>
-          )}
+            );
+          })()}
 
           {/* Father-Daughter Interactivity */}
-          <div className="w-full mt-1">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-xs font-bold text-[#ffd700] uppercase tracking-wider flex items-center gap-1.5">
-                <Heart size={14} /> 父女互動（每月一次）
-              </p>
-              {hasInteractedThisMonth && !cheatMode && (
-                <span className="text-[10px] text-slate-500 border border-slate-700 px-2 py-0.5 rounded">
-                  本月已互動
-                </span>
-              )}
-            </div>
-            <div className="grid grid-cols-2 gap-2 mb-2">
+          <div className="w-full mt-2">
+            <p className="text-xs font-bold text-[#ffd700] uppercase tracking-wider mb-2 flex items-center gap-1.5 justify-center">
+              <MessageSquare size={14} /> 與女兒互動對話
+            </p>
+            <div className="grid grid-cols-3 gap-1 sm:gap-2 mb-4">
               <button 
-                onClick={() => talkToDaughter('gentle')} 
-                disabled={hasInteractedThisMonth && !cheatMode}
-                className="py-2 text-xs bg-[rgba(255,255,255,0.03)] border border-slate-700 hover:border-pink-500 hover:text-pink-400 rounded-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                onClick={() => {
+                  audioManager.playSfx('sfx_click.mp3');
+                  talkToDaughter('gentle');
+                }} 
+                className="py-2 px-1 text-[10px] sm:text-xs bg-[rgba(255,255,255,0.03)] border border-slate-700 hover:border-pink-500 hover:text-pink-400 rounded-lg transition-all"
               >
                 💬 溫柔談心
               </button>
               <button 
-                onClick={() => talkToDaughter('praise')} 
-                disabled={hasInteractedThisMonth && !cheatMode}
-                className="py-2 text-xs bg-[rgba(255,255,255,0.03)] border border-slate-700 hover:border-[#ffd700] hover:text-[#ffd700] rounded-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                onClick={() => {
+                  audioManager.playSfx('sfx_click.mp3');
+                  talkToDaughter('praise');
+                }} 
+                className="py-2 px-1 text-[10px] sm:text-xs bg-[rgba(255,255,255,0.03)] border border-slate-700 hover:border-[#ffd700] hover:text-[#ffd700] rounded-lg transition-all"
               >
                 👍 誇獎表揚
               </button>
               <button 
-                onClick={() => talkToDaughter('scold')} 
-                disabled={hasInteractedThisMonth && !cheatMode}
-                className={`py-2 text-xs bg-[rgba(255,255,255,0.03)] border rounded-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed ${
-                  isRebellious
-                    ? 'border-red-500 text-red-400 hover:bg-red-950/20 animate-pulse'
-                    : 'border-slate-700 hover:border-red-500 hover:text-red-400'
-                }`}
+                onClick={() => {
+                  audioManager.playSfx('sfx_click.mp3');
+                  talkToDaughter('scold');
+                }} 
+                className="py-2 px-1 text-[10px] sm:text-xs bg-[rgba(255,255,255,0.03)] border border-slate-700 hover:border-red-500 hover:text-red-400 rounded-lg transition-all"
               >
-                ⚠️ 嚴厲訓導{isRebellious ? ' !' : ''}
-              </button>
-              <button 
-                onClick={() => talkToDaughter('headpat')} 
-                disabled={hasInteractedThisMonth && !cheatMode}
-                className="py-2 text-xs bg-[rgba(255,255,255,0.03)] border border-slate-700 hover:border-amber-400 hover:text-amber-400 rounded-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-              >
-                🤲 溫柔摸頭
+                ⚠️ 嚴厲訓導
               </button>
             </div>
-            <button
-              onClick={() => talkToDaughter('allowance')}
-              disabled={hasInteractedThisMonth && !cheatMode}
-              className="w-full py-2 text-xs bg-[rgba(255,215,0,0.05)] border border-[rgba(212,175,55,0.3)] hover:border-[#ffd700] hover:text-[#ffd700] rounded-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              💰 給零用錢（+80G+, 關係+6）
-            </button>
-            {isRebellious && (
-              <p className="text-[10px] text-red-400/80 mt-1.5 text-center">
-                ⚠️ 叛逆中：道德過低，日程活動有機率被拒絕。請使用「嚴厲訓導」提升道德！
-              </p>
-            )}
-            {isSick && (
-              <p className="text-[10px] text-blue-400/80 mt-1 text-center">
-                🤒 生病中：活動效果大幅下降，請前往商店購買【聖水】或多次選擇休息恢復！
-              </p>
-            )}
           </div>
 
           {/* Closet Button */}
           <div className="w-full border-t border-slate-800/80 pt-3 mt-1">
             <button
-              onClick={() => setIsClosetOpen(true)}
+              onClick={() => {
+                audioManager.playSfx('sfx_click.mp3');
+                setIsClosetOpen(true);
+              }}
               className="btn-fantasy w-full py-3.5 text-sm flex items-center justify-center gap-2 hover:border-[#ffd700] hover:text-[#ffd700]"
             >
               裙 開啟女兒的衣櫃 (Closet)
             </button>
+          </div>
+
+          {/* Title Selector Section */}
+          {(() => {
+            const unlocked = state.unlockedAchievements || [];
+            const titleMap = [
+              { ach: '第一次當爸爸', title: '乖巧女兒' },
+              { ach: '海路放行者', title: '外交特使' },
+              { ach: '三王女重聚', title: '血脈繼承者' },
+              { ach: '蔚藍大富翁', title: '檳榔大亨' },
+              { ach: '良師友誼', title: '同窗焦點' },
+              { ach: '永遠的學院生', title: '萬年留級生' },
+              { ach: '皇家圖書館學伴', title: '皇家學霸' },
+              { ach: '逆天改命', title: '幸運之神' },
+              { ach: '收穫祭之霸', title: '競技之王' }
+            ];
+            
+            const availableTitles = titleMap.filter(item => unlocked.includes(item.ach));
+            if (availableTitles.length === 0) return null;
+
+            return (
+              <div className="w-full border-t border-slate-800/80 pt-3 mt-2 flex flex-col gap-1.5 items-center justify-center">
+                <label className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                  👑 配戴成就稱號
+                </label>
+                <select
+                  value={daughter.selectedTitle || ''}
+                  onChange={(e) => {
+                    audioManager.playSfx('sfx_coin.mp3');
+                    selectTitle(e.target.value || null);
+                  }}
+                  className="w-full max-w-[220px] text-xs bg-slate-950/80 text-[#ffd700] border border-slate-850 hover:border-[#d4af37] px-3 py-1.5 rounded-lg focus:outline-none focus:border-[#d4af37] transition-all cursor-pointer font-bold text-center"
+                >
+                  <option value="" className="text-slate-400">--- 無稱號 ---</option>
+                  {availableTitles.map(item => (
+                    <option key={item.title} value={item.title} className="text-[#ffd700] bg-slate-950 font-bold">
+                      🏆 {item.title}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            );
+          })()}
+
+          {/* Backpack Section */}
+          <div className="w-full border-t border-slate-800/60 pt-4 mt-2">
+            <p className="text-xs font-bold text-[#ffd700] uppercase tracking-wider mb-3 flex items-center gap-1.5 justify-center">
+              🎒 隨身背包 (Backpack)
+            </p>
+            {state.inventory.filter(id => ITEMS.find(item => item.id === id)?.type === 'food').length === 0 ? (
+              <p className="text-[11px] text-slate-500 text-center italic py-3 bg-slate-950/40 border border-slate-900/60 rounded-xl">
+                背包目前無可用食品或藥水，可拜訪商店購買。
+              </p>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-40 overflow-y-auto pr-1">
+                {state.inventory.map((itemId, idx) => {
+                  const item = ITEMS.find(i => i.id === itemId);
+                  if (!item || item.type !== 'food') return null;
+                  
+                  return (
+                    <div 
+                      key={`${itemId}-${idx}`}
+                      className="flex items-center justify-between p-2 bg-slate-950/60 border border-slate-900 hover:border-slate-800 rounded-xl text-xs"
+                    >
+                      <div className="flex flex-col min-w-0 pr-1.5">
+                        <span className="font-semibold text-slate-200 truncate" title={item.name}>{item.name}</span>
+                        <span className="text-[10px] text-slate-400 truncate mt-0.5" title={item.description}>{item.description}</span>
+                      </div>
+                      <button
+                        onClick={() => handleUseItem(itemId)}
+                        className="shrink-0 px-2.5 py-1 bg-emerald-700/80 hover:bg-emerald-600 border border-emerald-500/50 hover:border-emerald-400 text-white rounded-lg text-[10px] font-semibold transition-all hover:scale-105"
+                      >
+                        使用
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
 
@@ -382,30 +461,52 @@ export const MainPanel: React.FC = () => {
 
           <div className="flex flex-col gap-3">
             <button 
-              onClick={() => setScreen('scheduler')} 
+              onClick={() => {
+                audioManager.playSfx('sfx_click.mp3');
+                setScreen('scheduler');
+              }} 
               className="btn-fantasy w-full py-4 text-sm flex items-center justify-center gap-2"
             >
               <Calendar size={18} /> 制定本月日程
             </button>
 
             <button 
-              onClick={() => setScreen('store')} 
+              onClick={() => {
+                audioManager.playSfx('sfx_click.mp3');
+                setScreen('store');
+              }} 
               className="btn-fantasy-sec w-full py-3.5 text-sm flex items-center justify-center gap-2 hover:border-[#d4af37] hover:text-[#d4af37]"
             >
               <ShoppingCart size={18} /> 拜訪武器禮品店
             </button>
 
             <button 
-              onClick={startAdventure} 
+              onClick={() => {
+                audioManager.playSfx('sfx_click.mp3');
+                startAdventure();
+              }} 
               className="btn-fantasy-sec w-full py-3.5 text-sm flex items-center justify-center gap-2 hover:border-emerald-500 hover:text-emerald-400"
             >
               <Compass size={18} /> 前往幽暗森林修行
             </button>
 
+            <button 
+              onClick={() => {
+                audioManager.playSfx('sfx_click.mp3');
+                setShowDiary(true);
+              }} 
+              className="btn-fantasy-sec w-full py-3.5 text-sm flex items-center justify-center gap-2 border-pink-500/40 text-pink-300 hover:bg-pink-950/20 hover:border-pink-400 hover:text-pink-200"
+            >
+              <BookOpen size={18} /> 女兒成長回憶日記
+            </button>
+
             {/* Bard specific street selling command */}
             {daughter.fatherBackground === 'bard' && (
               <button 
-                onClick={performStreetPerformance} 
+                onClick={() => {
+                  audioManager.playSfx('sfx_click.mp3');
+                  performStreetPerformance();
+                }} 
                 className="btn-fantasy-sec w-full py-3.5 text-sm flex items-center justify-center gap-2 border-purple-500/40 text-purple-300 hover:bg-purple-950/20 hover:border-purple-400"
               >
                 🎸 街頭琴藝賣藝
@@ -417,7 +518,10 @@ export const MainPanel: React.FC = () => {
             <div className="flex items-center justify-between text-xs text-slate-400 mb-2">
               <span>開發者作弊模式</span>
               <button 
-                onClick={toggleCheatMode} 
+                onClick={() => {
+                  audioManager.playSfx('sfx_click.mp3');
+                  toggleCheatMode();
+                }} 
                 className="text-[#d4af37] focus:outline-none"
               >
                 {cheatMode ? <ToggleRight size={28} /> : <ToggleLeft size={28} />}
@@ -475,7 +579,10 @@ export const MainPanel: React.FC = () => {
                 <span>👗 女兒的更衣室 (Closet)</span>
               </div>
               <button 
-                onClick={() => setIsClosetOpen(false)}
+                onClick={() => {
+                  audioManager.playSfx('sfx_click.mp3');
+                  setIsClosetOpen(false);
+                }}
                 className="text-slate-400 hover:text-white transition-colors"
               >
                 ✕
@@ -538,10 +645,10 @@ export const MainPanel: React.FC = () => {
                         style={getAvatarStyle(daughter.characterId)}
                       >
                         <img 
-                          src={item.image} 
-                          alt={item.name} 
-                          className="h-full w-auto object-contain" 
-                          onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
+                           src={item.image} 
+                           alt={item.name} 
+                           className="h-full w-auto object-contain" 
+                           onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
                         />
                       </div>
                       <div className="flex-1 min-w-0">
@@ -559,6 +666,7 @@ export const MainPanel: React.FC = () => {
                           </span>
                           <button
                             onClick={() => {
+                              audioManager.playSfx('sfx_click.mp3');
                               setIsClosetOpen(false);
                               setScreen('store');
                             }}
@@ -585,7 +693,10 @@ export const MainPanel: React.FC = () => {
                             已擁有
                           </span>
                           <button
-                            onClick={() => changeOutfit(item.id)}
+                            onClick={() => {
+                              audioManager.playSfx('sfx_click.mp3');
+                              changeOutfit(item.id);
+                            }}
                             className="px-3 py-1 bg-[#d4af37]/80 hover:bg-[#d4af37] text-slate-950 text-[10px] font-bold rounded transition-all"
                           >
                             換上服飾
@@ -600,7 +711,10 @@ export const MainPanel: React.FC = () => {
 
             {/* Footer close */}
             <button
-              onClick={() => setIsClosetOpen(false)}
+              onClick={() => {
+                audioManager.playSfx('sfx_click.mp3');
+                setIsClosetOpen(false);
+              }}
               className="btn-fantasy py-2.5 px-6 text-xs w-full mt-2"
             >
               關閉衣櫃
@@ -611,6 +725,9 @@ export const MainPanel: React.FC = () => {
 
       {/* Save/Load Panel Modal */}
       {isSavePanelOpen && <SaveLoadPanel onClose={() => setIsSavePanelOpen(false)} />}
+      
+      {/* Daughter Growth Diary Modal */}
+      {showDiary && <DiaryPanel onClose={() => setShowDiary(false)} />}
     </div>
   );
 };

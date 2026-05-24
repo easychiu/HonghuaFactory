@@ -3,6 +3,7 @@ import { useGame, ACTIVITIES } from '../contexts/GameContext';
 import { COURSES } from '../data/courses';
 import type { Activity } from '../types';
 import { Calendar, AlertCircle, Coins, BookOpen, Smile, Sparkles } from 'lucide-react';
+import { audioManager } from '../utils/audio';
 
 export const Scheduler: React.FC = () => {
   const { state, setSchedule, startScheduleExecution, setScreen } = useGame();
@@ -30,6 +31,7 @@ export const Scheduler: React.FC = () => {
   const getActivityType = (id: string): Activity['type'] | null => resolveActivity(id)?.type ?? null;
 
   const handleSelectType = (activityType: Activity['type']) => {
+    audioManager.playSfx('sfx_click.mp3');
     setSelectedTypeBySlot(prev => {
       const copy = [...prev] as [Activity['type'] | null, Activity['type'] | null, Activity['type'] | null];
       copy[activeSlot] = activityType;
@@ -47,6 +49,7 @@ export const Scheduler: React.FC = () => {
   };
 
   const handleSelectActivity = (activityId: string) => {
+    audioManager.playSfx('sfx_click.mp3');
     setSelected(prev => {
       const copy = [...prev] as [string, string, string];
       copy[activeSlot] = activityId;
@@ -64,6 +67,7 @@ export const Scheduler: React.FC = () => {
     const previousActivityId = selected[activeSlot - 1];
     if (!previousActivityId) return;
 
+    audioManager.playSfx('sfx_click.mp3');
     const previousType = selectedTypeBySlot[activeSlot - 1] ?? getActivityType(previousActivityId);
 
     setSelected(prev => {
@@ -87,6 +91,7 @@ export const Scheduler: React.FC = () => {
 
   const handleConfirm = () => {
     if (!isScheduleComplete) return;
+    audioManager.playSfx('sfx_click.mp3');
     setSchedule(selected[0], selected[1], selected[2]);
     startScheduleExecution();
   };
@@ -142,21 +147,56 @@ export const Scheduler: React.FC = () => {
           </p>
         </div>
         <button
-          onClick={() => setScreen('main')}
+          onClick={() => {
+            audioManager.playSfx('sfx_click.mp3');
+            setScreen('main');
+          }}
           className="btn-fantasy-sec text-xs"
         >
           返回起居室
         </button>
       </div>
 
+      {/* Seasonal Event Banner */}
+      {state.seasonalEvent && (
+        <div className="w-full p-3 sm:p-4 rounded-xl border animate-slide-up flex flex-col sm:flex-row items-center justify-between gap-3 shadow-lg bg-indigo-950/20 border-indigo-500/30">
+          <div className="flex items-center gap-3 text-left">
+            <span className="text-2xl">
+              {state.seasonalEvent === 'cold_wave' ? '❄️' :
+               state.seasonalEvent === 'caravan' ? '🐫' :
+               state.seasonalEvent === 'tax' ? '📜' :
+               state.seasonalEvent === 'harvest_blessing' ? '🌾' : '🏰'}
+            </span>
+            <div>
+              <h4 className="text-sm font-bold text-indigo-300">
+                {state.seasonalEvent === 'cold_wave' ? '大寒流襲來' :
+                 state.seasonalEvent === 'caravan' ? '流浪商旅到訪' :
+                 state.seasonalEvent === 'tax' ? '王國臨時徵稅' :
+                 state.seasonalEvent === 'harvest_blessing' ? '豐收女神的祝福' : '皇家特使巡視'}
+              </h4>
+              <p className="text-xs text-slate-300 mt-1">
+                {state.seasonalEvent === 'cold_wave' && '本月異常寒冷！女兒學習課程疲勞額外 +3，但在家靜養的減壓效果增加 5 點。'}
+                {state.seasonalEvent === 'caravan' && '異國商旅抵達！本月皇家商店與黑市所有商品享有 8 折特惠特價！'}
+                {state.seasonalEvent === 'tax' && '王國徵稅法案！本月所有商店商品漲價 20%，且月底將自動扣除 80 G 稅金（不足扣則壓力+25）。'}
+                {state.seasonalEvent === 'harvest_blessing' && '大地豐饒恩賜！本月女兒進行所有打工活動的薪資回報大幅增加 30%！'}
+                {state.seasonalEvent === 'royal_inspection' && '皇家特使來臨！本月學院課程正面屬性額外 +2，且額外獲得道德感 +3！'}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 flex flex-col gap-6">
-          <div className="glass-panel p-6 grid grid-cols-3 gap-4 text-center">
+          <div className="glass-panel p-3 sm:p-6 grid grid-cols-3 gap-2 sm:gap-4 text-center">
             {slotLabels.map((label, index) => (
               <button
                 key={label}
                 type="button"
-                onClick={() => setActiveSlot(index as 0 | 1 | 2)}
+                onClick={() => {
+                  audioManager.playSfx('sfx_click.mp3');
+                  setActiveSlot(index as 0 | 1 | 2);
+                }}
                 aria-pressed={activeSlot === index}
                 className={`schedule-slot-button ${activeSlot === index ? 'is-active' : ''}`}
               >
@@ -231,11 +271,11 @@ export const Scheduler: React.FC = () => {
 
             {activeType ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {visibleActivities.map((act, index) => (
+                {visibleActivities.map((act, idx) => (
                   <ActivityCard
                     key={act.id}
                     act={act}
-                    index={index + 1}
+                    index={idx + 1}
                     onSelect={handleSelectActivity}
                     active={selected[activeSlot] === act.id}
                     fatherBackground={daughter.fatherBackground}
@@ -396,14 +436,17 @@ const ActivityCard: React.FC<ActivityCardProps> = ({ act, index, onSelect, activ
 
   const colors = typeColors[act.type];
 
+  // Alternating background zebra-striping when inactive to ensure clear visual boundaries between slots
+  const cardBg = active
+    ? `${colors.activeBg} ${colors.activeBorder} ${colors.activeShadow}`
+    : index % 2 === 0
+      ? 'bg-slate-800/80 border-slate-700/80 hover:border-[#d4af37]/50 hover:bg-slate-750/90'
+      : 'bg-slate-950/95 border-slate-850 hover:border-[#d4af37]/50 hover:bg-slate-950/100';
+
   return (
     <div
       onClick={() => onSelect(act.id)}
-      className={`p-3.5 rounded-lg border-2 border-l-4 cursor-pointer transition-all flex flex-col justify-between min-h-[150px] ${colors.stripe} ${
-        active
-          ? `${colors.activeBg} ${colors.activeBorder} ${colors.activeShadow}`
-          : 'bg-[rgba(255,255,255,0.02)] border-slate-700/90 hover:border-slate-500 hover:bg-[rgba(255,255,255,0.04)]'
-      }`}
+      className={`p-3.5 rounded-lg border-2 border-l-4 cursor-pointer transition-all flex flex-col justify-between min-h-[150px] ${colors.stripe} ${cardBg}`}
     >
       <div className="flex justify-between items-start gap-2">
         <div>

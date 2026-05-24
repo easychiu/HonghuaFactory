@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useGame } from '../contexts/GameContext';
 import { Save, FolderOpen, Download, Upload, X, Trash2, Clock } from 'lucide-react';
+import { audioManager } from '../utils/audio';
 
 const MAX_SLOTS = 5;
 const SAVE_KEY_PREFIX = 'honghua_factory_slot_';
@@ -48,6 +49,7 @@ export const SaveLoadPanel: React.FC<{ onClose: () => void; loadOnly?: boolean }
   };
 
   const handleSave = (index: number) => {
+    audioManager.playSfx('sfx_click.mp3');
     const saveData = {
       daughter: state.daughter,
       time: state.time,
@@ -85,6 +87,7 @@ export const SaveLoadPanel: React.FC<{ onClose: () => void; loadOnly?: boolean }
   };
 
   const handleLoad = (index: number) => {
+    audioManager.playSfx('sfx_click.mp3');
     const raw = localStorage.getItem(getSaveSlotKey(index));
     if (!raw) {
       showMessage('此槽位沒有存檔資料！');
@@ -101,6 +104,7 @@ export const SaveLoadPanel: React.FC<{ onClose: () => void; loadOnly?: boolean }
   };
 
   const handleDelete = (index: number) => {
+    audioManager.playSfx('sfx_click.mp3');
     if (!window.confirm(`確定要刪除槽位 ${index + 1} 的存檔嗎？`)) return;
     localStorage.removeItem(getSaveSlotKey(index));
     const newSlots = [...slots];
@@ -111,6 +115,7 @@ export const SaveLoadPanel: React.FC<{ onClose: () => void; loadOnly?: boolean }
   };
 
   const handleExport = (index: number) => {
+    audioManager.playSfx('sfx_click.mp3');
     const raw = localStorage.getItem(getSaveSlotKey(index));
     if (!raw) {
       showMessage('此槽位沒有存檔，無法匯出。');
@@ -131,6 +136,7 @@ export const SaveLoadPanel: React.FC<{ onClose: () => void; loadOnly?: boolean }
   };
 
   const handleImport = () => {
+    audioManager.playSfx('sfx_click.mp3');
     if (!importText.trim()) {
       showMessage('請先貼上存檔 JSON 字串！');
       return;
@@ -215,7 +221,13 @@ export const SaveLoadPanel: React.FC<{ onClose: () => void; loadOnly?: boolean }
             </h2>
             <p className="text-[11px] text-slate-400 mt-1">{loadOnly ? '可直接讀取既有槽位，或匯入外部 JSON 存檔。' : '可查看各槽位紀錄時間，並直接讀取檔案。'}</p>
           </div>
-          <button onClick={onClose} className="p-1.5 rounded hover:bg-white/10 transition-all text-slate-400 hover:text-white">
+          <button 
+            onClick={() => {
+              audioManager.playSfx('sfx_click.mp3');
+              onClose();
+            }} 
+            className="p-1.5 rounded hover:bg-white/10 transition-all text-slate-400 hover:text-white"
+          >
             <X size={20} />
           </button>
         </div>
@@ -311,7 +323,10 @@ export const SaveLoadPanel: React.FC<{ onClose: () => void; loadOnly?: boolean }
         {/* Import Section */}
         <div className="border-t border-slate-800 pt-4">
           <button
-            onClick={() => setShowImport(!showImport)}
+            onClick={() => {
+              audioManager.playSfx('sfx_click.mp3');
+              setShowImport(!showImport);
+            }}
             className="btn-fantasy py-2 px-4 text-xs flex items-center gap-2 mx-auto"
           >
             <Upload size={14} /> {showImport ? '收起匯入面板' : '匯入外部存檔'}

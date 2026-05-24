@@ -36,12 +36,17 @@ export interface Daughter {
   avatarUrl: string; // 頭像路徑
   characterId: CharacterId; // 主角ID
   fatherBackground: FatherBackground; // 老爸背景
+  isRebellious?: boolean; // 是否叛逆
   bonds: {
     clover: number;
     shanshan: number;
     xuewu: number;
   };
   isSick?: boolean; // 生病狀態（疲勞超過體力上限觸發）
+  adventureCount?: number; // 冒險修行次數
+  selectedTitle?: string | null; // 當前配戴的成就稱號
+  refineLevels?: Record<string, number>; // 擁有的武器/防具精煉等級
+  diaryMilestones?: string[]; // 本週目已解鎖的日記里程碑 ID 列表
 }
 
 export type PeriodType = 'early' | 'mid' | 'late';
@@ -176,4 +181,8 @@ export interface GameState {
   completedEndings: string[]; // 已達成結局列表
   unlockedAchievements: string[]; // 已解鎖成就
   lastFatherInteractionMonth?: number; // 老爸最後一次與女兒互動的月份（用於每月限制）
+  seasonalEvent?: string | null; // 當前月季節隨機事件
+  unlockedItems?: string[]; // 道具百科解鎖列表
+  stardust?: number; // 回憶星塵點數
+  heritageUpgrades?: Record<string, number>; // 星塵商店已購買升級
 }

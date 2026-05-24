@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useGame } from '../contexts/GameContext';
 import { ACTIVITIES } from '../contexts/GameContext';
 import { COURSES } from '../data/courses';
+import { audioManager } from '../utils/audio';
 
 export interface FloatingStat {
   id: string;
@@ -106,12 +107,17 @@ export const useScheduleLoop = () => {
 
   const handleStep = () => {
     if (!activity) return;
+    audioManager.playSfx('sfx_click.mp3');
 
     // Trigger stat updates in context
-    const monthDone = executeNextPeriod();
+    const res = executeNextPeriod();
+    const monthDone = typeof res === 'boolean' ? res : res.monthFinished;
+    const statChanges = typeof res === 'object' && res.statChanges ? res.statChanges : null;
     
     // Spawn floaters
-    if (activity.cost <= daughter.gold) {
+    if (statChanges) {
+      spawnFloatingStats(statChanges);
+    } else if (activity.cost <= daughter.gold) {
       spawnFloatingStats(activity.statChanges);
     } else {
       // Fallback Rest Home
@@ -123,23 +129,27 @@ export const useScheduleLoop = () => {
       setIsFinished(true);
       setIsAutoPlay(false);
       setStatusText('本月所有日程已執行完畢！女兒回到了家中。');
+      audioManager.playSfx('sfx_level_up.mp3');
     } else {
       setCurrentSlot(prev => (prev + 1) as 0 | 1 | 2);
     }
   };
 
   const handleSkip = () => {
+    audioManager.playSfx('sfx_click.mp3');
     setIsAutoPlay(false);
     if (timerRef.current) clearInterval(timerRef.current);
     
     // Call executeNextPeriod for remaining slots
     let done = false;
     while (!done) {
-      done = executeNextPeriod();
+      const res = executeNextPeriod();
+      done = typeof res === 'boolean' ? res : res.monthFinished;
     }
     
     setIsFinished(true);
     setStatusText('已快速跳過本月排程動畫！女兒順利完成了所有日程。');
+    audioManager.playSfx('sfx_level_up.mp3');
   };
 
   const getPeriodLabel = (slot: number) => {

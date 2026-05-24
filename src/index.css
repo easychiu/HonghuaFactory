@@ -555,6 +555,7 @@ h1, h2, h3, .fantasy-font {
   text-shadow:
     0 0 16px rgba(255, 164, 164, 0.32),
     3px 3px 0 rgba(6, 11, 31, 0.6);
+  filter: drop-shadow(0 0 10px rgba(255, 164, 164, 0.45)) drop-shadow(2px 2px 0px rgba(6, 11, 31, 0.65));
   animation: float 3.2s ease-in-out infinite;
 }
 

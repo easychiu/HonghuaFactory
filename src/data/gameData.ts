@@ -169,6 +169,14 @@ export const ITEMS: Item[] = [
     price: 180,
     type: 'book',
     statChanges: { intelligence: 30, magicSkill: 20 }
+  },
+  {
+    id: 'refine_ore',
+    name: '精煉礦石',
+    description: '在野外冒險修行中獲得的特殊礦石，可用於在胡村姑的木工作坊精煉升級武器與防具。',
+    price: 300,
+    type: 'book',
+    statChanges: {}
   }
 ];
 

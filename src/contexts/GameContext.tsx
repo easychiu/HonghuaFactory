@@ -3,7 +3,7 @@ import type { GameState, Daughter, CharacterId, FatherBackground, Activity, Item
 import { COURSES } from '../data/courses';
 import { AVG_EVENTS } from '../data/events';
 import { determineEnding } from '../data/endings';
-import { getPersonalityType, getPersonalityDialogue } from '../utils/personality';
+import { getDaughterPersonality } from '../utils/avatar';
 
 // 定義商店道具庫
 export const ITEMS: Item[] = [
@@ -140,6 +140,14 @@ export const ITEMS: Item[] = [
     price: 1500,
     type: 'food',
     statChanges: { stamina: 10 }
+  },
+  {
+    id: 'refine_ore',
+    name: '精煉礦石',
+    description: '在野外冒險修行中獲得的特殊礦石，可用於在胡村姑的木工作坊精煉升級武器與防具。',
+    price: 300,
+    type: 'book',
+    statChanges: {}
   }
 ];
 
@@ -300,7 +308,7 @@ const AREA_CONFIG: Record<AdventureAreaId, { name: string; debuffName: string; d
   }
 };
 
-const pickRandom = <T,>(list: T[]): T => list[Math.floor(Math.random() * list.length)];
+const pickRandom = <T,>(list: readonly T[]): T => list[Math.floor(Math.random() * list.length)];
 const withLayerDifficulty = (monster: Monster, layerMultiplier: number): Monster => ({
   ...monster,
   hp: Math.round(monster.hp * layerMultiplier),
@@ -308,57 +316,112 @@ const withLayerDifficulty = (monster: Monster, layerMultiplier: number): Monster
   attack: Math.round(monster.attack * layerMultiplier),
   defense: Math.round(monster.defense * layerMultiplier),
   goldReward: Math.round(monster.goldReward * (1 + (layerMultiplier - 1) * 0.6)),
-  expReward: Math.round(monster.expReward * (1 + (layerMultiplier - 1) * 0.8))
-});
+  });
 
-export const generateAdventureMap = (areaId: AdventureAreaId, dad: FatherBackground, _charId: CharacterId, inventory: string[] = []): AdventureMapNode[] => {
+// 輔助函式：打亂陣列
+const shuffleArray = <T,>(array: T[]): T[] => {
+  const result = [...array];
+  for (let i = result.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [result[i], result[j]] = [result[j], result[i]];
+  }
+  return result;
+};
+
+// 輔助函式：取得修行區域主題化節點名稱
+const getRandomNodeName = (type: 'chest' | 'spring' | 'shop' | 'rest' | 'event', areaId: AdventureAreaId): string => {
+  const names: Record<AdventureAreaId, Record<typeof type, string[]>> = {
+    betel_forest: {
+      chest: ['林地寶箱', '遺忘寶箱', '老舊木箱'],
+      spring: ['生命泉水', '遠古泉水', '林間清泉'],
+      shop: ['旅行商販', '修行驛站', '林間補給點'],
+      rest: ['營地營火', '林間宿營區', '安全避難所'],
+      event: ['古木祭壇', '奇異巨石', '神秘花圈']
+    },
+    naval_border: {
+      chest: ['軍用物資箱', '走私保險箱', '遺留補給箱'],
+      spring: ['戰壕清泉', '海角甘泉', '峭壁水源'],
+      shop: ['補給驛站', '軍需小販', '邊哨交易所'],
+      rest: ['哨站營火', '臨時掩體', '避風港口'],
+      event: ['廢棄碉堡', '海巡浮標', '擱淺走私船']
+    },
+    royal_ruins: {
+      chest: ['遺跡寶藏', '王室密藏', '古老金箱'],
+      spring: ['聖殿泉水', '魔能之源', '洗禮聖水'],
+      shop: ['廢墟黑市', '古物商販', '殘垣補給點'],
+      rest: ['遺跡避難所', '石殿篝火', '安全殘垣'],
+      event: ['銘文石碑', '崩塌祭壇', '神秘石雕']
+    }
+  };
+  const list = names[areaId][type];
+  return list[Math.floor(Math.random() * list.length)];
+};
+
+export const generateAdventureMap = (
+  areaId: AdventureAreaId,
+  daughter: Daughter,
+  inventory: string[] = []
+): AdventureMapNode[] => {
+  interface NodeContent {
+    type: AdventureMapNode['type'];
+    name: string;
+    monster?: Monster;
+  }
+
   const nodes: AdventureMapNode[] = [];
   const areaCfg = AREA_CONFIG[areaId];
-  const layer1Monster = withLayerDifficulty(pickRandom(areaCfg.battleMonstersL1), 1.0);
-  const layer2Monster = withLayerDifficulty(pickRandom(areaCfg.battleMonstersL2), 1.15);
-  
+  const dad = daughter.fatherBackground;
+  const _charId = daughter.characterId;
+
+  // 取得備選的普通魔物 (用於替代未觸發的姊妹戰鬥)
+  const getReplacementMonster = (multiplier: number): Monster => {
+    const baseMonster = pickRandom(areaCfg.battleMonstersL2);
+    return withLayerDifficulty(baseMonster, multiplier);
+  };
+
   // Layer 0: 起點
   nodes.push({
     id: '0_0',
     layer: 0,
     index: 0,
     type: 'start',
-    name: '林地起點',
+    name: `${areaCfg.name}起點`,
     cleared: true,
     connectedTo: ['1_0', '1_1', '1_2']
   });
 
-  // Layer 1: 分支
+  // Layer 1 Contents: 1 battle, 1 chest/spring/event, 1 shop/event
+  const layer1Monster = withLayerDifficulty(pickRandom(areaCfg.battleMonstersL1), 1.0);
+  const l1TypeChoices1: Array<'chest' | 'spring' | 'event'> = ['chest', 'spring', 'event'];
+  const l1Type1 = pickRandom(l1TypeChoices1);
+  const l1TypeChoices2: Array<'shop' | 'event'> = ['shop', 'event'];
+  const l1Type2 = pickRandom(l1TypeChoices2);
+
+  const l1Contents: NodeContent[] = [
+    { type: 'battle', monster: layer1Monster, name: `${layer1Monster.name} 巢穴` },
+    { type: l1Type1, name: getRandomNodeName(l1Type1, areaId) },
+    { type: l1Type2, name: getRandomNodeName(l1Type2, areaId) }
+  ];
+  const shuffledL1 = shuffleArray(l1Contents);
+
+  // Add Layer 1 nodes
   nodes.push({
-    id: '1_0',
-    layer: 1,
-    index: 0,
-    type: 'battle',
-    name: `${layer1Monster.name} 巢穴`,
-    cleared: false,
-    connectedTo: ['2_0', '2_1'],
-    monster: layer1Monster
+    id: '1_0', layer: 1, index: 0,
+    type: shuffledL1[0].type, name: shuffledL1[0].name, cleared: false,
+    connectedTo: ['2_0', '2_1'], monster: shuffledL1[0].monster
   });
   nodes.push({
-    id: '1_1',
-    layer: 1,
-    index: 1,
-    type: 'chest',
-    name: '林間寶箱',
-    cleared: false,
-    connectedTo: ['2_1', '2_2']
+    id: '1_1', layer: 1, index: 1,
+    type: shuffledL1[1].type, name: shuffledL1[1].name, cleared: false,
+    connectedTo: ['2_1', '2_2'], monster: shuffledL1[1].monster
   });
   nodes.push({
-    id: '1_2',
-    layer: 1,
-    index: 2,
-    type: 'shop',
-    name: '修行驛站',
-    cleared: false,
-    connectedTo: ['2_2']
+    id: '1_2', layer: 1, index: 2,
+    type: shuffledL1[2].type, name: shuffledL1[2].name, cleared: false,
+    connectedTo: ['2_2'], monster: shuffledL1[2].monster
   });
 
-  // Layer 2: 注入隱藏節點
+  // Layer 2 Hidden Node configuration
   let layer2HiddenType: AdventureMapNode['type'] = 'event';
   let layer2HiddenName = '幽靜古木';
   if (dad === 'knight') {
@@ -375,36 +438,35 @@ export const generateAdventureMap = (areaId: AdventureAreaId, dad: FatherBackgro
     layer2HiddenName = '🎵 精靈的妖精之環';
   }
 
+  const layer2Monster = withLayerDifficulty(pickRandom(areaCfg.battleMonstersL2), 1.15);
+  const l2TypeChoices2: Array<'rest' | 'event' | 'spring'> = ['rest', 'event', 'spring'];
+  const l2Type2 = pickRandom(l2TypeChoices2);
+
+  const l2Contents: NodeContent[] = [
+    { type: 'battle', monster: layer2Monster, name: `${layer2Monster.name} 防線` },
+    { type: layer2HiddenType, name: layer2HiddenName },
+    { type: l2Type2, name: getRandomNodeName(l2Type2, areaId) }
+  ];
+  const shuffledL2 = shuffleArray(l2Contents);
+
+  // Add Layer 2 nodes
   nodes.push({
-    id: '2_0',
-    layer: 2,
-    index: 0,
-    type: 'battle',
-    name: `${layer2Monster.name} 防線`,
-    cleared: false,
-    connectedTo: ['3_0'],
-    monster: layer2Monster
+    id: '2_0', layer: 2, index: 0,
+    type: shuffledL2[0].type, name: shuffledL2[0].name, cleared: false,
+    connectedTo: ['3_0'], monster: shuffledL2[0].monster
   });
   nodes.push({
-    id: '2_1',
-    layer: 2,
-    index: 1,
-    type: layer2HiddenType,
-    name: layer2HiddenName,
-    cleared: false,
-    connectedTo: ['3_0', '3_1', '3_2']
+    id: '2_1', layer: 2, index: 1,
+    type: shuffledL2[1].type, name: shuffledL2[1].name, cleared: false,
+    connectedTo: ['3_0', '3_1', '3_2'], monster: shuffledL2[1].monster
   });
   nodes.push({
-    id: '2_2',
-    layer: 2,
-    index: 2,
-    type: 'rest',
-    name: '篝火宿營',
-    cleared: false,
-    connectedTo: ['3_2']
+    id: '2_2', layer: 2, index: 2,
+    type: shuffledL2[2].type, name: shuffledL2[2].name, cleared: false,
+    connectedTo: ['3_2'], monster: shuffledL2[2].monster
   });
 
-  // 根據當前主角 _charId 動態判定中層 Boss
+  // 根據當前主角 _charId 動態判定姊妹
   let sisterAId: CharacterId = 'erica';
   let sisterBId: CharacterId = 'emilia';
   if (_charId === 'erica') {
@@ -430,70 +492,98 @@ export const generateAdventureMap = (areaId: AdventureAreaId, dad: FatherBackgro
     };
   };
 
-  const sisterAMonster = getSisterMonster(sisterAId, 3);
-  const sisterBMonster = getSisterMonster(sisterBId, 4);
+  // 檢查是否滿足重逢條件
+  const elegance = daughter.attributes.elegance;
+  const art = daughter.attributes.art;
+  const hasClue = inventory.some(i => i.includes('royal') || i.includes('crest') || i.includes('saber') || i.includes('clue'));
+  const canReunite = elegance >= 150 || art >= 150 || hasClue;
 
-  // Layer 3:
-  nodes.push({
-    id: '3_0',
-    layer: 3,
-    index: 0,
-    type: 'battle',
-    name: sisterAMonster.name,
-    cleared: false,
-    connectedTo: ['4_0'],
-    monster: sisterAMonster
-  });
-  nodes.push({
-    id: '3_1',
-    layer: 3,
-    index: 1,
-    type: 'spring',
-    name: '遠古恢復泉水',
-    cleared: false,
-    connectedTo: ['4_0', '4_1']
-  });
-  nodes.push({
-    id: '3_2',
-    layer: 3,
-    index: 2,
-    type: 'shop',
-    name: '荒野流浪黑市',
-    cleared: false,
-    connectedTo: ['4_1']
-  });
+  const sisterAActive = canReunite && !inventory.includes(`${sisterAId}_reunited`);
+  const sisterBActive = canReunite && !inventory.includes(`${sisterBId}_reunited`);
 
-  // Layer 4:
+  // Define Sister A / replacement
+  let l3SisterContent: NodeContent;
+  if (sisterAActive) {
+    const sisterAMonster = getSisterMonster(sisterAId, 3);
+    l3SisterContent = { type: 'battle', monster: sisterAMonster, name: sisterAMonster.name };
+  } else {
+    const replacementMonster = getReplacementMonster(1.25);
+    l3SisterContent = { type: 'battle', monster: replacementMonster, name: `${replacementMonster.name} 巢穴` };
+  }
+
+  const l3TypeChoices1: Array<'spring' | 'chest' | 'event'> = ['spring', 'chest', 'event'];
+  const l3Type1 = pickRandom(l3TypeChoices1);
+  const l3TypeChoices2: Array<'shop' | 'rest'> = ['shop', 'rest'];
+  const l3Type2 = pickRandom(l3TypeChoices2);
+
+  const l3Contents: NodeContent[] = [
+    l3SisterContent,
+    { type: l3Type1, name: getRandomNodeName(l3Type1, areaId) },
+    { type: l3Type2, name: getRandomNodeName(l3Type2, areaId) }
+  ];
+  const shuffledL3 = shuffleArray(l3Contents);
+
+  // Add Layer 3 nodes
   nodes.push({
-    id: '4_0',
-    layer: 4,
-    index: 0,
-    type: 'rest',
-    name: '守夜營火',
-    cleared: false,
-    connectedTo: ['5_0']
+    id: '3_0', layer: 3, index: 0,
+    type: shuffledL3[0].type, name: shuffledL3[0].name, cleared: false,
+    connectedTo: ['4_0'], monster: shuffledL3[0].monster
   });
   nodes.push({
-    id: '4_1',
-    layer: 4,
-    index: 1,
-    type: 'battle',
-    name: sisterBMonster.name,
-    cleared: false,
-    connectedTo: ['5_0'],
-    monster: sisterBMonster
+    id: '3_1', layer: 3, index: 1,
+    type: shuffledL3[1].type, name: shuffledL3[1].name, cleared: false,
+    connectedTo: ['4_0', '4_1'], monster: shuffledL3[1].monster
+  });
+  nodes.push({
+    id: '3_2', layer: 3, index: 2,
+    type: shuffledL3[2].type, name: shuffledL3[2].name, cleared: false,
+    connectedTo: ['4_1'], monster: shuffledL3[2].monster
   });
 
-  // Layer 5: Boss Jaks
+  // Sister B / replacement
+  let l4SisterContent: NodeContent;
+  if (sisterBActive) {
+    const sisterBMonster = getSisterMonster(sisterBId, 4);
+    l4SisterContent = { type: 'battle', monster: sisterBMonster, name: sisterBMonster.name };
+  } else {
+    const replacementMonster = getReplacementMonster(1.35);
+    l4SisterContent = { type: 'battle', monster: replacementMonster, name: `${replacementMonster.name} 哨卡` };
+  }
+
+  const l4TypeChoices0: Array<'rest' | 'spring' | 'event'> = ['rest', 'spring', 'event'];
+  const l4Type0 = pickRandom(l4TypeChoices0);
+
+  const l4Contents: NodeContent[] = [
+    { type: l4Type0, name: getRandomNodeName(l4Type0, areaId) },
+    l4SisterContent
+  ];
+  const shuffledL4 = shuffleArray(l4Contents);
+
+  // Add Layer 4 nodes
   nodes.push({
-    id: '5_0',
-    layer: 5,
-    index: 0,
-    type: 'boss',
-    name: '👑 海軍少校 傑克斯',
-    cleared: false,
-    connectedTo: [],
-    monster: {
+    id: '4_0', layer: 4, index: 0,
+    type: shuffledL4[0].type, name: shuffledL4[0].name, cleared: false,
+    connectedTo: ['5_0'], monster: shuffledL4[0].monster
+  });
+  nodes.push({
+    id: '4_1', layer: 4, index: 1,
+    type: shuffledL4[1].type, name: shuffledL4[1].name, cleared: false,
+    connectedTo: ['5_0'], monster: shuffledL4[1].monster
+  });
+
+  // Layer 5 Boss: normal squad leader by default, Jaks randomly after multiple runs
+  const runCount = daughter.adventureCount || 0;
+  let spawnCaptain = false;
+  if (runCount >= 2) {
+    spawnCaptain = Math.random() < 0.35;
+  }
+
+  let bossMonster: Monster;
+  let bossNodeName: string;
+
+  if (spawnCaptain) {
+    bossNodeName = '👑 海軍少校 傑克斯';
+    bossMonster = {
       name: '海軍少校 傑克斯',
       hp: Math.round(420 * areaCfg.bossScale.hp),
       maxHp: Math.round(420 * areaCfg.bossScale.hp),
@@ -502,7 +592,39 @@ export const generateAdventureMap = (areaId: AdventureAreaId, dad: FatherBackgro
       goldReward: 600,
       expReward: 150,
       behaviorPattern: 'boss'
+    };
+  } else {
+    let normalBossName = '海軍伍長';
+    if (areaId === 'betel_forest') {
+      normalBossName = '荖葉林狂暴巨獸';
+    } else if (areaId === 'naval_border') {
+      normalBossName = '邊境防線伍長';
+    } else if (areaId === 'royal_ruins') {
+      normalBossName = '遺跡守衛什長';
     }
+
+    bossNodeName = `👑 ${normalBossName}`;
+    bossMonster = {
+      name: normalBossName,
+      hp: Math.round(300 * areaCfg.bossScale.hp),
+      maxHp: Math.round(300 * areaCfg.bossScale.hp),
+      attack: Math.round(28 * areaCfg.bossScale.attack),
+      defense: Math.round(14 * areaCfg.bossScale.defense),
+      goldReward: 300,
+      expReward: 80,
+      behaviorPattern: 'boss'
+    };
+  }
+
+  nodes.push({
+    id: '5_0',
+    layer: 5,
+    index: 0,
+    type: 'boss',
+    name: bossNodeName,
+    cleared: false,
+    connectedTo: [],
+    monster: bossMonster
   });
 
   return nodes;
@@ -532,11 +654,13 @@ interface GameContextProps {
   initGame: (name: string, birthMonth: number, birthDay: number, characterId: CharacterId, fatherBackground: FatherBackground) => void;
   setSchedule: (early: string, mid: string, late: string) => void;
   startScheduleExecution: () => void;
-  executeNextPeriod: () => boolean;
+  executeNextPeriod: () => { monthFinished: boolean; statChanges?: Record<string, number> } | boolean;
   finishExecution: () => void;
   buyItem: (itemId: string) => { success: boolean; message: string };
+  useItem: (itemId: string) => { success: boolean; message: string };
   talkToDaughter: (type: 'gentle' | 'scold' | 'praise' | 'headpat' | 'allowance') => void;
   changeOutfit: (outfit: Daughter['outfit']) => void;
+  selectTitle: (title: string | null) => void;
   startAdventure: () => void;
   stepAdventure: (nodeId: string) => void;
   endAdventure: (isDefeat: boolean) => void;
@@ -557,6 +681,9 @@ interface GameContextProps {
   consumeItem: (itemId: string) => void;
   resolveCombatReunion: (sisterId: string) => void;
   leaveAdventureShop: () => void;
+  buyHeritageUpgrade: (upgradeId: string, cost: number) => { success: boolean; message: string };
+  refineEquipment: (itemId: string) => { success: boolean; message: string };
+  addDiaryMilestone: (milestoneId: string) => void;
 }
 
 const GameContext = createContext<GameContextProps | undefined>(undefined);
@@ -574,6 +701,9 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const unlocked = local ? JSON.parse(local).unlockedCharacters : ['honghua'];
     const completed = local ? JSON.parse(local).completedEndings : [];
     const achievements = local ? (JSON.parse(local).unlockedAchievements || []) : [];
+    const unlockedItems = local ? (JSON.parse(local).unlockedItems || []) : [];
+    const stardust = local ? (JSON.parse(local).stardust || 0) : 0;
+    const heritageUpgrades = local ? (JSON.parse(local).heritageUpgrades || {}) : {};
     
     return {
       daughter: {
@@ -592,11 +722,17 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
         avatarUrl: '',
         characterId: 'honghua',
         fatherBackground: 'knight',
+        isSick: false,
+        isRebellious: false,
         bonds: {
           clover: 0,
           shanshan: 0,
           xuewu: 0
-        }
+        },
+        adventureCount: 0,
+        selectedTitle: null,
+        refineLevels: {},
+        diaryMilestones: []
       },
       time: { year: 1, month: 5, period: 'early' },
       schedule: null,
@@ -609,7 +745,11 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
       cheatMode: false,
       unlockedCharacters: unlocked,
       completedEndings: completed,
-      unlockedAchievements: achievements
+      unlockedAchievements: achievements,
+      unlockedItems: unlockedItems,
+      stardust: stardust,
+      heritageUpgrades: heritageUpgrades,
+      seasonalEvent: null
     };
   });
 
@@ -618,9 +758,19 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.setItem('honghua_factory_ng', JSON.stringify({
       unlockedCharacters: state.unlockedCharacters,
       completedEndings: state.completedEndings,
-      unlockedAchievements: state.unlockedAchievements
+      unlockedAchievements: state.unlockedAchievements,
+      unlockedItems: state.unlockedItems || [],
+      stardust: state.stardust || 0,
+      heritageUpgrades: state.heritageUpgrades || {}
     }));
-  }, [state.unlockedCharacters, state.completedEndings, state.unlockedAchievements]);
+  }, [
+    state.unlockedCharacters,
+    state.completedEndings,
+    state.unlockedAchievements,
+    state.unlockedItems,
+    state.stardust,
+    state.heritageUpgrades
+  ]);
 
   const checkAchievements = (
     daughter: Daughter,
@@ -692,6 +842,354 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return { unlocked: newUnlocked, logs: newLogs, updated };
   };
 
+  const advanceOnePeriod = (
+    currentState: GameState,
+    logText: string,
+    updatedDaughterProps: Partial<Daughter> = {},
+    inventoryOverride?: string[]
+  ): GameState => {
+    let nextInventory = inventoryOverride ? [...inventoryOverride] : [...currentState.inventory];
+    let nextDaughter = {
+      ...currentState.daughter,
+      ...updatedDaughterProps,
+    };
+    
+    if (updatedDaughterProps.attributes?.stamina !== undefined) {
+      nextDaughter.combatHp = updatedDaughterProps.attributes.stamina;
+    } else if (updatedDaughterProps.combatHp !== undefined) {
+      nextDaughter.combatHp = updatedDaughterProps.combatHp;
+    }
+
+    const currentPeriod = currentState.time.period;
+    const newLogs = [...currentState.logs];
+    
+    if (logText) {
+      newLogs.push({
+        id: Math.random().toString(),
+        year: currentState.time.year,
+        month: currentState.time.month,
+        period: currentPeriod,
+        text: logText,
+        type: 'info' as const
+      });
+    }
+
+    let nextPeriod: PeriodType = 'early';
+    let nextMonth = currentState.time.month;
+    let nextYear = currentState.time.year;
+    let newAge = nextDaughter.age;
+    let newScreen: GameState['activeScreen'] = 'main';
+    let nextEvent = currentState.currentEvent;
+    let nextEventStep = currentState.currentEventStep;
+    let nextSeasonalEvent = currentState.seasonalEvent !== undefined ? currentState.seasonalEvent : null;
+
+    if (currentPeriod === 'early') {
+      nextPeriod = 'mid';
+    } else if (currentPeriod === 'mid') {
+      nextPeriod = 'late';
+    } else {
+      // period is 'late', month wraps!
+      nextPeriod = 'early';
+      nextMonth += 1;
+      if (nextMonth > 12) {
+        nextMonth = 1;
+        nextYear += 1;
+      }
+
+      // 月底稅收結算
+      if (currentState.seasonalEvent === 'tax') {
+        if (nextDaughter.gold >= 80) {
+          nextDaughter.gold -= 80;
+          newLogs.push({
+            id: Math.random().toString(),
+            year: currentState.time.year,
+            month: currentState.time.month,
+            period: 'late',
+            text: `🪙 【王國稅收】月末稅務官上門，依法扣除女兒 80 G 臨時稅金。`,
+            type: 'info' as const
+          });
+        } else {
+          nextDaughter.attributes.stress = Math.min(999, nextDaughter.attributes.stress + 25);
+          newLogs.push({
+            id: Math.random().toString(),
+            year: currentState.time.year,
+            month: currentState.time.month,
+            period: 'late',
+            text: `⚠️ 【稅金不足】女兒持有的金幣不足以支付 80 G 稅款！遭到官員斥責警告，壓力增加 25 點！`,
+            type: 'stat_down' as const
+          });
+        }
+      }
+
+      // 新月份季節事件隨機判定
+      nextSeasonalEvent = null;
+      if (nextMonth !== 10 && Math.random() < 0.20) {
+        const events = ['cold_wave', 'caravan', 'tax', 'harvest_blessing', 'royal_inspection'];
+        nextSeasonalEvent = events[Math.floor(Math.random() * events.length)];
+        
+        const eventNames: Record<string, string> = {
+          cold_wave: '❄️【季節事件：大寒流襲來】這個月異常寒冷。女兒上課疲勞額外 +3，但在家休息的減壓效果增加 5 點。',
+          caravan: '🐫【季節事件：流浪商旅到訪】神秘的異國商隊抵達了城鎮。這個月皇家商店與黑市的商品售價一律享有 8 折特惠！',
+          tax: '📜【季節事件：王國臨時徵稅】王國頒布了緊急徵稅令。本月所有商店商品漲價 20%！且月底將自動扣除 80 G 稅金（若金幣不足則女兒壓力增加 25）。',
+          harvest_blessing: '🌾【季節事件：豐收女神的祝福】大地迎來豐饒之月。本月女兒進行所有打工活動的薪資回報增加 30%！',
+          royal_inspection: '🏰【季節事件：皇家特使巡視】國王特使親臨學院考察。本月安排學習課程的正面屬性額外 +2，且道德感提升 3 點！'
+        };
+
+        newLogs.push({
+          id: Math.random().toString(),
+          year: nextYear,
+          month: nextMonth,
+          period: 'early',
+          text: eventNames[nextSeasonalEvent],
+          type: 'event' as const
+        });
+      }
+
+      // Birthday aging
+      if (nextMonth === nextDaughter.birthMonth) {
+        newAge += 1;
+        newLogs.push({
+          id: Math.random().toString(),
+          year: nextYear,
+          month: nextMonth,
+          period: 'early',
+          text: `🎂 生日快樂！女兒 ${nextDaughter.name} 成長為 ${newAge} 歲了！`,
+          type: 'info' as const
+        });
+      }
+
+      nextDaughter.age = newAge;
+      nextDaughter.combatHp = nextDaughter.attributes.stamina;
+      nextDaughter.combatMp = nextDaughter.attributes.magicSkill * 2 + 10;
+
+      // Quarterly checks (months 3, 6, 9, 12 being completed)
+      const completedMonth = currentState.time.month;
+      const isQuarterEnd = [3, 6, 9, 12].includes(completedMonth);
+      if (isQuarterEnd) {
+        const fundIndex = nextInventory.findIndex(item => item.startsWith('fortress_fund_'));
+        if (fundIndex > -1) {
+          const fundItem = nextInventory[fundIndex];
+          const remainingQuarters = parseInt(fundItem.split('_')[2], 10);
+          nextDaughter.gold += 500;
+          nextInventory.splice(fundIndex, 1);
+          if (remainingQuarters > 1) {
+            nextInventory.push(`fortress_fund_${remainingQuarters - 1}`);
+            newLogs.push({
+              id: Math.random().toString(),
+              year: currentState.time.year,
+              month: completedMonth,
+              period: 'late',
+              text: `🪙 女兒收到了來自隱密要塞的本季軍餉資助 500 金幣！(剩餘 ${remainingQuarters - 1} 季)`,
+              type: 'info' as const
+            });
+          } else {
+            newLogs.push({
+              id: Math.random().toString(),
+              year: currentState.time.year,
+              month: completedMonth,
+              period: 'late',
+              text: `🪙 女兒收到了來自隱密要塞的最後一季軍餉資助 500 金幣！資助合約已滿。`,
+              type: 'info' as const
+            });
+          }
+        }
+        
+        if (nextInventory.includes('casino_property')) {
+          nextDaughter.gold += 1000;
+          newLogs.push({
+            id: Math.random().toString(),
+            year: currentState.time.year,
+            month: completedMonth,
+            period: 'late',
+            text: `🪙 女兒收到了來自黑鑽賭場的本季股權分紅 1000 金幣！`,
+            type: 'info' as const
+          });
+        }
+      }
+
+      // 18歲大結局
+      if (newAge >= 18) {
+        const finalClues = nextInventory.filter(i => i.includes('crest') || i.includes('saber')).length;
+        const sisters: string[] = [];
+        if (nextInventory.includes('erica_reunited')) sisters.push('erica');
+        if (nextInventory.includes('emilia_reunited')) sisters.push('emilia');
+        if (nextInventory.includes('honghua_reunited')) sisters.push('honghua');
+
+        const end = determineEnding(nextDaughter, currentState.completedEndings.length, finalClues, sisters);
+        
+        const newCompleted = [...currentState.completedEndings];
+        if (!newCompleted.includes(end.id)) newCompleted.push(end.id);
+        
+        const newUnlocked = [...currentState.unlockedCharacters];
+        if (!newUnlocked.includes('erica')) newUnlocked.push('erica');
+        if ((sisters.length >= 2 || end.id === 'three_revolution' || end.id === 'royal_return') && !newUnlocked.includes('emilia')) {
+          newUnlocked.push('emilia');
+        }
+
+        const { unlocked: achUnlocked, logs: checkedLogs } = checkAchievements(
+          nextDaughter,
+          nextInventory,
+          currentState.unlockedAchievements || [],
+          newLogs,
+          currentState.time.year,
+          currentState.time.month,
+          'late'
+        );
+
+        const finalUnlockedAchievements = [...achUnlocked];
+        const sistersCount = 1 + (nextInventory.includes('erica_reunited') ? 1 : 0) + (nextInventory.includes('emilia_reunited') ? 1 : 0) + (nextInventory.includes('honghua_reunited') ? 1 : 0);
+        if (sistersCount === 3 && !finalUnlockedAchievements.includes('三王女重聚')) {
+          finalUnlockedAchievements.push('三王女重聚');
+          checkedLogs.push({
+            id: Math.random().toString(),
+            year: currentState.time.year,
+            month: currentState.time.month,
+            period: 'late',
+            text: `🏆 解鎖成就：【三王女重聚】（在單次培育中將三胞胎姊妹全部認親重聚）！`,
+            type: 'event' as const
+          });
+        }
+
+        // 獲得星塵
+        const getEndingStardustReward = (id: string): number => {
+          const rare = ['infinite_observer', 'royal_return', 'three_revolution', 'phantom_thief_triplets'];
+          const special = ['binlang_monopoly', 'lucky_lay_flat', 'shadow_cabinet'];
+          const friendship = ['clover_mercenary', 'shanshan_court_aide', 'xuewu_magic_tower'];
+          const bad = ['beggar', 'mob_boss', 'courtesan', 'housewife'];
+          if (rare.includes(id)) return 100;
+          if (special.includes(id)) return 60;
+          if (friendship.includes(id)) return 40;
+          if (bad.includes(id)) return 15;
+          return 30;
+        };
+        const earnedStardust = getEndingStardustReward(end.id);
+        const nextStardust = (currentState.stardust || 0) + earnedStardust;
+
+        checkedLogs.push({
+          id: Math.random().toString(),
+          year: currentState.time.year,
+          month: currentState.time.month,
+          period: 'late',
+          text: `🌌 【回憶結算】本次培育達成結局【${end.name}】！獲得了 ${earnedStardust} 點回憶星塵。可用於下一週目繼承商店中購買永久加成！`,
+          type: 'event' as const
+        });
+
+        return {
+          ...currentState,
+          daughter: nextDaughter,
+          inventory: nextInventory,
+          time: { year: nextYear, month: nextMonth, period: 'early' },
+          activeScreen: 'ending',
+          logs: checkedLogs,
+          completedEndings: newCompleted,
+          unlockedCharacters: newUnlocked,
+          unlockedAchievements: finalUnlockedAchievements,
+          stardust: nextStardust,
+          adventure: null
+        };
+      }
+
+      // 月結算優先觸發：同窗好感階段事件與社交來信
+      let triggeredEvent: any = null;
+      let eventStep: string | null = null;
+
+      // 檢查特定月份是否有同學社交來信
+      const letterSchedule: Record<string, string> = {
+        '1_9': 'letter_clover_1',
+        '2_3': 'letter_shanshan_1',
+        '2_9': 'letter_xuewu_1',
+        '3_3': 'letter_father_1',
+        '3_9': 'letter_clover_2',
+        '4_3': 'letter_shanshan_2',
+        '4_9': 'letter_xuewu_2',
+        '5_3': 'letter_father_2'
+      };
+      const letterKey = `${nextYear}_${nextMonth}`;
+      
+      if (letterSchedule[letterKey]) {
+        triggeredEvent = AVG_EVENTS[letterSchedule[letterKey]];
+        eventStep = triggeredEvent?.startNodeId || null;
+        newLogs.push({
+          id: Math.random().toString(),
+          year: nextYear,
+          month: nextMonth,
+          period: 'early',
+          text: `✉️ 收到了一封來信：【${triggeredEvent.title}】，女兒正準備閱讀並回覆。`,
+          type: 'event' as const
+        });
+      } else {
+        // 沒有社交來信，進行普通的同窗好感事件或隨機冒險事件
+        const bondStoryCandidates = [
+          {
+            key: 'bond_story_clover_30',
+            cond: (nextDaughter.bonds?.clover || 0) >= 30 && !nextInventory.includes('bond_story_clover_30_done')
+          },
+          {
+            key: 'bond_story_clover_60',
+            cond: (nextDaughter.bonds?.clover || 0) >= 60 && !nextInventory.includes('bond_story_clover_60_done')
+          },
+          {
+            key: 'bond_story_shanshan_30',
+            cond: (nextDaughter.bonds?.shanshan || 0) >= 30 && !nextInventory.includes('bond_story_shanshan_30_done')
+          },
+          {
+            key: 'bond_story_shanshan_60',
+            cond: (nextDaughter.bonds?.shanshan || 0) >= 60 && !nextInventory.includes('bond_story_shanshan_60_done')
+          },
+          {
+            key: 'bond_story_xuewu_30',
+            cond: (nextDaughter.bonds?.xuewu || 0) >= 30 && !nextInventory.includes('bond_story_xuewu_30_done')
+          },
+          {
+            key: 'bond_story_xuewu_60',
+            cond: (nextDaughter.bonds?.xuewu || 0) >= 60 && !nextInventory.includes('bond_story_xuewu_60_done')
+          }
+        ];
+        const firstBondStory = bondStoryCandidates.find(candidate => candidate.cond);
+        if (firstBondStory) {
+          triggeredEvent = AVG_EVENTS[firstBondStory.key];
+          eventStep = triggeredEvent?.startNodeId || null;
+        } else if (Math.random() < 0.25) {
+          const eventKeys = Object.keys(AVG_EVENTS).filter(key => !key.startsWith('bond_story_') && !key.startsWith('letter_'));
+          const randomKey = eventKeys[Math.floor(Math.random() * eventKeys.length)];
+          const rawEvent = AVG_EVENTS[randomKey];
+          if (rawEvent) {
+            triggeredEvent = rawEvent;
+            eventStep = rawEvent.startNodeId;
+          }
+        }
+      }
+
+      nextEvent = nextMonth === 10 ? null : triggeredEvent;
+      nextEventStep = nextMonth === 10 ? null : eventStep;
+      newScreen = nextMonth === 10 ? 'festival' : 'main';
+    }
+
+    const { unlocked: achUnlocked, logs: checkedLogs } = checkAchievements(
+      nextDaughter,
+      nextInventory,
+      currentState.unlockedAchievements || [],
+      newLogs,
+      currentState.time.year,
+      currentState.time.month,
+      currentState.time.period
+    );
+
+    return {
+      ...currentState,
+      daughter: nextDaughter,
+      inventory: nextInventory,
+      time: { year: nextYear, month: nextMonth, period: nextPeriod },
+      activeScreen: newScreen,
+      currentEvent: nextEvent,
+      currentEventStep: nextEventStep,
+      unlockedAchievements: achUnlocked,
+      adventure: null,
+      logs: checkedLogs,
+      seasonalEvent: nextSeasonalEvent
+    };
+  };
+
   const setScreen = (screen: GameState['activeScreen']) => {
     setState((prev) => ({ ...prev, activeScreen: screen }));
   };
@@ -754,22 +1252,66 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
       reputationBonus += 50;
     }
 
+    // 星塵商店 permanent 屬性加成
+    const upgrades = state.heritageUpgrades || {};
+    const hGoldLevel = upgrades['gold_boost'] || 0;
+    const hStaminaLevel = upgrades['stamina_boost'] || 0;
+    const hAllStatsLevel = upgrades['all_stats_boost'] || 0;
+    const hPotionLevel = upgrades['heirloom_potion'] || 0;
+    const hDaggerLevel = upgrades['heirloom_dagger'] || 0;
+
+    goldBonus += hGoldLevel * 200;
+    staminaBonus += hStaminaLevel * 15;
+    statBonus += hAllStatsLevel * 8;
+
+    // 圖鑑收集加成 (unlockedItems count)
+    const unlockedItems = state.unlockedItems || [];
+    let codexGold = 0;
+    let codexStamina = 0;
+    let codexStrength = 0;
+    let codexIntelligence = 0;
+    let codexCharisma = 0;
+    let codexSensitivity = 0;
+    let codexPiety = 0;
+    let codexCombatSkill = 0;
+    let codexMagicSkill = 0;
+    let codexStressDiff = 0;
+
+    if (unlockedItems.includes('steel_sword')) codexStrength += 2;
+    if (unlockedItems.includes('silver_armor')) codexStamina += 5;
+    if (unlockedItems.includes('royal_dress')) codexCharisma += 5;
+    if (unlockedItems.includes('summer_dress')) codexStressDiff -= 5;
+    if (unlockedItems.includes('royal_letter')) codexIntelligence += 5;
+    if (unlockedItems.includes('old_lute')) codexSensitivity += 5;
+    if (unlockedItems.includes('future_gp125')) codexGold += 100;
+    if (unlockedItems.includes('giant_hammer')) codexStrength += 5;
+    if (unlockedItems.includes('binlang_ice')) codexCombatSkill += 2;
+    if (unlockedItems.includes('binlang_twin')) codexMagicSkill += 2;
+    if (unlockedItems.includes('binlang_normal')) codexStamina += 5;
+    if (unlockedItems.includes('barrel_rice_cake')) codexStamina += 5;
+    if (unlockedItems.includes('holy_water')) codexPiety += 5;
+    if (unlockedItems.includes('bm_dark_armor')) codexStamina += 5;
+    if (unlockedItems.includes('bm_poison_dagger')) codexCombatSkill += 5;
+    if (unlockedItems.includes('bm_cheap_gp125')) codexGold += 50;
+
+    goldBonus += codexGold;
+
     const freshDaughter: Daughter = {
       name: name || (characterId === 'honghua' ? '紅花' : characterId === 'erica' ? '艾莉卡' : '艾蜜莉亞'),
       age: 10,
       birthMonth: birthMonth || 5,
       birthDay: birthDay || 20,
       attributes: {
-        stamina: DEFAULT_ATTRIBUTES.stamina + statBonus + staminaBonus,
-        strength: DEFAULT_ATTRIBUTES.strength + statBonus + strengthBonus,
-        intelligence: DEFAULT_ATTRIBUTES.intelligence + statBonus + intelligenceBonus,
-        charisma: DEFAULT_ATTRIBUTES.charisma + statBonus,
+        stamina: DEFAULT_ATTRIBUTES.stamina + statBonus + staminaBonus + codexStamina,
+        strength: DEFAULT_ATTRIBUTES.strength + statBonus + strengthBonus + codexStrength,
+        intelligence: DEFAULT_ATTRIBUTES.intelligence + statBonus + intelligenceBonus + codexIntelligence,
+        charisma: DEFAULT_ATTRIBUTES.charisma + statBonus + codexCharisma,
         morality: DEFAULT_ATTRIBUTES.morality + statBonus,
-        piety: DEFAULT_ATTRIBUTES.piety + statBonus,
-        sensitivity: DEFAULT_ATTRIBUTES.sensitivity + statBonus + sensitivityBonus,
-        stress: DEFAULT_ATTRIBUTES.stress,
-        combatSkill: DEFAULT_ATTRIBUTES.combatSkill + statBonus + combatSkillBonus,
-        magicSkill: DEFAULT_ATTRIBUTES.magicSkill + statBonus + magicSkillBonus,
+        piety: DEFAULT_ATTRIBUTES.piety + statBonus + codexPiety,
+        sensitivity: DEFAULT_ATTRIBUTES.sensitivity + statBonus + sensitivityBonus + codexSensitivity,
+        stress: Math.max(0, DEFAULT_ATTRIBUTES.stress + codexStressDiff),
+        combatSkill: DEFAULT_ATTRIBUTES.combatSkill + statBonus + combatSkillBonus + codexCombatSkill,
+        magicSkill: DEFAULT_ATTRIBUTES.magicSkill + statBonus + magicSkillBonus + codexMagicSkill,
         reputation: DEFAULT_ATTRIBUTES.reputation + reputationBonus,
         sin: DEFAULT_ATTRIBUTES.sin,
         elegance: DEFAULT_ATTRIBUTES.elegance + statBonus + eleganceBonus,
@@ -782,14 +1324,20 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
       combatMp: 50,
       focus: 100,
       maxFocus: 100,
-      avatarUrl: defaultAvatar,
+      avatarUrl: characterId === 'honghua' ? 'honghua' : defaultAvatar,
       characterId,
       fatherBackground,
+      isSick: false,
+      isRebellious: false,
       bonds: {
         clover: 0,
         shanshan: 0,
         xuewu: 0
-      }
+      },
+      adventureCount: 0,
+      selectedTitle: null,
+      refineLevels: {},
+      diaryMilestones: []
     };
 
     const startingInventory: string[] = [];
@@ -819,11 +1367,23 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
       freshDaughter.attributes.sensitivity += 100;
     }
 
+    // 傳家寶開局贈送
+    if (hPotionLevel > 0) startingInventory.push('holy_water');
+    if (hDaggerLevel > 0) startingInventory.push('bm_poison_dagger');
+
     // 套用成就解鎖金幣加成
     freshDaughter.gold += goldBonus;
 
     freshDaughter.combatHp = freshDaughter.attributes.stamina;
     freshDaughter.combatMp = freshDaughter.attributes.magicSkill * 2 + 10;
+
+    // 將所有初始裝備加入解鎖列表
+    const newUnlockedItems = [...unlockedItems];
+    startingInventory.forEach(item => {
+      if (!newUnlockedItems.includes(item) && ITEMS.some(i => i.id === item)) {
+        newUnlockedItems.push(item);
+      }
+    });
 
     // 自動解鎖第一檔成就「第一次當爸爸」
     const nextAchievements = [...unlocked];
@@ -837,6 +1397,8 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
       time: { year: 1, month: birthMonth, period: 'early' },
       schedule: null,
       inventory: startingInventory,
+      unlockedItems: newUnlockedItems,
+      unlockedAchievements: nextAchievements,
       activeScreen: 'main',
       logs: [
         {
@@ -848,7 +1410,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
             fatherBackground === 'knight' ? '失落的騎士' : fatherBackground === 'scholar' ? '失落的文臣' : fatherBackground === 'merchant' ? '行商人' : '吟遊詩人'
           }】。開始培育妳的王女吧！${
             goldBonus > 0 || statBonus > 0 || strengthBonus > 0 || staminaBonus > 0 || intelligenceBonus > 0 || eleganceBonus > 0 || magicSkillBonus > 0 || sensitivityBonus > 0
-              ? `（已套用多週目成就傳承加成！）`
+              ? `（已套用多週目與星塵繼承傳承加成！）`
               : ''
           }`,
           type: 'info'
@@ -858,7 +1420,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
       currentEventStep: 'start',
       adventure: null,
       cheatMode: false,
-      unlockedAchievements: nextAchievements
+      seasonalEvent: null
     }));
   };
 
@@ -876,9 +1438,9 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   // 執行下一旬日程
-  const executeNextPeriod = (): boolean => {
-    if (state.currentEvent) return false;
-    if (!state.schedule) return true;
+  const executeNextPeriod = (): { monthFinished: boolean; statChanges?: Record<string, number> } | boolean => {
+    if (state.currentEvent) return { monthFinished: false };
+    if (!state.schedule) return { monthFinished: true };
     let triggeredAVGEvent: string | null = null;
     const currentPeriod = state.time.period;
     let activityId = '';
@@ -897,234 +1459,431 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     }
 
-    if (!activity) return true;
+    if (!activity) return { monthFinished: true };
 
     const newDaughter = { ...state.daughter };
     const newLogs = [...state.logs];
     const newInventory = [...state.inventory];
     const logId = Math.random().toString();
     let restGain = 0;
+    let finalStatChanges: Record<string, number> = {};
 
-    // 1. 檢驗金幣
-    let cost = activity.cost;
-    // 文臣老爸學習文藝打8折
-    if (newDaughter.fatherBackground === 'scholar' && activity.type === 'study') {
-      const isHumanities = ['rhetoric', 'history', 'music_poetry', 'theology_art', 'etiquette'].includes(activity.id);
-      if (isHumanities) {
-        cost = Math.round(cost * 0.8);
+    // --- 1. 叛逆期翹課/罷工判定 ---
+    let isStrike = false;
+    let strikeStatChanges: Record<string, number> = {};
+    if (newDaughter.isRebellious && (activity.type === 'work' || activity.type === 'study')) {
+      const strikeChance = 0.40; // 40% 機率
+      if (Math.random() < strikeChance) {
+        isStrike = true;
+        const rollPlay = Math.random() < 0.5;
+        if (rollPlay) {
+          // 出門玩耍
+          strikeStatChanges = { stress: -10, morality: -5, sin: 2 };
+          newDaughter.relationship = Math.max(0, newDaughter.relationship - 2);
+          newLogs.push({
+            id: logId,
+            year: state.time.year,
+            month: state.time.month,
+            period: currentPeriod,
+            text: `😈 【叛逆罷工】女兒發脾氣不肯去【${activity.name}】，擅自跑去大街上玩耍！親密度 -2，道德 -5，罪孽 +2，壓力 -10。`,
+            type: 'event'
+          });
+        } else {
+          // 睡懶覺
+          strikeStatChanges = { stress: -15 };
+          newDaughter.relationship = Math.max(0, newDaughter.relationship - 1);
+          newLogs.push({
+            id: logId,
+            year: state.time.year,
+            month: state.time.month,
+            period: currentPeriod,
+            text: `😈 【叛逆罷工】女兒把房門鎖上，拒絕去【${activity.name}】，在房間睡了一整天懶覺！親密度 -1，壓力 -15。`,
+            type: 'event'
+          });
+        }
+
+        // 應用罷工屬性異動
+        Object.entries(strikeStatChanges).forEach(([key, val]) => {
+          const attrKey = key as keyof typeof newDaughter.attributes;
+          if (attrKey === 'stress') {
+            newDaughter.attributes.stress = Math.max(0, newDaughter.attributes.stress + val);
+          } else {
+            newDaughter.attributes[attrKey] = Math.max(0, newDaughter.attributes[attrKey] + val);
+          }
+        });
       }
     }
 
-    if (cost > newDaughter.gold) {
-      newLogs.push({
-        id: logId,
-        year: state.time.year,
-        month: state.time.month,
-        period: currentPeriod,
-        text: `【${activity.name}】因金幣不足（需要 ${cost} G，持有 ${newDaughter.gold} G），改為在家休息。`,
-        type: 'info'
-      });
-      const rest = ACTIVITIES.find(a => a.id === 'rest_home')!;
-      newDaughter.attributes.stress = Math.max(0, newDaughter.attributes.stress + (rest.statChanges.stress || 0));
-      restGain = 5;
-    } else {
-      // 扣除學費，給予工作獎勵
-      let finalGoldReward = activity.reward;
-      
-      // 行商老爸打工收入 +20%
-      if (newDaughter.fatherBackground === 'merchant' && activity.type === 'work') {
-        finalGoldReward = Math.round(finalGoldReward * 1.2);
-      }
-      
-      // 詩人老爸賣藝有氣質額外打賞
-      if (activity.id === 'street_performance') {
-        finalGoldReward += Math.round(newDaughter.attributes.art * 0.15);
-      }
-
-      // 檢查是否沒有宮廷推薦信卻做政務打雜
-      if (activity.id === 'government_office' && !state.inventory.includes('royal_letter')) {
+    // --- 2. 生病判定 ---
+    let isSickFail = false;
+    if (!isStrike && newDaughter.isSick && (activity.type === 'work' || activity.type === 'study')) {
+      const sickFailChance = 0.80; // 80% 失敗機率
+      if (Math.random() < sickFailChance) {
+        isSickFail = true;
+        let cost = activity.cost;
+        if (newDaughter.fatherBackground === 'scholar' && activity.type === 'study') {
+          const isHumanities = ['rhetoric', 'history', 'music_poetry', 'theology_art', 'etiquette'].includes(activity.id);
+          if (isHumanities) {
+            cost = Math.round(cost * 0.8);
+          }
+        }
+        
+        // 扣除學費（如果是上課且學費充足）
+        if (cost <= newDaughter.gold) {
+          newDaughter.gold = Math.max(0, newDaughter.gold - cost);
+        } else {
+          cost = 0;
+        }
+        
+        strikeStatChanges = { stress: 3 };
+        newDaughter.attributes.stress = Math.max(0, newDaughter.attributes.stress + 3);
+        
         newLogs.push({
           id: logId,
           year: state.time.year,
           month: state.time.month,
           period: currentPeriod,
-          text: `【政務打雜】需要【宮廷推薦信】才可以進入，打工遭到拒絕，被迫在家躺平休息。`,
+          text: `🤢 【生病養病】女兒生病勉強執行【${activity.name}】，半途支撐不住，只能躺下養病。${cost > 0 ? `扣除學費 ${cost} G，` : ''}未獲得任何屬性提升，疲勞度 +3。`,
+          type: 'stat_down'
+        });
+      } else {
+        newLogs.push({
+          id: Math.random().toString(),
+          year: state.time.year,
+          month: state.time.month,
+          period: currentPeriod,
+          text: `🤢 【病中堅持】雖然女兒正生著病，但她咬緊牙關堅持完成了【${activity.name}】！`,
+          type: 'info'
+        });
+      }
+    }
+
+    // --- 3. 休息與療癒生病判定 ---
+    if (!isStrike && !isSickFail && newDaughter.isSick && activity.type === 'rest') {
+      if (activity.id === 'rest_home') {
+        if (Math.random() < 0.30) {
+          newDaughter.isSick = false;
+          newLogs.push({
+            id: Math.random().toString(),
+            year: state.time.year,
+            month: state.time.month,
+            period: currentPeriod,
+            text: `🌸 在家靜養後，女兒的氣色好了許多，生病痊癒了！`,
+            type: 'event'
+          });
+        } else {
+          newLogs.push({
+            id: Math.random().toString(),
+            year: state.time.year,
+            month: state.time.month,
+            period: currentPeriod,
+            text: `🌸 女兒在家休息養病，疲勞度減少，但身體依然有些虛弱。`,
+            type: 'info'
+          });
+        }
+      } else if (activity.id === 'rest_vacation') {
+        newDaughter.isSick = false;
+        newLogs.push({
+          id: Math.random().toString(),
+          year: state.time.year,
+          month: state.time.month,
+          period: currentPeriod,
+          text: `🌸 度假散心讓女兒身心舒暢，生病完全康復了！`,
+          type: 'event'
+        });
+      }
+    }
+
+    if (isStrike || isSickFail) {
+      finalStatChanges = strikeStatChanges;
+    } else {
+      // 1. 檢驗金幣
+      let cost = activity.cost;
+      // 文臣老爸學習文藝打8折
+      if (newDaughter.fatherBackground === 'scholar' && activity.type === 'study') {
+        const isHumanities = ['rhetoric', 'history', 'music_poetry', 'theology_art', 'etiquette'].includes(activity.id);
+        if (isHumanities) {
+          cost = Math.round(cost * 0.8);
+        }
+      }
+
+      if (cost > newDaughter.gold) {
+        newLogs.push({
+          id: logId,
+          year: state.time.year,
+          month: state.time.month,
+          period: currentPeriod,
+          text: `【${activity.name}】因金幣不足（需要 ${cost} G，持有 ${newDaughter.gold} G），改為在家休息。`,
           type: 'info'
         });
         const rest = ACTIVITIES.find(a => a.id === 'rest_home')!;
         newDaughter.attributes.stress = Math.max(0, newDaughter.attributes.stress + (rest.statChanges.stress || 0));
         restGain = 5;
+        finalStatChanges = { stress: rest.statChanges.stress || 0 };
       } else {
-        // --- 判定成敗 ---
-        // 大成功判定：艾莉卡基礎 30%，四葉草滿級 (clover >= 100) 額外 +20%
-        const isErica = newDaughter.characterId === 'erica';
-        let luckyChance = isErica ? 0.30 : 0.00;
-        if (newDaughter.bonds && newDaughter.bonds.clover >= 100) {
-          luckyChance += 0.20;
+        // 扣除學費，給予工作獎勵
+        let finalGoldReward = activity.reward;
+        
+        // 行商老爸打工收入 +20%
+        if (newDaughter.fatherBackground === 'merchant' && activity.type === 'work') {
+          finalGoldReward = Math.round(finalGoldReward * 1.2);
         }
-        const isLuckySuccess = Math.random() < luckyChance;
+
+        // 豐收女神祝福打工薪資額外 +30%
+        if (state.seasonalEvent === 'harvest_blessing' && activity.type === 'work') {
+          finalGoldReward = Math.round(finalGoldReward * 1.3);
+        }
         
-        let finalStatChanges = { ...activity.statChanges };
-        let isSuccess = true;
-        let logText = '';
-        
-      // 叛逆與生病狀態判定
-      const isRebellious = newDaughter.attributes.morality < 50 && newDaughter.attributes.stress > 80;
-      const isSick = !!newDaughter.isSick;
-      const isRebellionFail = !isLuckySuccess && isRebellious && activity.type !== 'rest' && Math.random() < 0.35;
-        
-      if (isLuckySuccess) {
-        // 強運大成功
-        isSuccess = true;
-        // 屬性獲得兩倍，且不增加疲勞！
-        Object.entries(activity.statChanges).forEach(([key, val]) => {
-          const attrKey = key as keyof typeof activity.statChanges;
-          if (attrKey === 'stress') {
-            finalStatChanges.stress = 0; // 不增加疲勞
-          } else if ((val || 0) > 0) {
-            (finalStatChanges as any)[attrKey] = (val || 0) * 2;
+        // 詩人老爸賣藝有氣質額外打賞
+        if (activity.id === 'street_performance') {
+          finalGoldReward += Math.round(newDaughter.attributes.art * 0.15);
+        }
+
+        // 檢查是否沒有宮廷推薦信卻做政務打雜
+        if (activity.id === 'government_office' && !state.inventory.includes('royal_letter')) {
+          newLogs.push({
+            id: logId,
+            year: state.time.year,
+            month: state.time.month,
+            period: currentPeriod,
+            text: `【政務打雜】需要【宮廷推薦信】才可以進入，打工遭到拒絕，被迫在家躺平休息。`,
+            type: 'info'
+          });
+          const rest = ACTIVITIES.find(a => a.id === 'rest_home')!;
+          newDaughter.attributes.stress = Math.max(0, newDaughter.attributes.stress + (rest.statChanges.stress || 0));
+          restGain = 5;
+          finalStatChanges = { stress: rest.statChanges.stress || 0 };
+        } else {
+          // --- 判定成敗 ---
+          // 大成功判定：艾莉卡基礎 30%，四葉草滿級 (clover >= 100) 額外 +20%
+          const isErica = newDaughter.characterId === 'erica';
+          let luckyChance = isErica ? 0.30 : 0.00;
+          if (newDaughter.bonds && newDaughter.bonds.clover >= 100) {
+            luckyChance += 0.20;
           }
-        });
-        logText = `✨【艾莉卡強運爆發！】在${activity.name}中大成功！獲得兩倍數值加成，且毫無壓力！`;
-      } else if (isRebellionFail) {
-        // 叛逆狀態：強制拒絕行程，躲在房間玩耍
-        isSuccess = false;
-        finalGoldReward = 0;
-        finalStatChanges = { stress: -5 };
-        newDaughter.relationship = Math.max(0, newDaughter.relationship - 2);
-        logText = `😤【叛逆狀態】${newDaughter.name} 強硬拒絕了「${activity.name}」的安排，說「我不想去！」擅自躲在房間玩耍。請透過「嚴厲訓導」父女互動來矯正行為！`;
-      } else if (activity.type !== 'rest') {
-        // 常規成敗率（生病時成功率大幅下降）
-        let successChance = Math.max(30, Math.round(100 - (newDaughter.attributes.stress / Math.max(1, newDaughter.attributes.stamina)) * 60));
-        if (isSick) {
-          successChance = Math.max(10, successChance - 30);
-        }
-        isSuccess = Math.random() * 100 < successChance;
+
+          let finalStatChangesLocal = { ...activity.statChanges };
+          let isSuccess = true;
+          let logText = '';
+
+          // 性格對大成功率及打工收益的特殊影響
+          const daughterPersonality = getDaughterPersonality(newDaughter.attributes);
+          if (daughterPersonality === '高冷學霸') {
+            if (activity.type === 'study') {
+              luckyChance += 0.10;
+            }
+            if (activity.type === 'work') {
+              finalGoldReward = Math.round(finalGoldReward * 0.9);
+            }
+          } else if (daughterPersonality === '元氣女漢子') {
+            if (['farm', 'woodshop', 'graveyard_guard'].includes(activity.id)) {
+              luckyChance += 0.15;
+            }
+            if (activity.type === 'study') {
+              luckyChance = Math.max(0, luckyChance - 0.10);
+            }
+          } else if (daughterPersonality === '多愁善感藝術家') {
+            if (['music_poetry', 'theology_art'].includes(activity.id)) {
+              luckyChance += 0.20;
+            }
+            finalStatChangesLocal.stress = (finalStatChangesLocal.stress || 0) + 2;
+          } else if (daughterPersonality === '溫柔乖乖女') {
+            if (['church_clean', 'maid_mansion'].includes(activity.id)) {
+              luckyChance += 0.15;
+            }
+          } else if (daughterPersonality === '社交名媛') {
+            if (['etiquette', 'rhetoric'].includes(activity.id)) {
+              luckyChance += 0.15;
+            }
+            if (['maid_mansion', 'street_performance'].includes(activity.id)) {
+              luckyChance += 0.10;
+            }
+          }
+
+          // 季節隨機事件影響
+          if (state.seasonalEvent === 'cold_wave') {
+            if (activity.type === 'study') {
+              finalStatChangesLocal.stress = (finalStatChangesLocal.stress || 0) + 3;
+            }
+            if (activity.id === 'rest_home') {
+              finalStatChangesLocal.stress = (finalStatChangesLocal.stress || 0) - 5;
+            }
+          } else if (state.seasonalEvent === 'royal_inspection') {
+            if (activity.type === 'study') {
+              Object.entries(finalStatChangesLocal).forEach(([key, val]) => {
+                if (key !== 'stress' && (val || 0) > 0) {
+                  (finalStatChangesLocal as any)[key] = (val || 0) + 2;
+                }
+              });
+              finalStatChangesLocal.morality = (finalStatChangesLocal.morality || 0) + 3;
+            }
+          }
+
+          const isLuckySuccess = Math.random() < luckyChance;
           
-        if (!isSuccess) {
-          if (isSick && activity.type === 'study') {
-            // 生病時無法專注上課
-            finalStatChanges = { stress: Math.round((activity.statChanges.stress || 2)) };
-            logText = `🤒【生病狀態】${newDaughter.name} 因身體不適無法集中精神，${activity.name}幾乎毫無收穫。請購買聖水或休息至恢復。`;
-          } else if (activity.type === 'work') {
-            finalGoldReward = Math.round(finalGoldReward * 0.3);
-            finalStatChanges = { stress: Math.round((activity.statChanges.stress || 3) * 1.5) };
-            logText = isSick
-              ? `🤒❌【${activity.name}】生病中體力不支，工作頻頻出錯被責備！僅獲得 ${finalGoldReward} G，疲勞+${finalStatChanges.stress || 0}。`
-              : `❌【${activity.name}】工作失誤被嚴厲責備！工作失敗！僅獲得 ${finalGoldReward} G，疲勞+${finalStatChanges.stress || 0}。`;
-          } else {
-            // 學習失敗
-            const modifiedChanges: any = {};
+          if (isLuckySuccess) {
+            // 強運大成功
+            isSuccess = true;
+            // 屬性獲得兩倍，且不增加疲勞！
             Object.entries(activity.statChanges).forEach(([key, val]) => {
-              if (key === 'stress') modifiedChanges.stress = val;
-              else if ((val || 0) > 0) modifiedChanges[key] = 1; // 混水摸魚微增
-              else modifiedChanges[key] = val;
+              const attrKey = key as keyof typeof activity.statChanges;
+              if (attrKey === 'stress') {
+                finalStatChangesLocal.stress = 0; // 不增加疲勞
+              } else if ((val || 0) > 0) {
+                (finalStatChangesLocal as any)[attrKey] = (val || 0) * 2;
+              }
             });
-            finalStatChanges = modifiedChanges;
-            logText = `❌【${activity.name}】上課時心不在焉、打瞌睡。雖然扣了學費，但近乎沒有學到東西。`;
-          }
-        }
-      }
+            logText = `✨【艾莉卡強運爆發！】在${activity.name}中大成功！獲得兩倍數值加成，且毫無壓力！`;
 
-        if (isSuccess && !isLuckySuccess) {
-          logText = `完成 ${activity.name}：${activity.effectDescription}`;
-        }
-
-        if (activity.type === 'rest') {
-          restGain = activity.id === 'rest_vacation' ? 10 : 5;
-        }
-
-        newDaughter.gold = Math.max(0, newDaughter.gold - cost + finalGoldReward);
-        
-        // 增減屬性
-        Object.entries(finalStatChanges).forEach(([key, val]) => {
-          const attrKey = key as keyof typeof DEFAULT_ATTRIBUTES;
-          if (attrKey === 'stress') {
-            newDaughter.attributes.stress = Math.max(0, newDaughter.attributes.stress + (val || 0));
-          } else {
-            let increment = val || 0;
-            // 雪舞滿級加成：上課所獲得的正面屬性增長率永久 +15%
-            if (activity.type === 'study' && increment > 0 && newDaughter.bonds && newDaughter.bonds.xuewu >= 100) {
-              increment = Math.round(increment * 1.15);
-            }
-            newDaughter.attributes[attrKey] = Math.max(0, newDaughter.attributes[attrKey] + increment);
-          }
-        });
-
-        newLogs.push({
-          id: logId,
-          year: state.time.year,
-          month: state.time.month,
-          period: currentPeriod,
-          text: logText,
-          type: isSuccess ? 'stat_up' : 'stat_down'
-        });
-
-        // --- 同窗亂入事件 (上課限定，非大成功時 25% 機率觸發 AVG 事件) ---
-        if (activity.type === 'study' && isSuccess && !isLuckySuccess && Math.random() < 0.25) {
-          if (['swordplay', 'etiquette'].includes(activity.id)) {
-            triggeredAVGEvent = 'clover_encounter';
-          }
-          else if (['rhetoric', 'history'].includes(activity.id)) {
-            triggeredAVGEvent = 'shanshan_encounter';
-          }
-          else if (activity.id === 'science_class') {
-            triggeredAVGEvent = 'xuewu_encounter';
-          }
-        }
-
-        // --- 打工隨機事件 ---
-        if (activity.type === 'work' && isSuccess) {
-          // 民宿打雜 -> 奧客凱文
-          if (activity.id === 'guesthouse_helper' && Math.random() < 0.25) {
-            const success = newDaughter.attributes.elegance >= 80 || newDaughter.attributes.intelligence >= 80;
-            if (success) {
-              newDaughter.gold += 80;
+            // 記錄大成功回憶日記
+            const currentDiary = newDaughter.diaryMilestones ? [...newDaughter.diaryMilestones] : [];
+            if (activity.type === 'work' && !currentDiary.includes('first_work_success')) {
+              currentDiary.push('first_work_success');
               newLogs.push({
                 id: Math.random().toString(),
                 year: state.time.year,
                 month: state.time.month,
                 period: currentPeriod,
-                text: `宿客「凱文 (Kerwin)」無理取鬧。女兒用過人口才和禮儀完美安撫！獲得額外打賞金幣 80。`,
-                type: 'event'
+                text: `📖 女兒在回憶日記中寫下了關於【首次打工大成功】的新頁面...`,
+                type: 'info' as const
               });
+            } else if (activity.type === 'study' && !currentDiary.includes('first_study_success')) {
+              currentDiary.push('first_study_success');
+              newLogs.push({
+                id: Math.random().toString(),
+                year: state.time.year,
+                month: state.time.month,
+                period: currentPeriod,
+                text: `📖 女兒在回憶日記中寫下了關於【首次學習大成功】的新頁面...`,
+                type: 'info' as const
+              });
+            }
+            newDaughter.diaryMilestones = currentDiary;
+          } else if (activity.type !== 'rest') {
+            // 常規成敗率
+            const successChance = Math.max(30, Math.round(100 - (newDaughter.attributes.stress / Math.max(1, newDaughter.attributes.stamina)) * 60));
+            isSuccess = Math.random() * 100 < successChance;
+            
+            if (!isSuccess) {
+              if (activity.type === 'work') {
+                finalGoldReward = Math.round(finalGoldReward * 0.3);
+                finalStatChangesLocal = { stress: Math.round((activity.statChanges.stress || 3) * 1.5) };
+                logText = `❌【${activity.name}】工作失誤被嚴厲責備！工作失敗！僅獲得 ${finalGoldReward} G，疲勞+${finalStatChangesLocal.stress || 0}。`;
+              } else {
+                // 學習失敗
+                const modifiedChanges: any = {};
+                Object.entries(activity.statChanges).forEach(([key, val]) => {
+                  if (key === 'stress') modifiedChanges.stress = val;
+                  else if ((val || 0) > 0) modifiedChanges[key] = 1; // 混水摸魚微增
+                  else modifiedChanges[key] = val;
+                });
+                finalStatChangesLocal = modifiedChanges;
+                logText = `❌【${activity.name}】上課時心不在焉、打瞌睡。雖然扣了學費，但近乎沒有學到東西。`;
+              }
+            }
+          }
+
+          if (isSuccess && !isLuckySuccess) {
+            logText = `完成 ${activity.name}：${activity.effectDescription}`;
+          }
+
+          if (activity.type === 'rest') {
+            restGain = activity.id === 'rest_vacation' ? 10 : 5;
+          }
+
+          newDaughter.gold = Math.max(0, newDaughter.gold - cost + finalGoldReward);
+          finalStatChanges = finalStatChangesLocal;
+          
+          // 增減屬性
+          Object.entries(finalStatChanges).forEach(([key, val]) => {
+            const attrKey = key as keyof typeof DEFAULT_ATTRIBUTES;
+            if (attrKey === 'stress') {
+              newDaughter.attributes.stress = Math.max(0, newDaughter.attributes.stress + (val || 0));
             } else {
-              newDaughter.attributes.stress += 25;
+              let increment = val || 0;
+              // 雪舞滿級加成：上課所獲得的正面屬性增長率永久 +15%
+              if (activity.type === 'study' && increment > 0 && newDaughter.bonds && newDaughter.bonds.xuewu >= 100) {
+                increment = Math.round(increment * 1.15);
+              }
+              newDaughter.attributes[attrKey] = Math.max(0, newDaughter.attributes[attrKey] + increment);
+            }
+          });
+
+          newLogs.push({
+            id: logId,
+            year: state.time.year,
+            month: state.time.month,
+            period: currentPeriod,
+            text: logText,
+            type: isSuccess ? 'stat_up' : 'stat_down'
+          });
+
+          // --- 同窗亂入事件 (上課限定，非大成功時 25% 機率觸發 AVG 事件) ---
+          if (activity.type === 'study' && isSuccess && !isLuckySuccess && Math.random() < 0.25) {
+            if (['swordplay', 'etiquette'].includes(activity.id)) {
+              triggeredAVGEvent = 'clover_encounter';
+            }
+            else if (['rhetoric', 'history'].includes(activity.id)) {
+              triggeredAVGEvent = 'shanshan_encounter';
+            }
+            else if (activity.id === 'science_class') {
+              triggeredAVGEvent = 'xuewu_encounter';
+            }
+          }
+
+          // --- 打工隨機事件 ---
+          if (activity.type === 'work' && isSuccess) {
+            // 民宿打雜 -> 奧客凱文
+            if (activity.id === 'guesthouse_helper' && Math.random() < 0.25) {
+              const success = newDaughter.attributes.elegance >= 80 || newDaughter.attributes.intelligence >= 80;
+              if (success) {
+                newDaughter.gold += 80;
+                newLogs.push({
+                  id: Math.random().toString(),
+                  year: state.time.year,
+                  month: state.time.month,
+                  period: currentPeriod,
+                  text: `宿客「凱文 (Kerwin)」無理取鬧。女兒用過人口才和禮儀完美安撫！獲得額外打賞金幣 80。`,
+                  type: 'event'
+                });
+              } else {
+                newDaughter.attributes.stress += 25;
+                newLogs.push({
+                  id: Math.random().toString(),
+                  year: state.time.year,
+                  month: state.time.month,
+                  period: currentPeriod,
+                  text: `宿客「凱文 (Kerwin)」大聲咆哮進行精神污染！女兒委屈哭泣，疲勞大幅增加 25。`,
+                  type: 'event'
+                });
+              }
+            }
+            // 教堂清潔 -> 塞特私房聖水
+            if (activity.id === 'church_clean' && Math.random() < 0.20) {
+              newInventory.push('holy_water');
               newLogs.push({
                 id: Math.random().toString(),
                 year: state.time.year,
                 month: state.time.month,
                 period: currentPeriod,
-                text: `宿客「凱文 (Kerwin)」大聲咆哮進行精神污染！女兒委屈哭泣，疲勞大幅增加 25。`,
+                text: `教堂管理員「塞特」看女兒認真，特別贈送了神奇的【塞特的私房聖水】！`,
                 type: 'event'
               });
             }
-          }
-          // 教堂清潔 -> 塞特私房聖水
-          if (activity.id === 'church_clean' && Math.random() < 0.20) {
-            newInventory.push('holy_water');
-            newLogs.push({
-              id: Math.random().toString(),
-              year: state.time.year,
-              month: state.time.month,
-              period: currentPeriod,
-              text: `教堂管理員「塞特」看女兒認真，特別贈送了神奇的【塞特的私房聖水】！`,
-              type: 'event'
-            });
-          }
-          // 木工作坊 -> 累積次數送大鐵錘
-          if (activity.id === 'woodshop') {
-            const woodJobsCount = state.logs.filter(l => l.text.includes('木工作坊') && !l.text.includes('金幣不足')).length + 1;
-            if (woodJobsCount === 10) {
-              newInventory.push('giant_hammer');
-              newLogs.push({
-                id: Math.random().toString(),
-                year: state.time.year,
-                month: state.time.month,
-                period: currentPeriod,
-                text: `🔨 胡村姑大讚女兒幹活踏實，高興地贈送了極重的大兵器【三十公分的錘子】！`,
-                type: 'event'
-              });
+            // 木工作坊 -> 累積次數送大鐵錘
+            if (activity.id === 'woodshop') {
+              const woodJobsCount = state.logs.filter(l => l.text.includes('木工作坊') && !l.text.includes('金幣不足')).length + 1;
+              if (woodJobsCount === 10) {
+                newInventory.push('giant_hammer');
+                newLogs.push({
+                  id: Math.random().toString(),
+                  year: state.time.year,
+                  month: state.time.month,
+                  period: currentPeriod,
+                  text: `🔨 胡村姑大讚女兒幹活踏實，高興地贈送了極重的大兵器【三十公分的錘子】！`,
+                  type: 'event'
+                });
+              }
             }
           }
         }
@@ -1139,47 +1898,112 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
       newDaughter.bonds.xuewu = Math.min(100, (newDaughter.bonds.xuewu || 0) + restGain);
     }
 
-    // 2. 壓力生病檢查
+    // 2. 壓力生病與住院檢查
     if (newDaughter.attributes.stress > newDaughter.attributes.stamina) {
-      // 首次觸發積勞成疾
-      if (!newDaughter.isSick) {
-        newDaughter.isSick = true;
+      // 觸發首次生病日記里程碑
+      const currentDiary = newDaughter.diaryMilestones ? [...newDaughter.diaryMilestones] : [];
+      if (!currentDiary.includes('first_sick')) {
+        currentDiary.push('first_sick');
+        newLogs.push({
+          id: Math.random().toString(),
+          year: state.time.year,
+          month: state.time.month,
+          period: currentPeriod,
+          text: `📖 女兒在回憶日記中寫下了關於【首次生病住院】的新頁面...`,
+          type: 'info' as const
+        });
+      }
+      newDaughter.diaryMilestones = currentDiary;
+
+      if (newDaughter.isSick) {
+        // 已生病 -> 重病住院
         newDaughter.attributes.stress = Math.round(newDaughter.attributes.stress * 0.4);
         newDaughter.attributes.stamina = Math.max(40, newDaughter.attributes.stamina - 15);
         newDaughter.gold = Math.max(0, newDaughter.gold - 60);
+        newDaughter.isSick = false;
         newLogs.push({
           id: Math.random().toString(),
           year: state.time.year,
           month: state.time.month,
           period: currentPeriod,
-          text: `🤒 女兒積勞成疾生病住院！體力衰退，自動扣除 60 金幣醫藥費，壓力減半。生病期間活動失敗率大幅上升，請購買【聖水】或多次休息以恢復！`,
+          text: `🏥 【住院治療】因病情加重且持續疲勞，女兒不得不住院治療！自動扣除 60 G 醫藥費，體力衰退，生病狀態解除，壓力減半。`,
           type: 'stat_down'
         });
       } else {
-        // 已生病仍過勞：繼續扣血和疲勞減少
-        newDaughter.attributes.stress = Math.round(newDaughter.attributes.stress * 0.5);
-        newDaughter.attributes.stamina = Math.max(30, newDaughter.attributes.stamina - 8);
-        newDaughter.gold = Math.max(0, newDaughter.gold - 40);
+        // 未生病 -> 機率性生病
+        if (Math.random() < 0.60) {
+          newDaughter.isSick = true;
+          newLogs.push({
+            id: Math.random().toString(),
+            year: state.time.year,
+            month: state.time.month,
+            period: currentPeriod,
+            text: `⚠️ 【生病】女兒因疲勞過度（疲勞 ${newDaughter.attributes.stress} > 體力 ${newDaughter.attributes.stamina}）病倒了！此時打工或上課將有 80% 機率失敗。請讓她休息、前往度假或使用「塞特的私房聖水」治療。`,
+            type: 'stat_down'
+          });
+        } else {
+          // 40% 直接累倒送醫
+          newDaughter.attributes.stress = Math.round(newDaughter.attributes.stress * 0.4);
+          newDaughter.attributes.stamina = Math.max(40, newDaughter.attributes.stamina - 15);
+          newDaughter.gold = Math.max(0, newDaughter.gold - 60);
+          newLogs.push({
+            id: Math.random().toString(),
+            year: state.time.year,
+            month: state.time.month,
+            period: currentPeriod,
+            text: `🏥 【緊急住院】女兒疲勞嚴重超標，體力不支直接被送往醫院！扣除 60 G，體力衰退，壓力減半。`,
+            type: 'stat_down'
+          });
+        }
+      }
+    }
+
+    // 3. 叛逆期判定檢查
+    if (!newDaughter.isRebellious) {
+      let rebelChance = 0;
+      if (newDaughter.attributes.morality < 50) {
+        rebelChance += (50 - newDaughter.attributes.morality) * 0.8;
+      }
+      if (newDaughter.attributes.stress > 80) {
+        rebelChance += (newDaughter.attributes.stress - 80) * 1.0;
+      }
+      if (newDaughter.relationship < 40) {
+        rebelChance += (40 - newDaughter.relationship) * 1.0;
+      }
+      rebelChance = Math.min(85, rebelChance);
+
+      // 溫柔乖乖女叛逆機率減半
+      const personality = getDaughterPersonality(newDaughter.attributes);
+      if (personality === '溫柔乖乖女') {
+        rebelChance = rebelChance / 2;
+      }
+
+      if (rebelChance > 0 && Math.random() * 100 < rebelChance) {
+        newDaughter.isRebellious = true;
+        // 觸發首次叛逆日記里程碑
+        const currentDiary = newDaughter.diaryMilestones ? [...newDaughter.diaryMilestones] : [];
+        if (!currentDiary.includes('first_rebellion')) {
+          currentDiary.push('first_rebellion');
+          newLogs.push({
+            id: Math.random().toString(),
+            year: state.time.year,
+            month: state.time.month,
+            period: currentPeriod,
+            text: `📖 女兒在回憶日記中寫下了關於【首次叛逆翹課】的新頁面...`,
+            type: 'info' as const
+          });
+        }
+        newDaughter.diaryMilestones = currentDiary;
+
         newLogs.push({
           id: Math.random().toString(),
           year: state.time.year,
           month: state.time.month,
           period: currentPeriod,
-          text: `🤒 仍在生病中的 ${newDaughter.name} 再次過度疲勞！狀況持續惡化，扣除 40 金幣追加醫療費。趕快讓她休息！`,
-          type: 'stat_down'
+          text: `⚡ 【叛逆期】女兒看你的眼神變得很不屑，進入了叛逆期！執行打工或課程時將有 40% 機率翹課/罷工。請透過日常互動進行對話管教。`,
+          type: 'event'
         });
       }
-    } else if (newDaughter.isSick && newDaughter.attributes.stress < Math.round(newDaughter.attributes.stamina * 0.5)) {
-      // 自然恢復：疲勞降至體力一半以下時解除生病
-      newDaughter.isSick = false;
-      newLogs.push({
-        id: Math.random().toString(),
-        year: state.time.year,
-        month: state.time.month,
-        period: currentPeriod,
-        text: `✅ ${newDaughter.name} 的身體狀況改善，生病狀態已解除！可以重新全力投入日程了。`,
-        type: 'stat_up'
-      });
     }
 
     // 時間切換
@@ -1215,7 +2039,10 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
       };
     });
 
-    return monthFinished;
+    return {
+      monthFinished,
+      statChanges: finalStatChanges
+    };
   };
 
 
@@ -1440,11 +2267,22 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const buyItem = (itemId: string): { success: boolean; message: string } => {
     const item = ITEMS.find(i => i.id === itemId);
     if (!item) return { success: false, message: '找不到商品' };
+
+    // 黑市走私物品必須在武者修行/冒險地圖中才可購入
+    if (itemId.startsWith('bm_') && state.adventure === null) {
+      return { success: false, message: '此商品僅在黑市出售，必須在武者修行中進入。' };
+    }
     
     // 行商老爸享 8 折優惠；黑市解鎖後檳榔 5 折
     let discount = state.daughter.fatherBackground === 'merchant' ? 0.8 : 1;
     if (itemId.startsWith('binlang_') && state.inventory.includes('black_market_unlocked')) {
       discount = 0.5;
+    }
+    // 季節隨機事件特惠或漲價
+    if (state.seasonalEvent === 'caravan') {
+      discount *= 0.8;
+    } else if (state.seasonalEvent === 'tax') {
+      discount *= 1.2;
     }
     const finalPrice = Math.round(item.price * discount);
 
@@ -1453,23 +2291,20 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     let newDaughter = { ...state.daughter };
     newDaughter.gold -= finalPrice;
 
-    // 應用屬性增減
-    Object.entries(item.statChanges).forEach(([key, val]) => {
-      const attrKey = key as keyof typeof newDaughter.attributes;
-      if (attrKey === 'stress') {
-        newDaughter.attributes.stress = Math.max(0, newDaughter.attributes.stress + val);
-      } else {
-        newDaughter.attributes[attrKey] = Math.max(0, newDaughter.attributes[attrKey] + val);
-      }
-    });
+    // 應用屬性增減 (如果是 food/消耗品則留待使用時再加屬性，其餘裝備/書本購買時即刻增加屬性)
+    if (item.type !== 'food') {
+      Object.entries(item.statChanges).forEach(([key, val]) => {
+        const attrKey = key as keyof typeof newDaughter.attributes;
+        if (attrKey === 'stress') {
+          newDaughter.attributes.stress = Math.max(0, newDaughter.attributes.stress + (val || 0));
+        } else {
+          newDaughter.attributes[attrKey] = Math.max(0, newDaughter.attributes[attrKey] + (val || 0));
+        }
+      });
+    }
 
     if (item.outfitChange) {
       newDaughter.outfit = item.outfitChange;
-    }
-
-    // 聖水特效：清除生病狀態
-    if (itemId === 'holy_water' && newDaughter.isSick) {
-      newDaughter.isSick = false;
     }
 
     newDaughter.combatHp = newDaughter.attributes.stamina;
@@ -1494,45 +2329,109 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return { success: true, message: `成功購買 ${item.name}！` };
   };
 
-  // 與女兒對話互動（每月限制一次）
+  // 與女兒對話互動
   const talkToDaughter = (type: 'gentle' | 'scold' | 'praise' | 'headpat' | 'allowance') => {
     // 每月限制互動一次
     if (state.lastFatherInteractionMonth === state.time.month && !state.cheatMode) {
       return;
     }
-    
-    const personality = getPersonalityType(state.daughter);
-    const text = getPersonalityDialogue(personality, type, state.daughter.name);
-    
+
+    let text = '';
     let newDaughter = { ...state.daughter };
     const updatedAttributes = { ...newDaughter.attributes };
+    const personality = getDaughterPersonality(newDaughter.attributes);
 
-    if (type === 'gentle') {
-      newDaughter.relationship = Math.min(100, newDaughter.relationship + 5);
-      updatedAttributes.stress = Math.max(0, updatedAttributes.stress - 25);
-      // 溫柔談心對叛逆狀態有額外效果
-      if (updatedAttributes.morality < 50) {
-        updatedAttributes.morality = Math.min(999, updatedAttributes.morality + 5);
+    const gentleQuotes: Record<string, string> = {
+      '元氣女漢子': `女兒有些害羞地撓撓頭說：「老爸，別突然這麼肉麻啦！走，我們去練劍！」`,
+      '高冷學霸': `女兒推了推眼鏡，冷靜地回覆：「謝謝父親。不過，您有這時間，不如多看兩本書。」`,
+      '多愁善感藝術家': `女兒輕聲嘆了口氣，眼中帶笑：「跟老爸聊天時，感覺風裡的歌聲都溫柔了許多……」`,
+      '溫柔乖乖女': `女兒甜甜一笑，雙手抱住你的手臂：「最喜歡和老爸聊天了！我會一直當個乖女兒的。」`,
+      '社交名媛': `女兒優雅地行了個禮，嫣然一笑：「父親的體貼總是如此恰到好處，真是紳士風範。」`,
+      '天真少女': `女兒高興地蹦蹦跳跳：「耶！老爸最好了，我們今天晚上吃草莓蛋糕嗎？」`
+    };
+
+    const praiseQuotes: Record<string, string> = {
+      '元氣女漢子': `女兒高興地拍拍胸脯：「那是當然！我可是要成為最強女戰士的！」`,
+      '高冷學霸': `女兒微微點頭：「這在我的計算之中，但我會繼續保持優秀的。」`,
+      '多愁善感藝術家': `女兒雙頰微紅，低聲呢喃：「老爸的誇獎，像春天第一朵綻放的花……」`,
+      '溫柔乖乖女': `女兒開心地笑著：「謝謝爸爸，我會更加努力不讓您失望的！」`,
+      '社交名媛': `女兒以摺扇半遮面，俏皮地笑著：「能得到父親的讚賞，是本名媛最大的榮幸～」`,
+      '天真少女': `女兒高興地轉了個圈：「哈哈，老爸最疼我了！最喜歡被老爸誇了！」`
+    };
+
+    const scoldQuotes: Record<string, string> = {
+      '元氣女漢子': `女兒不服氣地鼓起腮幫子：「我知道了啦！下次我會加倍練回來的！」`,
+      '高冷學霸': `女兒低下頭，理智地分析：「您的指責有合理之處，我會修正我的行為偏差。」`,
+      '多愁善感藝術家': `女兒眼眶微紅，低下頭不說話，淚水在眼眶裡打轉，顯得無比委屈。`,
+      '溫柔乖乖女': `女兒眼含淚光，乖巧地認錯：「對不起，爸爸，我真的知道錯了，您別生氣……」`,
+      '社交名媛': `女兒收起笑容，略顯嚴肅地回覆：「父親教訓得是，適當的自省也是淑女的必修課。」`,
+      '天真少女': `女兒委屈地扁扁嘴，抱著頭叫道：「我知道錯了嘛！老爸不要兇我……」`
+    };
+
+    if (newDaughter.isRebellious) {
+      if (type === 'gentle') {
+        const cureRebel = Math.random() < 0.50; // 50% 機率
+        if (cureRebel) {
+          newDaughter.isRebellious = false;
+          text = `父親溫柔地與女兒聊天開導。女兒在你的關愛之下，終於認識到了錯誤，【叛逆】狀態解除了！`;
+          newDaughter.relationship = Math.min(100, newDaughter.relationship + 8);
+          updatedAttributes.stress = Math.max(0, updatedAttributes.stress - 15);
+        } else {
+          text = `父親溫柔地試圖與女兒聊天。但叛逆的女兒只是扭過頭去哼了一聲，親密度微升。`;
+          newDaughter.relationship = Math.min(100, newDaughter.relationship + 2);
+        }
+      } else if (type === 'scold') {
+        const cureRebel = Math.random() < 0.80; // 80% 機率
+        if (cureRebel) {
+          newDaughter.isRebellious = false;
+          text = `父親嚴厲地訓導了女兒。女兒眼泛淚光，但心服口服，收斂了脾氣，【叛逆】狀態解除了！`;
+          updatedAttributes.morality += 15;
+          newDaughter.relationship = Math.max(0, newDaughter.relationship - 10);
+          updatedAttributes.stress += 10;
+        } else {
+          text = `父親嚴厲地訓誡女兒。女兒感到委屈與不滿，跟你大吵了一架！壓力暴增，親密感暴跌！`;
+          updatedAttributes.stress += 15;
+          newDaughter.relationship = Math.max(0, newDaughter.relationship - 12);
+        }
+      } else if (type === 'praise') {
+        text = `父親誇獎了女兒。但叛逆的女兒一臉不屑，冷冷地說「這沒什麼了不起的」，好感度微升。`;
+        newDaughter.relationship = Math.min(100, newDaughter.relationship + 2);
+      } else if (type === 'headpat') {
+        text = `父親想要摸摸女兒的頭。但叛逆的女兒一巴掌拍開你的手，氣呼呼地說「別碰我！」；親密度下降。`;
+        newDaughter.relationship = Math.max(0, newDaughter.relationship - 4);
+      } else if (type === 'allowance') {
+        const allowanceAmount = 80 + Math.round(newDaughter.relationship * 0.5);
+        newDaughter.gold = Math.max(0, newDaughter.gold + allowanceAmount);
+        newDaughter.relationship = Math.min(100, newDaughter.relationship + 2);
+        text = `父親給了女兒零用錢 ${allowanceAmount} G。叛逆的女兒搶過去說「才這點啊？算了，我拿走了。」`;
       }
-    } else if (type === 'scold') {
-      newDaughter.relationship = Math.max(0, newDaughter.relationship - 5);
-      updatedAttributes.morality = Math.min(999, updatedAttributes.morality + 12);
-      updatedAttributes.stress = Math.min(999, updatedAttributes.stress + 8);
-    } else if (type === 'praise') {
-      newDaughter.relationship = Math.min(100, newDaughter.relationship + 4);
-      updatedAttributes.charisma = Math.min(999, updatedAttributes.charisma + 5);
-      updatedAttributes.stress = Math.max(0, updatedAttributes.stress - 10);
-    } else if (type === 'headpat') {
-      // 摸頭：大幅減壓、增加關係
-      newDaughter.relationship = Math.min(100, newDaughter.relationship + 4);
-      updatedAttributes.stress = Math.max(0, updatedAttributes.stress - 30);
-      updatedAttributes.sensitivity = Math.min(999, updatedAttributes.sensitivity + 2);
-    } else if (type === 'allowance') {
-      // 給零用錢：補充金幣、增加關係
-      const allowanceAmount = 80 + Math.round(newDaughter.relationship * 0.5);
-      newDaughter.gold = Math.max(0, newDaughter.gold + allowanceAmount);
-      newDaughter.relationship = Math.min(100, newDaughter.relationship + 6);
-      updatedAttributes.sensitivity = Math.min(999, updatedAttributes.sensitivity + 2);
+    } else {
+      if (type === 'gentle') {
+        text = `父親溫柔地與女兒聊天。她非常開心，壓力顯著消除。\n${gentleQuotes[personality] || ''}`;
+        newDaughter.relationship = Math.min(100, newDaughter.relationship + 5);
+        updatedAttributes.stress = Math.max(0, updatedAttributes.stress - 20);
+      } else if (type === 'scold') {
+        text = `父親嚴肅地訓誡了女兒。女兒感到委屈，但更懂得自我約束了。\n${scoldQuotes[personality] || ''}`;
+        newDaughter.relationship = Math.max(0, newDaughter.relationship - 5);
+        updatedAttributes.morality += 10;
+        updatedAttributes.stress += 8;
+      } else if (type === 'praise') {
+        text = `父親誇獎了女兒，女兒的小臉上洋溢著驕傲的神采！\n${praiseQuotes[personality] || ''}`;
+        newDaughter.relationship = Math.min(100, newDaughter.relationship + 4);
+        updatedAttributes.charisma += 5;
+        updatedAttributes.stress = Math.max(0, updatedAttributes.stress - 10);
+      } else if (type === 'headpat') {
+        text = `父親溫柔地摸了摸女兒的頭。女兒閉上眼蹭了蹭你的掌心，臉上露出開心的笑容。`;
+        newDaughter.relationship = Math.min(100, newDaughter.relationship + 4);
+        updatedAttributes.stress = Math.max(0, updatedAttributes.stress - 30);
+        updatedAttributes.sensitivity = Math.min(999, updatedAttributes.sensitivity + 2);
+      } else if (type === 'allowance') {
+        const allowanceAmount = 80 + Math.round(newDaughter.relationship * 0.5);
+        newDaughter.gold = Math.max(0, newDaughter.gold + allowanceAmount);
+        newDaughter.relationship = Math.min(100, newDaughter.relationship + 6);
+        updatedAttributes.sensitivity = Math.min(999, updatedAttributes.sensitivity + 2);
+        text = `父親給了女兒零用錢 ${allowanceAmount} G。女兒非常高興，開心地親了你一下！`;
+      }
     }
 
     newDaughter.attributes = updatedAttributes;
@@ -1553,11 +2452,90 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }));
   };
 
+  // 使用背包道具
+  const useItem = (itemId: string): { success: boolean; message: string } => {
+    const item = ITEMS.find(i => i.id === itemId);
+    if (!item) return { success: false, message: '找不到該道具' };
+
+    const idx = state.inventory.indexOf(itemId);
+    if (idx === -1) return { success: false, message: '背包中沒有此道具' };
+
+    let newDaughter = { ...state.daughter };
+    let success = false;
+    let message = '';
+
+    if (itemId === 'holy_water') {
+      newDaughter.isSick = false;
+      // 應用屬性變更
+      Object.entries(item.statChanges).forEach(([key, val]) => {
+        const attrKey = key as keyof typeof newDaughter.attributes;
+        if (attrKey === 'stress') {
+          newDaughter.attributes.stress = Math.max(0, newDaughter.attributes.stress + (val || 0));
+        } else {
+          newDaughter.attributes[attrKey] = Math.max(0, newDaughter.attributes[attrKey] + (val || 0));
+        }
+      });
+      message = `✨ 使用了【${item.name}】，女兒的生病狀態被消除了！`;
+      success = true;
+    } else if (item.type === 'food') {
+      // 食物消耗品
+      Object.entries(item.statChanges).forEach(([key, val]) => {
+        const attrKey = key as keyof typeof newDaughter.attributes;
+        if (attrKey === 'stress') {
+          newDaughter.attributes.stress = Math.max(0, newDaughter.attributes.stress + (val || 0));
+        } else {
+          newDaughter.attributes[attrKey] = Math.max(0, newDaughter.attributes[attrKey] + (val || 0));
+        }
+      });
+      message = `😋 女兒吃下了【${item.name}】！`;
+      if (item.statChanges.stress && item.statChanges.stress < 0) {
+        message += ` 壓力減少了 ${Math.abs(item.statChanges.stress)}。`;
+      }
+      success = true;
+    } else {
+      return { success: false, message: '此道具為裝備或特殊書籍，無法直接使用。' };
+    }
+
+    if (success) {
+      newDaughter.combatHp = newDaughter.attributes.stamina;
+      newDaughter.combatMp = newDaughter.attributes.magicSkill * 2 + 10;
+
+      const newInventory = [...state.inventory];
+      newInventory.splice(idx, 1);
+
+      const newLogs = [...state.logs, {
+        id: Math.random().toString(),
+        year: state.time.year,
+        month: state.time.month,
+        period: state.time.period,
+        text: message,
+        type: 'event' as const
+      }];
+
+      setState(prev => ({
+        ...prev,
+        daughter: newDaughter,
+        inventory: newInventory,
+        logs: newLogs
+      }));
+    }
+
+    return { success, message };
+  };
+
   // 更換裝備服飾
   const changeOutfit = (outfit: Daughter['outfit']) => {
     setState((prev) => ({
       ...prev,
       daughter: { ...prev.daughter, outfit }
+    }));
+  };
+
+  // 選擇稱號
+  const selectTitle = (title: string | null) => {
+    setState((prev) => ({
+      ...prev,
+      daughter: { ...prev.daughter, selectedTitle: title }
     }));
   };
 
@@ -1568,8 +2546,16 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const areaId = areaOrder[state.time.month % areaOrder.length];
     const areaCfg = AREA_CONFIG[areaId];
     
+    // 增加冒險次數追蹤
+    const runCount = state.daughter.adventureCount || 0;
+    const nextCount = runCount + 1;
+    const updatedDaughter = {
+      ...state.daughter,
+      adventureCount: nextCount
+    };
+
     // 初始化 Slay the Spire 地圖
-    const mapNodes = generateAdventureMap(areaId, state.daughter.fatherBackground, state.daughter.characterId, state.inventory);
+    const mapNodes = generateAdventureMap(areaId, updatedDaughter, state.inventory);
     
     let partyData = undefined;
     if (isEmilia) {
@@ -1581,6 +2567,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     setState((prev) => ({
       ...prev,
+      daughter: updatedDaughter,
       activeScreen: 'adventure',
       adventure: {
         areaId,
@@ -1589,7 +2576,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
         highLayerDebuffDescription: areaCfg.debuffDescription,
         nodes: mapNodes,
         currentNodeId: '0_0',
-        daughterHp: prev.daughter.combatHp,
+        daughterHp: updatedDaughter.combatHp,
         daughterMaxHp: prev.daughter.attributes.stamina,
         party: partyData,
         combatLog: [`進入「${areaCfg.name}」，準備迎戰區域魔物。高層區域效果：${areaCfg.debuffName}。`],
@@ -1697,7 +2684,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }));
         return;
       }
-      // 驛站，顯示修行專屬商店介面（不跳轉主商店）
+      // 驛站，顯示修行專屬商店，不跳轉主商店
       nextAdv.status = 'shopping';
       setState(prev => ({
         ...prev,
@@ -1837,31 +2824,16 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const endAdventure = (isDefeat: boolean) => {
     if (!state.adventure) return;
     const rewardGold = isDefeat ? 0 : 200;
-    
-    const newLogs = [...state.logs, {
-      id: Math.random().toString(),
-      year: state.time.year,
-      month: state.time.month,
-      period: state.time.period,
-      text: isDefeat 
-        ? `☠️ 冒險失敗！女兒在蔚藍林地中受傷被送回家中，修行強制終止。`
-        : `🏆 冒險結束！女兒成功探索蔚藍林地歸來，獲得金幣獎勵 200。`,
-      type: 'info' as const
-    }];
+    const logText = isDefeat 
+      ? `☠️ 冒險失敗！女兒在${state.adventure.areaName}中受傷被送回家中，修行強制終止。`
+      : `🏆 冒險結束！女兒成功探索${state.adventure.areaName}歸來，獲得金幣獎勵 200。`;
 
     setState((prev) => {
-      const newDaughter = { ...prev.daughter };
-      newDaughter.gold += rewardGold;
-      newDaughter.focus = 100; // 回復滿行動力
-      newDaughter.combatHp = newDaughter.attributes.stamina;
-
-      return {
-        ...prev,
-        daughter: newDaughter,
-        activeScreen: 'main',
-        adventure: null,
-        logs: newLogs
-      };
+      return advanceOnePeriod(prev, logText, {
+        gold: prev.daughter.gold + rewardGold,
+        focus: 100,
+        combatHp: prev.daughter.attributes.stamina
+      });
     });
   };
 
@@ -1931,6 +2903,10 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
           newDaughter.bonds.xuewu = Math.min(100, Math.max(0, (newDaughter.bonds.xuewu || 0) + rew.xuewuBond));
         }
 
+        if (rew.relationship) {
+          newDaughter.relationship = Math.min(100, Math.max(0, newDaughter.relationship + rew.relationship));
+        }
+
         if (rew.hp) {
           newDaughter.combatHp = Math.max(0, newDaughter.combatHp + rew.hp);
           if (updatedAdventure) {
@@ -1965,6 +2941,15 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       }
 
+      // 解鎖新獲得道具的圖鑑
+      const currentUnlocked = prev.unlockedItems || [];
+      let newUnlocked = [...currentUnlocked];
+      newInventory.forEach(itemId => {
+        if (!newUnlocked.includes(itemId) && ITEMS.some(i => i.id === itemId)) {
+          newUnlocked.push(itemId);
+        }
+      });
+
       const updatedLogs = [...prev.logs];
       if (result.log) {
         updatedLogs.push({
@@ -1986,19 +2971,56 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const isEnd = !nextStep || !prev.currentEvent!.nodes[nextStep];
 
       if (isEnd && prev.currentEvent && prev.currentEvent.id === 'jaks_patrol' && updatedAdventure && updatedAdventure.status === 'exploring') {
-        newDaughter.gold += 300;
-        newDaughter.focus = 100;
-        newDaughter.combatHp = newDaughter.attributes.stamina;
-        newScreen = 'main';
-        updatedAdventure = null;
-        updatedLogs.push({
-          id: Math.random().toString(),
-          year: prev.time.year,
-          month: prev.time.month,
-          period: prev.time.period,
-          text: `🏆 冒險成功！藉由智慧與高雅氣質說服了傑克斯少校，成功探索蔚藍林地，獲得獎勵金幣 300！`,
-          type: 'info' as const
-        });
+        const isArrested = prev.currentEventStep === 'jaks_arrest';
+        let logText = '';
+        let daughterUpdates = {};
+        
+        let finalUnlockedAchievements = [...prev.unlockedAchievements || []];
+        let logsForPeriod = [...updatedLogs];
+
+        if (isArrested) {
+          logText = `☠️ 冒險失敗！女兒被傑克斯少校逮捕押送回城，修行強制終止。`;
+          daughterUpdates = {
+            focus: 100,
+            combatHp: Math.round(newDaughter.attributes.stamina * 0.2)
+          };
+        } else {
+          logText = `🏆 冒險成功！藉由智慧與高雅氣質說服了傑克斯少校，成功探索「${updatedAdventure.areaName}」，獲得獎勵金幣 300！`;
+          daughterUpdates = {
+            gold: newDaughter.gold + 300,
+            focus: 100,
+            combatHp: newDaughter.attributes.stamina
+          };
+          
+          if (!finalUnlockedAchievements.includes('海路放行者')) {
+            finalUnlockedAchievements.push('海路放行者');
+            logsForPeriod.push({
+              id: Math.random().toString(),
+              year: prev.time.year,
+              month: prev.time.month,
+              period: prev.time.period,
+              text: `🏆 解鎖成就：【海路放行者】（在冒險中免戰說服傑克斯少校，或在正面戰鬥中將其擊敗）！`,
+              type: 'event' as const
+            });
+          }
+        }
+
+        const stateAfterPeriod = advanceOnePeriod(
+          {
+            ...prev,
+            daughter: newDaughter,
+            inventory: newInventory,
+            logs: logsForPeriod,
+            unlockedAchievements: finalUnlockedAchievements,
+            unlockedItems: newUnlocked,
+            currentEvent: null,
+            currentEventStep: null
+          },
+          logText,
+          daughterUpdates
+        );
+
+        return stateAfterPeriod;
       }
 
       const { unlocked: achUnlocked, logs: checkedLogs } = checkAchievements(
@@ -2012,19 +3034,6 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
       );
 
       const finalUnlockedAchievements = [...achUnlocked];
-      if (isEnd && prev.currentEvent && prev.currentEvent.id === 'jaks_patrol' && updatedAdventure && updatedAdventure.status === 'exploring') {
-        if (!finalUnlockedAchievements.includes('海路放行者')) {
-          finalUnlockedAchievements.push('海路放行者');
-          checkedLogs.push({
-            id: Math.random().toString(),
-            year: prev.time.year,
-            month: prev.time.month,
-            period: prev.time.period,
-            text: `🏆 解鎖成就：【海路放行者】（在冒險中免戰說服傑克斯少校，或在正面戰鬥中將其擊敗）！`,
-            type: 'event' as const
-          });
-        }
-      }
 
       return {
         ...prev,
@@ -2035,6 +3044,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
         currentEvent: isEnd ? null : prev.currentEvent,
         currentEventStep: isEnd ? null : nextStep,
         unlockedAchievements: finalUnlockedAchievements,
+        unlockedItems: newUnlocked,
         adventure: updatedAdventure
       };
     });
@@ -2078,6 +3088,19 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }));
   };
 
+  const leaveAdventureShop = () => {
+    setState((prev) => {
+      if (!prev.adventure) return prev;
+      return {
+        ...prev,
+        adventure: {
+          ...prev.adventure,
+          status: 'exploring' as const
+        }
+      };
+    });
+  };
+
   const eatRiceCake = () => {
     setState((prev) => {
       if (!prev.inventory.includes('barrel_rice_cake')) return prev;
@@ -2118,19 +3141,6 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
         inventory: newInventory,
         adventure: updatedAdventure,
         logs: newLogs
-      };
-    });
-  };
-
-  const leaveAdventureShop = () => {
-    setState((prev) => {
-      if (!prev.adventure) return prev;
-      return {
-        ...prev,
-        adventure: {
-          ...prev.adventure,
-          status: 'exploring' as const
-        }
       };
     });
   };
@@ -2238,20 +3248,45 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
         nextAdv.combatLog.push(`🎁 戰利品：獲得傑克斯少校的【皇家海軍軍刀】！`);
       }
 
+      // 掉落精煉礦石
+      let oreDropped = 0;
       if (isBoss) {
-        logs.push({
-          id: Math.random().toString(),
-          year: prev.time.year,
-          month: prev.time.month,
-          period: prev.time.period,
-          text: `👑 討伐首領成功！順利完成「${prev.adventure.areaName}」修行！獲得金幣 300！`,
-          type: 'info'
-        });
-        newDaughter.gold += 300;
-        newDaughter.focus = 100;
-        newDaughter.combatHp = newDaughter.attributes.stamina;
-        newScreen = 'main';
-        updatedAdventure = null;
+        oreDropped = Math.floor(Math.random() * 2) + 1; // 1-2
+      } else if (Math.random() < 0.20) {
+        oreDropped = 1;
+      }
+      
+      if (oreDropped > 0) {
+        for (let i = 0; i < oreDropped; i++) {
+          newInventory.push('refine_ore');
+        }
+        nextAdv.combatLog.push(`🎁 戰利品：獲得了 ${oreDropped} 個【精煉礦石】！`);
+      }
+
+      if (isBoss) {
+        const logText = `👑 討伐首領成功！順利完成「${prev.adventure.areaName}」修行！獲得金幣 300！`;
+        
+        // 觸發擊敗修行首領日記里程碑
+        const currentDiary = newDaughter.diaryMilestones ? [...newDaughter.diaryMilestones] : [];
+        if (!currentDiary.includes('first_adventure_boss')) {
+          currentDiary.push('first_adventure_boss');
+          logs.push({
+            id: Math.random().toString(),
+            year: prev.time.year,
+            month: prev.time.month,
+            period: prev.time.period,
+            text: `📖 女兒在回憶日記中寫下了關於【擊敗修行首領】的新頁面...`,
+            type: 'info' as const
+          });
+        }
+        newDaughter.diaryMilestones = currentDiary;
+
+        return advanceOnePeriod(prev, logText, {
+          gold: newDaughter.gold + 300,
+          focus: 100,
+          combatHp: newDaughter.attributes.stamina,
+          diaryMilestones: newDaughter.diaryMilestones
+        }, newInventory);
       }
 
       const { unlocked: achUnlocked, logs: checkedLogs } = checkAchievements(
@@ -2264,6 +3299,15 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
         prev.time.period
       );
 
+      // 解鎖獲得道具的圖鑑
+      const currentUnlocked = prev.unlockedItems || [];
+      let newUnlocked = [...currentUnlocked];
+      newInventory.forEach(itemId => {
+        if (!newUnlocked.includes(itemId) && ITEMS.some(i => i.id === itemId)) {
+          newUnlocked.push(itemId);
+        }
+      });
+
       return {
         ...prev,
         daughter: newDaughter,
@@ -2271,7 +3315,8 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
         adventure: updatedAdventure,
         activeScreen: newScreen,
         logs: checkedLogs,
-        unlockedAchievements: achUnlocked
+        unlockedAchievements: achUnlocked,
+        unlockedItems: newUnlocked
       };
     });
   };
@@ -2279,26 +3324,11 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const resolveCombatDefeat = () => {
     setState((prev) => {
       if (!prev.adventure) return prev;
-      const newLogs = [...prev.logs, {
-        id: Math.random().toString(),
-        year: prev.time.year,
-        month: prev.time.month,
-        period: prev.time.period,
-        text: `☠️ 戰鬥力竭！被魔物擊倒送回王城，修行強制結束。`,
-        type: 'info' as const
-      }];
-
-      const newDaughter = { ...prev.daughter };
-      newDaughter.focus = 100;
-      newDaughter.combatHp = Math.round(newDaughter.attributes.stamina * 0.2);
-
-      return {
-        ...prev,
-        daughter: newDaughter,
-        activeScreen: 'main',
-        adventure: null,
-        logs: newLogs
-      };
+      const logText = `☠️ 戰鬥力竭！被魔物擊倒送回王城，修行強制結束。`;
+      return advanceOnePeriod(prev, logText, {
+        focus: 100,
+        combatHp: Math.round(prev.daughter.attributes.stamina * 0.2)
+      });
     });
   };
 
@@ -2403,11 +3433,27 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
         type: 'event' as const
       }];
 
+      const newDaughter = { ...prev.daughter };
+      const currentDiary = newDaughter.diaryMilestones ? [...newDaughter.diaryMilestones] : [];
+      if (!currentDiary.includes('first_reunion')) {
+        currentDiary.push('first_reunion');
+        newLogs.push({
+          id: Math.random().toString(),
+          year: prev.time.year,
+          month: prev.time.month,
+          period: prev.time.period,
+          text: `📖 女兒在回憶日記中寫下了關於【三胞胎姊妹首次重逢】的新頁面...`,
+          type: 'info' as const
+        });
+      }
+      newDaughter.diaryMilestones = currentDiary;
+
       const eventId = `${sisterId}_reunion_avg`;
       const ev = AVG_EVENTS[eventId];
 
       return {
         ...prev,
+        daughter: newDaughter,
         inventory: newInventory,
         unlockedCharacters: newUnlocked,
         logs: newLogs,
@@ -2415,6 +3461,187 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
         activeScreen: 'main' as const,
         currentEvent: ev || null,
         currentEventStep: ev ? ev.startNodeId : null
+      };
+    });
+  };
+
+  const buyHeritageUpgrade = (upgradeId: string, cost: number): { success: boolean; message: string } => {
+    let success = false;
+    let message = '';
+
+    setState(prev => {
+      const currentStardust = prev.stardust || 0;
+      if (currentStardust < cost) {
+        success = false;
+        message = '回憶星塵不足！';
+        return prev;
+      }
+
+      const upgrades = { ...prev.heritageUpgrades };
+      const currentLevel = upgrades[upgradeId] || 0;
+
+      const maxLevels: Record<string, number> = {
+        gold_boost: 5,
+        stamina_boost: 5,
+        all_stats_boost: 3,
+        heirloom_potion: 1,
+        heirloom_dagger: 1
+      };
+      
+      const maxLevel = maxLevels[upgradeId] || 0;
+      if (currentLevel >= maxLevel) {
+        success = false;
+        message = '該升級項已達最高等級！';
+        return prev;
+      }
+
+      upgrades[upgradeId] = currentLevel + 1;
+      success = true;
+      message = '升級成功！';
+
+      return {
+        ...prev,
+        stardust: currentStardust - cost,
+        heritageUpgrades: upgrades
+      };
+    });
+
+    return { success, message };
+  };
+
+  const refineEquipment = (itemId: string): { success: boolean; message: string } => {
+    const item = ITEMS.find(i => i.id === itemId);
+    if (!item) return { success: false, message: '找不到該裝備' };
+    if (item.type !== 'weapon' && item.type !== 'armor') return { success: false, message: '此道具不可進行精煉' };
+
+    let success = false;
+    let message = '';
+
+    setState(prev => {
+      const newDaughter = { ...prev.daughter };
+      const newInventory = [...prev.inventory];
+      const refineLevels = { ...newDaughter.refineLevels };
+      const currentLevel = refineLevels[itemId] || 0;
+
+      if (currentLevel >= 5) {
+        success = false;
+        message = '該裝備已達到最高精煉等級 (+5)';
+        return prev;
+      }
+
+      const oreCount = newInventory.filter(id => id === 'refine_ore').length;
+      const requiredOre = currentLevel + 1;
+      const requiredGold = 100 * (currentLevel + 1);
+
+      if (newDaughter.gold < requiredGold) {
+        success = false;
+        message = `金幣不足！精煉需要 ${requiredGold} G。`;
+        return prev;
+      }
+
+      if (oreCount < requiredOre) {
+        success = false;
+        message = `精煉礦石不足！精煉需要 ${requiredOre} 個，當前僅有 ${oreCount} 個。`;
+        return prev;
+      }
+
+      newDaughter.gold -= requiredGold;
+      
+      let oresRemoved = 0;
+      for (let i = newInventory.length - 1; i >= 0; i--) {
+        if (newInventory[i] === 'refine_ore' && oresRemoved < requiredOre) {
+          newInventory.splice(i, 1);
+          oresRemoved++;
+        }
+      }
+
+      const nextLevel = currentLevel + 1;
+      refineLevels[itemId] = nextLevel;
+      newDaughter.refineLevels = refineLevels;
+
+      let statUpMessage = '';
+      if (itemId === 'steel_sword') {
+        newDaughter.attributes.combatSkill += 6;
+        newDaughter.attributes.strength += 3;
+        statUpMessage = '戰鬥技術+6，力量+3';
+      } else if (itemId === 'silver_armor') {
+        newDaughter.attributes.stamina += 10;
+        newDaughter.attributes.combatSkill += 4;
+        statUpMessage = '體力+10，戰鬥技術+4';
+      } else if (itemId === 'bm_dark_armor') {
+        newDaughter.attributes.stamina += 12;
+        newDaughter.attributes.combatSkill += 6;
+        statUpMessage = '體力+12，戰鬥技術+6';
+      } else if (itemId === 'bm_poison_dagger') {
+        newDaughter.attributes.combatSkill += 10;
+        newDaughter.attributes.sin += 3;
+        statUpMessage = '戰鬥技術+10，罪孽+3';
+      }
+
+      newDaughter.combatHp = newDaughter.attributes.stamina;
+      newDaughter.combatMp = newDaughter.attributes.magicSkill * 2 + 10;
+
+      const logText = `🔨 【裝備精煉】成功將【${item.name}】精煉至 +${nextLevel}！消耗了 ${requiredGold} G 與 ${requiredOre} 個精煉礦石。主角屬性增加：${statUpMessage}！`;
+      const newLogs = [...prev.logs, {
+        id: Math.random().toString(),
+        year: prev.time.year,
+        month: prev.time.month,
+        period: prev.time.period,
+        text: logText,
+        type: 'info' as const
+      }];
+
+      success = true;
+      message = `成功將【${item.name}】精煉至 +${nextLevel}！`;
+
+      return {
+        ...prev,
+        daughter: newDaughter,
+        inventory: newInventory,
+        logs: newLogs
+      };
+    });
+
+    return { success, message };
+  };
+
+  const addDiaryMilestone = (milestoneId: string) => {
+    setState(prev => {
+      const currentMilestones = prev.daughter.diaryMilestones || [];
+      if (currentMilestones.includes(milestoneId)) return prev;
+
+      const newMilestones = [...currentMilestones, milestoneId];
+      const newDaughter = {
+        ...prev.daughter,
+        diaryMilestones: newMilestones
+      };
+
+      const milestoneNames: Record<string, string> = {
+        first_work_success: '首次打工大成功',
+        first_study_success: '首次上課大成功',
+        first_sick: '首次生病住院',
+        first_rebellion: '首次叛逆翹課',
+        first_adventure_boss: '擊敗修行首領',
+        first_reunion: '三胞胎姊妹首次重逢',
+        first_black_market: '踏入神秘黑市',
+        first_casino: '初入黑鑽賭局'
+      };
+
+      const name = milestoneNames[milestoneId] || milestoneId;
+      const logText = `📖 女兒在回憶日記中寫下了關於【${name}】的新頁面...`;
+      const newLogs = [...prev.logs, {
+        id: Math.random().toString(),
+        year: prev.time.year,
+        month: prev.time.month,
+        period: prev.time.period,
+        text: logText,
+        type: 'info' as const
+      }];
+
+      return {
+        ...prev,
+        daughter: newDaughter,
+        logs: newLogs
       };
     });
   };
@@ -2430,8 +3657,10 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
         executeNextPeriod,
         finishExecution,
         buyItem,
+        useItem,
         talkToDaughter,
         changeOutfit,
+        selectTitle,
         startAdventure,
         stepAdventure,
         endAdventure,
@@ -2451,7 +3680,10 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
         resolveFestival,
         consumeItem,
         resolveCombatReunion,
-        leaveAdventureShop
+        leaveAdventureShop,
+        buyHeritageUpgrade,
+        refineEquipment,
+        addDiaryMilestone
       }}
     >
       {children}
