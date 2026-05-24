@@ -155,7 +155,7 @@ export interface AdventureState {
     jumbo: PartyMember;
   };
   combatLog: string[];
-  status: 'exploring' | 'fighting' | 'chest' | 'defeat' | 'victory';
+  status: 'exploring' | 'fighting' | 'chest' | 'defeat' | 'victory' | 'shopping';
   // 記錄是否已打破巨石障礙等冒險暫存狀態
   boulderBroken?: boolean;
   satiated?: boolean;
