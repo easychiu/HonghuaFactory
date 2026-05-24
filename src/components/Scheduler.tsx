@@ -184,13 +184,14 @@ export const Scheduler: React.FC = () => {
                   type="button"
                   onClick={handleCopyPreviousSlot}
                   disabled={!canCopyPreviousSlot}
+                  title="把目前旬別設成與前一旬相同"
                   className={`px-3 py-1.5 rounded-md border text-[11px] transition-all ${
                     canCopyPreviousSlot
-                      ? 'border-slate-700 bg-slate-900/70 text-slate-200 hover:border-[#d4af37] hover:text-[#ffd700]'
+                      ? 'border-slate-600 bg-slate-900/80 text-slate-100 hover:border-[#d4af37] hover:text-[#ffd700]'
                       : 'border-slate-800 bg-slate-900/40 text-slate-500 cursor-not-allowed'
                   }`}
                 >
-                  同上週
+                  同上周
                 </button>
               </div>
             </div>
@@ -198,30 +199,30 @@ export const Scheduler: React.FC = () => {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
               <button
                 onClick={() => handleSelectType('work')}
-                className={`p-3 rounded-lg border text-left text-sm transition-all ${
+                className={`p-3 rounded-lg border-2 text-left text-sm transition-all ${
                   activeType === 'work'
-                    ? 'bg-[rgba(212,175,55,0.08)] border-[#d4af37] text-[#ffd700]'
-                    : 'bg-[rgba(255,255,255,0.01)] border-slate-800 hover:border-slate-700 text-slate-300'
+                    ? 'bg-[rgba(212,175,55,0.08)] border-[#d4af37] text-[#ffd700] shadow-[0_0_0_1px_rgba(212,175,55,0.25)]'
+                    : 'bg-[rgba(255,255,255,0.02)] border-slate-700 hover:border-slate-500 text-slate-300'
                 }`}
               >
                 <span className="font-bold flex items-center gap-1.5"><Coins size={14} /> 打工</span>
               </button>
               <button
                 onClick={() => handleSelectType('study')}
-                className={`p-3 rounded-lg border text-left text-sm transition-all ${
+                className={`p-3 rounded-lg border-2 text-left text-sm transition-all ${
                   activeType === 'study'
-                    ? 'bg-[rgba(212,175,55,0.08)] border-[#d4af37] text-[#ffd700]'
-                    : 'bg-[rgba(255,255,255,0.01)] border-slate-800 hover:border-slate-700 text-slate-300'
+                    ? 'bg-[rgba(212,175,55,0.08)] border-[#d4af37] text-[#ffd700] shadow-[0_0_0_1px_rgba(212,175,55,0.25)]'
+                    : 'bg-[rgba(255,255,255,0.02)] border-slate-700 hover:border-slate-500 text-slate-300'
                 }`}
               >
                 <span className="font-bold flex items-center gap-1.5"><BookOpen size={14} /> 學習</span>
               </button>
               <button
                 onClick={() => handleSelectType('rest')}
-                className={`p-3 rounded-lg border text-left text-sm transition-all ${
+                className={`p-3 rounded-lg border-2 text-left text-sm transition-all ${
                   activeType === 'rest'
-                    ? 'bg-[rgba(212,175,55,0.08)] border-[#d4af37] text-[#ffd700]'
-                    : 'bg-[rgba(255,255,255,0.01)] border-slate-800 hover:border-slate-700 text-slate-300'
+                    ? 'bg-[rgba(212,175,55,0.08)] border-[#d4af37] text-[#ffd700] shadow-[0_0_0_1px_rgba(212,175,55,0.25)]'
+                    : 'bg-[rgba(255,255,255,0.02)] border-slate-700 hover:border-slate-500 text-slate-300'
                 }`}
               >
                 <span className="font-bold flex items-center gap-1.5"><Smile size={14} /> 休息</span>
@@ -360,10 +361,10 @@ const ActivityCard: React.FC<ActivityCardProps> = ({ act, onSelect, active, fath
   return (
     <div
       onClick={() => onSelect(act.id)}
-      className={`p-3.5 rounded-lg border cursor-pointer transition-all flex flex-col justify-between ${
+      className={`p-3.5 rounded-lg border-2 cursor-pointer transition-all flex flex-col justify-between ${
         active
-          ? 'bg-[rgba(212,175,55,0.06)] border-[#d4af37] shadow-[0_0_10px_rgba(212,175,55,0.08)]'
-          : 'bg-[rgba(255,255,255,0.01)] border-slate-800/80 hover:border-slate-700 hover:bg-[rgba(255,255,255,0.03)]'
+          ? 'bg-[rgba(212,175,55,0.08)] border-[#d4af37] shadow-[0_0_12px_rgba(212,175,55,0.18)]'
+          : 'bg-[rgba(255,255,255,0.02)] border-slate-700/90 hover:border-slate-500 hover:bg-[rgba(255,255,255,0.04)]'
       }`}
     >
       <div className="flex justify-between items-start gap-2">

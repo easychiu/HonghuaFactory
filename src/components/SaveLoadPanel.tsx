@@ -204,9 +204,12 @@ export const SaveLoadPanel: React.FC<{ onClose: () => void }> = ({ onClose }) =>
       >
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-bold bg-gradient-to-r from-amber-400 to-[#d4af37] bg-clip-text text-transparent flex items-center gap-2">
-            <Save size={20} /> 存檔管理
-          </h2>
+          <div>
+            <h2 className="text-xl font-bold bg-gradient-to-r from-amber-400 to-[#d4af37] bg-clip-text text-transparent flex items-center gap-2">
+              <Save size={20} /> 存/讀檔紀錄管理
+            </h2>
+            <p className="text-[11px] text-slate-400 mt-1">可查看各槽位紀錄時間，並直接讀取檔案。</p>
+          </div>
           <button onClick={onClose} className="p-1.5 rounded hover:bg-white/10 transition-all text-slate-400 hover:text-white">
             <X size={20} />
           </button>
@@ -256,32 +259,36 @@ export const SaveLoadPanel: React.FC<{ onClose: () => void }> = ({ onClose }) =>
                 <button
                   onClick={() => handleSave(i)}
                   title="存檔至此槽位"
-                  className="p-1.5 rounded bg-[rgba(212,175,55,0.1)] border border-[#d4af37]/20 hover:border-[#d4af37]/50 text-[#d4af37] hover:text-[#ffd700] transition-all text-xs"
+                  className="px-2 py-1.5 rounded bg-[rgba(212,175,55,0.1)] border border-[#d4af37]/25 hover:border-[#d4af37]/60 text-[#d4af37] hover:text-[#ffd700] transition-all text-[11px] font-semibold flex items-center gap-1"
                 >
                   <Save size={14} />
+                  <span>存檔</span>
                 </button>
                 {slot && (
                   <>
                     <button
                       onClick={() => handleLoad(i)}
                       title="讀取此槽位"
-                      className="p-1.5 rounded bg-[rgba(100,200,255,0.08)] border border-sky-500/20 hover:border-sky-500/50 text-sky-400 hover:text-sky-300 transition-all text-xs"
+                      className="px-2 py-1.5 rounded bg-[rgba(100,200,255,0.08)] border border-sky-500/30 hover:border-sky-500/60 text-sky-400 hover:text-sky-300 transition-all text-[11px] font-semibold flex items-center gap-1"
                     >
                       <FolderOpen size={14} />
+                      <span>讀取</span>
                     </button>
                     <button
                       onClick={() => handleExport(i)}
                       title="匯出存檔"
-                      className="p-1.5 rounded bg-[rgba(100,255,100,0.08)] border border-emerald-500/20 hover:border-emerald-500/50 text-emerald-400 hover:text-emerald-300 transition-all text-xs"
+                      className="px-2 py-1.5 rounded bg-[rgba(100,255,100,0.08)] border border-emerald-500/30 hover:border-emerald-500/60 text-emerald-400 hover:text-emerald-300 transition-all text-[11px] font-semibold flex items-center gap-1"
                     >
                       <Download size={14} />
+                      <span>匯出</span>
                     </button>
                     <button
                       onClick={() => handleDelete(i)}
                       title="刪除此槽位"
-                      className="p-1.5 rounded bg-[rgba(255,100,100,0.08)] border border-red-500/20 hover:border-red-500/50 text-red-400 hover:text-red-300 transition-all text-xs"
+                      className="px-2 py-1.5 rounded bg-[rgba(255,100,100,0.08)] border border-red-500/30 hover:border-red-500/60 text-red-400 hover:text-red-300 transition-all text-[11px] font-semibold flex items-center gap-1"
                     >
                       <Trash2 size={14} />
+                      <span>刪除</span>
                     </button>
                   </>
                 )}
