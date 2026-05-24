@@ -434,9 +434,12 @@ export const MainPanel: React.FC = () => {
       <div className="glass-panel p-5 flex flex-col gap-3">
         <h3 className="text-sm font-bold flex items-center gap-2 text-slate-300">
           <History size={16} /> 養育事件日誌
+          {logs.length > 0 && (
+            <span className="text-[10px] text-slate-500 font-normal ml-auto">共 {logs.length} 筆紀錄</span>
+          )}
         </h3>
         
-        <div className="h-40 overflow-y-auto bg-slate-950/80 border border-slate-900/60 rounded-lg p-3 space-y-2 text-xs font-mono">
+        <div className="h-48 overflow-y-scroll bg-slate-950/80 border border-slate-900/60 rounded-lg p-3 space-y-2 text-xs font-mono scrollbar-visible">
           {logs.length === 0 ? (
             <p className="text-slate-500 text-center italic mt-12">尚無養育日誌，請開始制定日程運作遊戲。</p>
           ) : (

@@ -556,6 +556,7 @@ interface GameContextProps {
   resolveFestival: (victory: boolean, goldPrize: number, repPrize: number, logText: string, consumedItems?: string[]) => void;
   consumeItem: (itemId: string) => void;
   resolveCombatReunion: (sisterId: string) => void;
+  leaveAdventureShop: () => void;
 }
 
 const GameContext = createContext<GameContextProps | undefined>(undefined);
@@ -1696,12 +1697,12 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }));
         return;
       }
-      // 驛站，直接跳轉 store 面板
+      // 驛站，顯示修行專屬商店介面（不跳轉主商店）
+      nextAdv.status = 'shopping';
       setState(prev => ({
         ...prev,
         daughter: newDaughter,
-        adventure: nextAdv,
-        activeScreen: 'store'
+        adventure: nextAdv
       }));
       return;
     } 
@@ -2121,6 +2122,19 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
   };
 
+  const leaveAdventureShop = () => {
+    setState((prev) => {
+      if (!prev.adventure) return prev;
+      return {
+        ...prev,
+        adventure: {
+          ...prev.adventure,
+          status: 'exploring' as const
+        }
+      };
+    });
+  };
+
   // 重玩 / 重啟週目 (NG+)
   const restartGame = () => {
     setState(prev => ({
@@ -2436,7 +2450,8 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
         eatRiceCake,
         resolveFestival,
         consumeItem,
-        resolveCombatReunion
+        resolveCombatReunion,
+        leaveAdventureShop
       }}
     >
       {children}

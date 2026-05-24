@@ -2,10 +2,10 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useGame, ITEMS } from '../contexts/GameContext';
 import { useCombat } from '../contexts/CombatContext';
 import { useAdventure } from '../hooks/useAdventure';
-import { Swords, Heart, LogOut, Backpack, AlertCircle } from 'lucide-react';
+import { Swords, Heart, LogOut, Backpack, AlertCircle, ShoppingCart, Coins, ArrowLeft } from 'lucide-react';
 
 export const AdventureMap: React.FC = () => {
-  const { state, resolveCombatVictory, resolveCombatDefeat, eatRiceCake, consumeItem, resolveCombatReunion, equipMember } = useGame();
+  const { state, resolveCombatVictory, resolveCombatDefeat, eatRiceCake, consumeItem, resolveCombatReunion, equipMember, buyItem, leaveAdventureShop } = useGame();
   const { combatState, startCombat, executePlayerAction, resolveEnemyTurn, endCombat, failFleeAttempt } = useCombat();
   const { daughter, inventory } = state;
   
@@ -31,6 +31,7 @@ export const AdventureMap: React.FC = () => {
     dx: number;
     dy: number;
   }>>([]);
+  const [shopMessage, setShopMessage] = useState<{ text: string; isError: boolean } | null>(null);
 
   // Auto-scroll combat log to bottom
   useEffect(() => {
@@ -1002,6 +1003,148 @@ export const AdventureMap: React.FC = () => {
 
         </div>
       )}
+
+      {/* Adventure Shop UI (When shopping at a 驛站 or 黑市) */}
+      {adventure.status === 'shopping' && (() => {
+        const currentNode = adventure.nodes.find(n => n.id === adventure.currentNodeId);
+        const shopName = currentNode?.name || '修行驛站';
+        const isBlackMarket = shopName.includes('黑市');
+
+        // Adventure shop items: consumables relevant to adventure combat
+        const adventureShopItems = ITEMS.filter(item => {
+          // Show consumable combat items
+          if (['binlang_ice', 'binlang_twin', 'binlang_normal', 'barrel_rice_cake', 'holy_water'].includes(item.id)) return true;
+          // Black market shop also sells black market items
+          if (isBlackMarket && item.id.startsWith('bm_')) return true;
+          return false;
+        });
+
+        const handleAdventureBuy = (itemId: string) => {
+          const res = buyItem(itemId);
+          setShopMessage({ text: res.message, isError: !res.success });
+          setTimeout(() => setShopMessage(null), 3000);
+        };
+
+        return (
+          <div className="glass-panel p-4 sm:p-6 flex flex-col gap-4 animate-slide-up">
+            {/* Shop Header */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 border-b border-[rgba(212,175,55,0.2)] pb-4">
+              <div className="flex items-center gap-2">
+                <ShoppingCart size={22} className={isBlackMarket ? 'text-purple-400' : 'text-emerald-400'} />
+                <div>
+                  <h2 className={`text-xl font-bold ${isBlackMarket ? 'text-purple-300' : 'text-emerald-300'}`}>
+                    {shopName}
+                  </h2>
+                  <p className="text-xs text-slate-400">
+                    {isBlackMarket
+                      ? '在荒野黑市中，可以找到一些特殊的裝備與消耗品。'
+                      : '途中的補給驛站，可購買戰鬥消耗品與回復道具。'}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 px-3 py-1.5 bg-[rgba(212,175,55,0.08)] border border-[rgba(212,175,55,0.25)] rounded-lg text-sm">
+                  <Coins className="text-[#d4af37]" size={16} />
+                  <span className="font-bold text-[#ffd700]">{daughter.gold} G</span>
+                </div>
+                <button
+                  onClick={() => leaveAdventureShop()}
+                  className="btn-fantasy-sec text-xs flex items-center gap-1"
+                >
+                  <ArrowLeft size={14} />
+                  返回修行路徑
+                </button>
+              </div>
+            </div>
+
+            {/* Shop Message */}
+            {shopMessage && (
+              <div className={`p-3 rounded-lg text-sm font-semibold border text-center ${
+                shopMessage.isError
+                  ? 'bg-red-950/80 border-red-500/50 text-red-200'
+                  : 'bg-emerald-950/80 border-emerald-500/50 text-emerald-200'
+              } animate-bounce shadow-lg`}>
+                {shopMessage.text}
+              </div>
+            )}
+
+            {/* Items Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {adventureShopItems.map((item) => {
+                let finalPrice = item.price;
+                let discountLabel = '';
+                if (item.id.startsWith('binlang_') && inventory.includes('black_market_unlocked')) {
+                  finalPrice = Math.round(item.price * 0.5);
+                  discountLabel = '5折批發';
+                } else if (daughter.fatherBackground === 'merchant') {
+                  finalPrice = Math.round(item.price * 0.8);
+                  discountLabel = '8折商惠';
+                }
+
+                return (
+                  <div key={item.id} className={`p-4 rounded-xl border flex flex-col justify-between gap-3 transition-all ${
+                    isBlackMarket
+                      ? 'bg-purple-950/20 border-purple-800/40 hover:border-purple-500/50'
+                      : 'bg-slate-950/40 border-slate-800/60 hover:border-emerald-500/40'
+                  }`}>
+                    <div>
+                      <div className="flex justify-between items-start gap-2 mb-2">
+                        <h3 className="text-sm font-bold text-white flex items-center gap-1.5">
+                          {item.name}
+                          {discountLabel && (
+                            <span className="text-[9px] px-1.5 py-0.5 bg-cyan-950 border border-cyan-800 text-cyan-400 font-bold rounded">
+                              {discountLabel}
+                            </span>
+                          )}
+                        </h3>
+                        <span className="shrink-0 text-xs px-2 py-1 bg-slate-900 border border-slate-800 text-[#ffd700] font-bold rounded-lg flex items-center gap-1">
+                          <Coins size={11} />
+                          {finalPrice < item.price ? (
+                            <span className="flex items-center gap-1">
+                              <span className="line-through text-slate-500 mr-0.5">{item.price}</span>
+                              <span>{finalPrice} G</span>
+                            </span>
+                          ) : (
+                            <span>{item.price} G</span>
+                          )}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-slate-400 leading-relaxed">{item.description}</p>
+                    </div>
+                    <button
+                      onClick={() => handleAdventureBuy(item.id)}
+                      disabled={daughter.gold < finalPrice}
+                      className={`w-full py-2 text-xs font-bold rounded-lg border transition-all ${
+                        daughter.gold < finalPrice
+                          ? 'bg-slate-900/60 border-slate-800 text-slate-500 cursor-not-allowed'
+                          : isBlackMarket
+                          ? 'bg-purple-900/30 border-purple-600/40 text-purple-300 hover:bg-purple-800/40 hover:border-purple-500'
+                          : 'bg-emerald-900/30 border-emerald-600/40 text-emerald-300 hover:bg-emerald-800/40 hover:border-emerald-500'
+                      }`}
+                    >
+                      {daughter.gold < finalPrice ? '金幣不足' : '購入商品'}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Adventure status summary */}
+            <div className="flex flex-wrap items-center gap-4 text-xs text-slate-400 border-t border-slate-800/50 pt-3">
+              <span className="flex items-center gap-1">
+                <Heart size={12} className="text-red-400" /> HP: {adventure.daughterHp}/{adventure.daughterMaxHp}
+              </span>
+              <span className="flex items-center gap-1">
+                ⚡ 專注度: {daughter.focus}/{daughter.maxFocus}
+              </span>
+              <span className="flex items-center gap-1">
+                🎒 背包: {inventory.filter(i => ['binlang_ice', 'binlang_twin', 'binlang_normal', 'barrel_rice_cake', 'holy_water'].includes(i)).length} 件消耗品
+              </span>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Shared Logs Panel (When exploring) */}
       {adventure.status === 'exploring' && (
