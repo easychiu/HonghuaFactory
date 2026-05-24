@@ -4,9 +4,10 @@ import { EndingGallery } from './EndingGallery';
 import { AchievementPanel } from './AchievementPanel';
 import {
   Sparkles, Calendar, User, Shield, BookOpen, Coins, Music, Lock, Trophy,
-  ChevronLeft, ChevronRight,
+  ChevronLeft, ChevronRight, FolderOpen,
 } from 'lucide-react';
 import type { CharacterId, FatherBackground } from '../types';
+import { SaveLoadPanel } from './SaveLoadPanel';
 
 type StartStep = 'prologue' | 'father' | 'daughter';
 
@@ -117,6 +118,7 @@ export const StartScreen: React.FC = () => {
   const [name, setName] = useState('');
   const [showGallery, setShowGallery] = useState(false);
   const [showAchievements, setShowAchievements] = useState(false);
+  const [showLoadPanel, setShowLoadPanel] = useState(false);
   const [birthMonth, setBirthMonth] = useState(5);
   const [birthDay, setBirthDay] = useState(20);
   const [selectedChar, setSelectedChar] = useState<CharacterId>('honghua');
@@ -198,6 +200,13 @@ export const StartScreen: React.FC = () => {
                 className="text-[10px] text-purple-400 hover:text-purple-300 border border-purple-500/30 hover:border-purple-400/50 bg-purple-500/5 hover:bg-purple-500/10 px-2.5 py-1.5 rounded transition-all flex items-center gap-1.5 uppercase font-semibold"
               >
                 <Trophy size={12} /> 榮譽成就 ({state.unlockedAchievements?.length || 0})
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowLoadPanel(true)}
+                className="text-[10px] text-sky-300 hover:text-sky-200 border border-sky-500/30 hover:border-sky-400/50 bg-sky-500/5 hover:bg-sky-500/10 px-2.5 py-1.5 rounded transition-all flex items-center gap-1.5 uppercase font-semibold"
+              >
+                <FolderOpen size={12} /> 讀取存檔
               </button>
             </div>
 
@@ -515,6 +524,7 @@ export const StartScreen: React.FC = () => {
 
       {showGallery && <EndingGallery onClose={() => setShowGallery(false)} />}
       {showAchievements && <AchievementPanel onClose={() => setShowAchievements(false)} />}
+      {showLoadPanel && <SaveLoadPanel onClose={() => setShowLoadPanel(false)} loadOnly />}
     </div>
   );
 };

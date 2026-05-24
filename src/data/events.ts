@@ -1018,10 +1018,24 @@ export const AVG_EVENTS: Record<string, AVGEvent> = {
         text: '喲，小姑娘，看妳一臉疲憊的樣子，要不要在我們黑鑽俱樂部玩一把？只要贏了，這間賭場的產權分紅就是妳的；要是輸了，妳手上的所有金幣歸我，敢不敢賭一把？',
         choices: [
           {
-            text: '🎲 憑強運盲擲梭哈！（大成功概率 100%）',
-            effect: (_state) => {
+            text: '🎲 憑強運盲擲梭哈！（艾莉卡 100%，其他角色一般機率）',
+            effect: (state) => {
+              const isErica = state.daughter.characterId === 'erica';
+              const successChance = isErica ? 1 : 0.35;
+              const isSuccess = Math.random() < successChance;
+
+              if (!isSuccess) {
+                return {
+                  log: `${state.daughter.name} 運氣不佳，盲擲失利，賭桌上的籌碼瞬間歸零。`,
+                  nextDialogId: 'casino_fail',
+                  rewards: {
+                    gold: -state.daughter.gold
+                  }
+                };
+              }
+
               return {
-                log: '艾莉卡憑藉強運連續盲擲三個 6 點共 18 點滿分！贏到賭場老闆當場破產，轉讓「賭場產權書」！',
+                log: `${state.daughter.name} 憑藉強運連續盲擲三個 6 點共 18 點滿分！贏到賭場老闆當場破產，轉讓「賭場產權書」！`,
                 nextDialogId: 'casino_success',
                 rewards: {
                   addInventory: 'casino_property'
@@ -1043,6 +1057,11 @@ export const AVG_EVENTS: Record<string, AVGEvent> = {
       casino_success: {
         speaker: '地下賭場老闆 凱薩',
         text: '這、這不可能……！連續盲擲 18 點！？妳這丫頭運氣也太逆天了吧！罷了，願賭服輸，這張「賭場產權書」歸妳了，以後每季的分紅我會派人送去。',
+        nextId: undefined
+      },
+      casino_fail: {
+        speaker: '地下賭場老闆 凱薩',
+        text: '哼，勝負已分。賭桌上的籌碼我就全收下了，下次再來挑戰吧。',
         nextId: undefined
       }
     }

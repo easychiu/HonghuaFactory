@@ -231,10 +231,11 @@ export const Scheduler: React.FC = () => {
 
             {activeType ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {visibleActivities.map(act => (
+                {visibleActivities.map((act, index) => (
                   <ActivityCard
                     key={act.id}
                     act={act}
+                    index={index + 1}
                     onSelect={handleSelectActivity}
                     active={selected[activeSlot] === act.id}
                     fatherBackground={daughter.fatherBackground}
@@ -339,12 +340,13 @@ export const Scheduler: React.FC = () => {
 
 interface ActivityCardProps {
   act: Activity;
+  index: number;
   onSelect: (id: string) => void;
   active: boolean;
   fatherBackground: string;
 }
 
-const ActivityCard: React.FC<ActivityCardProps> = ({ act, onSelect, active, fatherBackground }) => {
+const ActivityCard: React.FC<ActivityCardProps> = ({ act, index, onSelect, active, fatherBackground }) => {
   let cost = act.cost;
   if (fatherBackground === 'scholar' && act.type === 'study') {
     const isHumanities = ['rhetoric', 'history', 'music_poetry', 'theology_art', 'etiquette'].includes(act.id);
@@ -361,7 +363,7 @@ const ActivityCard: React.FC<ActivityCardProps> = ({ act, onSelect, active, fath
   return (
     <div
       onClick={() => onSelect(act.id)}
-      className={`p-3.5 rounded-lg border-2 cursor-pointer transition-all flex flex-col justify-between ${
+      className={`p-3.5 rounded-lg border-2 cursor-pointer transition-all flex flex-col justify-between min-h-[150px] ${
         active
           ? 'bg-[rgba(212,175,55,0.08)] border-[#d4af37] shadow-[0_0_12px_rgba(212,175,55,0.18)]'
           : 'bg-[rgba(255,255,255,0.02)] border-slate-700/90 hover:border-slate-500 hover:bg-[rgba(255,255,255,0.04)]'
@@ -369,6 +371,15 @@ const ActivityCard: React.FC<ActivityCardProps> = ({ act, onSelect, active, fath
     >
       <div className="flex justify-between items-start gap-2">
         <div>
+          <div className="mb-1.5">
+            <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold border ${
+              active
+                ? 'text-[#ffe58a] border-[#d4af37]/50 bg-[#d4af37]/15'
+                : 'text-slate-300 border-slate-600/70 bg-slate-900/50'
+            }`}>
+              {act.type === 'work' ? '打工' : act.type === 'study' ? '學習' : '休息'} #{index}
+            </span>
+          </div>
           <h4 className={`text-sm font-bold ${active ? 'text-[#ffd700]' : 'text-slate-200'}`}>
             {act.name}
           </h4>
