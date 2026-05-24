@@ -631,3 +631,146 @@ h1, h2, h3, .fantasy-font {
     margin: 0.25rem 0;
   }
 }
+
+/* ==========================================================================
+   Activity Card (Scheduler Options) Custom Styling
+   ========================================================================== */
+.activity-card {
+  padding: 18px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-left: 5px solid rgba(255, 255, 255, 0.4);
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 156px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+  background: var(--glass-bg);
+  backdrop-filter: blur(8px);
+}
+
+.activity-card.type-work {
+  border-left-color: #10b981; /* Emerald */
+}
+.activity-card.type-study {
+  border-left-color: #6366f1; /* Indigo */
+}
+.activity-card.type-rest {
+  border-left-color: #d4af37; /* Gold */
+}
+
+/* Inactive cards zebra striping for clear contrast and visual boundary */
+.activity-card.inactive.is-even {
+  background: rgba(25, 20, 45, 0.4);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+.activity-card.inactive.is-even:hover {
+  background: rgba(40, 32, 70, 0.65);
+  border-color: rgba(212, 175, 55, 0.4);
+  box-shadow: 0 6px 20px rgba(212, 175, 55, 0.1);
+  transform: translateY(-2px);
+}
+
+.activity-card.inactive.is-odd {
+  background: rgba(8, 6, 16, 0.85);
+  border-color: rgba(255, 255, 255, 0.05);
+}
+.activity-card.inactive.is-odd:hover {
+  background: rgba(18, 14, 34, 0.95);
+  border-color: rgba(212, 175, 55, 0.4);
+  box-shadow: 0 6px 20px rgba(212, 175, 55, 0.1);
+  transform: translateY(-2px);
+}
+
+/* Active selected cards */
+.activity-card.is-active.type-work {
+  background: rgba(16, 185, 129, 0.09);
+  border-color: #10b981;
+  box-shadow: 
+    0 0 0 1px rgba(16, 185, 129, 0.3),
+    0 0 20px rgba(16, 185, 129, 0.18),
+    inset 0 0 12px rgba(16, 185, 129, 0.05);
+  transform: translateY(-2px) scale(1.01);
+}
+.activity-card.is-active.type-study {
+  background: rgba(99, 102, 241, 0.09);
+  border-color: #6366f1;
+  box-shadow: 
+    0 0 0 1px rgba(99, 102, 241, 0.3),
+    0 0 20px rgba(99, 102, 241, 0.18),
+    inset 0 0 12px rgba(99, 102, 241, 0.05);
+  transform: translateY(-2px) scale(1.01);
+}
+.activity-card.is-active.type-rest {
+  background: rgba(212, 175, 55, 0.09);
+  border-color: #d4af37;
+  box-shadow: 
+    0 0 0 1px rgba(212, 175, 55, 0.35),
+    0 0 20px rgba(212, 175, 55, 0.22),
+    inset 0 0 12px rgba(212, 175, 55, 0.05);
+  transform: translateY(-2px) scale(1.01);
+}
+
+/* Badges within activity cards */
+.activity-card .badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 9999px;
+  padding: 3px 10px;
+  font-size: 10px;
+  font-weight: 700;
+  border: 1px solid transparent;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.activity-card .badge.type-work.is-active {
+  color: #a7f3d0;
+  border-color: rgba(16, 185, 129, 0.45);
+  background: rgba(16, 185, 129, 0.22);
+}
+.activity-card .badge.type-work.is-inactive {
+  color: #34d399;
+  border-color: rgba(52, 211, 153, 0.25);
+  background: rgba(6, 95, 70, 0.35);
+}
+
+.activity-card .badge.type-study.is-active {
+  color: #c7d2fe;
+  border-color: rgba(99, 102, 241, 0.45);
+  background: rgba(99, 102, 241, 0.22);
+}
+.activity-card .badge.type-study.is-inactive {
+  color: #818cf8;
+  border-color: rgba(129, 140, 248, 0.25);
+  background: rgba(49, 46, 129, 0.35);
+}
+
+.activity-card .badge.type-rest.is-active {
+  color: #ffe58a;
+  border-color: rgba(212, 175, 55, 0.45);
+  background: rgba(212, 175, 55, 0.22);
+}
+.activity-card .badge.type-rest.is-inactive {
+  color: #fbbf24;
+  border-color: rgba(251, 191, 36, 0.25);
+  background: rgba(120, 85, 0, 0.35);
+}
+
+/* Titles text coloring */
+.activity-card h4 {
+  margin: 6px 0 2px 0;
+  transition: color 0.2s ease;
+}
+.activity-card.is-active.type-work h4 {
+  color: #34d399;
+}
+.activity-card.is-active.type-study h4 {
+  color: #a5b4fc;
+}
+.activity-card.is-active.type-rest h4 {
+  color: #ffd700;
+}
+

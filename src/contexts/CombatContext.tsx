@@ -695,7 +695,11 @@ export const CombatProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
     // --- 檢查怪物死亡與下一動輪替 ---
     if (nextState.monsterHp <= 0) {
-      // 怪物已死
+      if (nextState.turn !== 'victory') {
+        audioManager.playSfx('sfx_coin.mp3');
+        logEntries.push(`🎉 擊敗了 ${monster.name}！獲得 ${monster.goldReward} 金幣。`);
+        nextState.turn = 'victory';
+      }
     } else {
       let isEnemyBlocked = false;
       let blockReason = '';

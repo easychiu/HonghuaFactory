@@ -400,77 +400,36 @@ const ActivityCard: React.FC<ActivityCardProps> = ({ act, index, onSelect, activ
     reward = Math.round(reward * 1.2);
   }
 
-  // Type-specific color scheme for clear differentiation
-  const typeColors = {
-    work: {
-      activeBg: 'bg-[rgba(16,185,129,0.08)]',
-      activeBorder: 'border-emerald-500',
-      activeShadow: 'shadow-[0_0_12px_rgba(16,185,129,0.18)]',
-      badgeActive: 'text-emerald-300 border-emerald-500/50 bg-emerald-500/15',
-      badgeInactive: 'text-emerald-400 border-emerald-600/50 bg-emerald-900/30',
-      nameActive: 'text-emerald-300',
-      stripe: 'border-l-emerald-500',
-      label: '💰 打工',
-    },
-    study: {
-      activeBg: 'bg-[rgba(99,102,241,0.08)]',
-      activeBorder: 'border-indigo-500',
-      activeShadow: 'shadow-[0_0_12px_rgba(99,102,241,0.18)]',
-      badgeActive: 'text-indigo-300 border-indigo-500/50 bg-indigo-500/15',
-      badgeInactive: 'text-indigo-400 border-indigo-600/50 bg-indigo-900/30',
-      nameActive: 'text-indigo-300',
-      stripe: 'border-l-indigo-500',
-      label: '📖 學習',
-    },
-    rest: {
-      activeBg: 'bg-[rgba(212,175,55,0.08)]',
-      activeBorder: 'border-[#d4af37]',
-      activeShadow: 'shadow-[0_0_12px_rgba(212,175,55,0.18)]',
-      badgeActive: 'text-[#ffe58a] border-[#d4af37]/50 bg-[#d4af37]/15',
-      badgeInactive: 'text-amber-400 border-amber-600/50 bg-amber-900/30',
-      nameActive: 'text-[#ffd700]',
-      stripe: 'border-l-[#d4af37]',
-      label: '😴 休息',
-    },
-  };
-
-  const colors = typeColors[act.type];
-
-  // Alternating background zebra-striping when inactive to ensure clear visual boundaries between slots
-  const cardBg = active
-    ? `${colors.activeBg} ${colors.activeBorder} ${colors.activeShadow}`
-    : index % 2 === 0
-      ? 'bg-slate-800/80 border-slate-700/80 hover:border-[#d4af37]/50 hover:bg-slate-750/90'
-      : 'bg-slate-950/95 border-slate-850 hover:border-[#d4af37]/50 hover:bg-slate-950/100';
+  const label = act.type === 'work' ? '💰 打工' : act.type === 'study' ? '📖 學習' : '😴 休息';
+  const cardClass = `activity-card type-${act.type} ${active ? 'is-active' : `inactive ${index % 2 === 0 ? 'is-even' : 'is-odd'}`}`;
+  const badgeClass = `badge type-${act.type} ${active ? 'is-active' : 'is-inactive'}`;
 
   return (
     <div
       onClick={() => onSelect(act.id)}
-      className={`p-3.5 rounded-lg border-2 border-l-4 cursor-pointer transition-all flex flex-col justify-between min-h-[150px] ${colors.stripe} ${cardBg}`}
+      className={cardClass}
     >
-      <div className="flex justify-between items-start gap-2">
-        <div>
+      <div className="flex justify-between items-start gap-2" style={{ width: '100%' }}>
+        <div style={{ flex: 1 }}>
           <div className="mb-1.5">
-            <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold border ${
-              active ? colors.badgeActive : colors.badgeInactive
-            }`}>
-              {colors.label} #{index}
+            <span className={badgeClass}>
+              {label} #{index}
             </span>
           </div>
-          <h4 className={`text-sm font-bold ${active ? colors.nameActive : 'text-slate-200'}`}>
+          <h4 className="text-sm font-bold">
             {act.name}
           </h4>
           <p className="text-[11px] text-slate-400 mt-1 line-clamp-2 leading-normal">
             {act.description}
           </p>
         </div>
-        <div className="shrink-0 text-right text-xs">
+        <div className="shrink-0 text-right text-xs" style={{ minWidth: '60px' }}>
           {cost > 0 && <span className="text-red-400 font-bold">-{cost} G</span>}
           {reward > 0 && <span className="text-emerald-400 font-bold">+{reward} G</span>}
           {cost === 0 && reward === 0 && <span className="text-slate-400">免費</span>}
         </div>
       </div>
-      <div className="text-[10px] text-slate-400 border-t border-slate-900/60 pt-2 mt-2 leading-relaxed">
+      <div className="text-[10px] text-slate-400 border-t border-slate-900/60 pt-2 mt-2 leading-relaxed" style={{ borderTop: '1px solid rgba(0,0,0,0.15)', paddingTop: '8px', marginTop: '8px' }}>
         {act.effectDescription}
       </div>
     </div>
