@@ -391,6 +391,66 @@ h1, h2, h3, .fantasy-font {
   position: relative;
 }
 
+@keyframes dq-impact-shake {
+  0% { transform: translate3d(0, 0, 0); }
+  25% { transform: translate3d(-5px, 2px, 0); }
+  50% { transform: translate3d(6px, -3px, 0); }
+  75% { transform: translate3d(-4px, 1px, 0); }
+  100% { transform: translate3d(0, 0, 0); }
+}
+
+@keyframes dq-impact-shake-ice {
+  0% { transform: translate3d(0, 0, 0); filter: brightness(1); }
+  35% { transform: translate3d(4px, -4px, 0); filter: brightness(1.15); }
+  70% { transform: translate3d(-4px, 3px, 0); filter: brightness(1.08); }
+  100% { transform: translate3d(0, 0, 0); filter: brightness(1); }
+}
+
+.dq-battle-stage.dq-impact-shake {
+  animation: dq-impact-shake 0.28s ease-out 1;
+}
+
+.dq-battle-stage.dq-impact-shake-ice {
+  animation: dq-impact-shake-ice 0.32s ease-out 1;
+}
+
+.dq-impact-particles-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+}
+
+@keyframes dq-impact-particle-fly {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+    opacity: 0.95;
+  }
+  100% {
+    transform: translate3d(var(--dx), var(--dy), 0) scale(0.1);
+    opacity: 0;
+  }
+}
+
+.dq-impact-particle {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  animation: dq-impact-particle-fly 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  box-shadow: 0 0 10px currentColor;
+}
+
+.dq-impact-particle.is-slash {
+  color: #ffd166;
+  background: radial-gradient(circle, #fff6cc 0%, #ffd166 45%, #ff7b00 100%);
+}
+
+.dq-impact-particle.is-ice {
+  color: #8deaff;
+  background: radial-gradient(circle, #e0f7ff 0%, #8deaff 45%, #38bdf8 100%);
+}
+
 .dq-battle-stage::after {
   content: '';
   position: absolute;
