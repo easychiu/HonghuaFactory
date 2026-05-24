@@ -204,9 +204,9 @@ export const StartScreen: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setShowLoadPanel(true)}
-                className="text-[10px] text-sky-300 hover:text-sky-200 border border-sky-500/30 hover:border-sky-400/50 bg-sky-500/5 hover:bg-sky-500/10 px-2.5 py-1.5 rounded transition-all flex items-center gap-1.5 uppercase font-semibold"
+                className="text-xs text-sky-200 hover:text-white border-2 border-sky-500/50 hover:border-sky-400 bg-sky-500/10 hover:bg-sky-500/20 px-4 py-2 rounded-lg transition-all flex items-center gap-2 uppercase font-bold shadow-[0_0_10px_rgba(56,189,248,0.15)] hover:shadow-[0_0_15px_rgba(56,189,248,0.3)]"
               >
-                <FolderOpen size={12} /> 讀取存檔
+                <FolderOpen size={16} /> 讀取存檔
               </button>
             </div>
 

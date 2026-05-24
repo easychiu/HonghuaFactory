@@ -215,6 +215,36 @@ h1, h2, h3, .fantasy-font {
   background: var(--gold-accent);
 }
 
+/* Scrollbar always visible for log panels */
+.scrollbar-visible {
+  scrollbar-gutter: stable;
+}
+
+.scrollbar-visible::-webkit-scrollbar {
+  width: 10px;
+}
+
+.scrollbar-visible::-webkit-scrollbar-track {
+  background: rgba(15, 10, 30, 0.8);
+  border-radius: 5px;
+}
+
+.scrollbar-visible::-webkit-scrollbar-thumb {
+  background: rgba(212, 175, 55, 0.35);
+  border-radius: 5px;
+  border: 2px solid rgba(15, 10, 30, 0.8);
+}
+
+.scrollbar-visible::-webkit-scrollbar-thumb:hover {
+  background: rgba(212, 175, 55, 0.6);
+}
+
+/* Firefox scrollbar for .scrollbar-visible */
+.scrollbar-visible {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(212, 175, 55, 0.35) rgba(15, 10, 30, 0.8);
+}
+
 /* Mobile Responsive Utilities */
 @media (max-width: 640px) {
   html {

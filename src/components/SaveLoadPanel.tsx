@@ -57,7 +57,12 @@ export const SaveLoadPanel: React.FC<{ onClose: () => void; loadOnly?: boolean }
       logs: state.logs,
       currentEvent: state.currentEvent,
       currentEventStep: state.currentEventStep,
-      adventure: state.adventure
+      adventure: state.adventure,
+      cheatMode: state.cheatMode,
+      unlockedCharacters: state.unlockedCharacters,
+      completedEndings: state.completedEndings,
+      unlockedAchievements: state.unlockedAchievements,
+      lastFatherInteractionMonth: state.lastFatherInteractionMonth
     };
 
     localStorage.setItem(getSaveSlotKey(index), JSON.stringify(saveData));

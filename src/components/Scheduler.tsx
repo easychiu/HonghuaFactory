@@ -360,12 +360,48 @@ const ActivityCard: React.FC<ActivityCardProps> = ({ act, index, onSelect, activ
     reward = Math.round(reward * 1.2);
   }
 
+  // Type-specific color scheme for clear differentiation
+  const typeColors = {
+    work: {
+      activeBg: 'bg-[rgba(16,185,129,0.08)]',
+      activeBorder: 'border-emerald-500',
+      activeShadow: 'shadow-[0_0_12px_rgba(16,185,129,0.18)]',
+      badgeActive: 'text-emerald-300 border-emerald-500/50 bg-emerald-500/15',
+      badgeInactive: 'text-emerald-400 border-emerald-600/50 bg-emerald-900/30',
+      nameActive: 'text-emerald-300',
+      stripe: 'border-l-emerald-500',
+      label: '💰 打工',
+    },
+    study: {
+      activeBg: 'bg-[rgba(99,102,241,0.08)]',
+      activeBorder: 'border-indigo-500',
+      activeShadow: 'shadow-[0_0_12px_rgba(99,102,241,0.18)]',
+      badgeActive: 'text-indigo-300 border-indigo-500/50 bg-indigo-500/15',
+      badgeInactive: 'text-indigo-400 border-indigo-600/50 bg-indigo-900/30',
+      nameActive: 'text-indigo-300',
+      stripe: 'border-l-indigo-500',
+      label: '📖 學習',
+    },
+    rest: {
+      activeBg: 'bg-[rgba(212,175,55,0.08)]',
+      activeBorder: 'border-[#d4af37]',
+      activeShadow: 'shadow-[0_0_12px_rgba(212,175,55,0.18)]',
+      badgeActive: 'text-[#ffe58a] border-[#d4af37]/50 bg-[#d4af37]/15',
+      badgeInactive: 'text-amber-400 border-amber-600/50 bg-amber-900/30',
+      nameActive: 'text-[#ffd700]',
+      stripe: 'border-l-[#d4af37]',
+      label: '😴 休息',
+    },
+  };
+
+  const colors = typeColors[act.type];
+
   return (
     <div
       onClick={() => onSelect(act.id)}
-      className={`p-3.5 rounded-lg border-2 cursor-pointer transition-all flex flex-col justify-between min-h-[150px] ${
+      className={`p-3.5 rounded-lg border-2 border-l-4 cursor-pointer transition-all flex flex-col justify-between min-h-[150px] ${colors.stripe} ${
         active
-          ? 'bg-[rgba(212,175,55,0.08)] border-[#d4af37] shadow-[0_0_12px_rgba(212,175,55,0.18)]'
+          ? `${colors.activeBg} ${colors.activeBorder} ${colors.activeShadow}`
           : 'bg-[rgba(255,255,255,0.02)] border-slate-700/90 hover:border-slate-500 hover:bg-[rgba(255,255,255,0.04)]'
       }`}
     >
@@ -373,17 +409,15 @@ const ActivityCard: React.FC<ActivityCardProps> = ({ act, index, onSelect, activ
         <div>
           <div className="mb-1.5">
             <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold border ${
-              active
-                ? 'text-[#ffe58a] border-[#d4af37]/50 bg-[#d4af37]/15'
-                : 'text-slate-300 border-slate-600/70 bg-slate-900/50'
+              active ? colors.badgeActive : colors.badgeInactive
             }`}>
-              {act.type === 'work' ? '打工' : act.type === 'study' ? '學習' : '休息'} #{index}
+              {colors.label} #{index}
             </span>
           </div>
-          <h4 className={`text-sm font-bold ${active ? 'text-[#ffd700]' : 'text-slate-200'}`}>
+          <h4 className={`text-sm font-bold ${active ? colors.nameActive : 'text-slate-200'}`}>
             {act.name}
           </h4>
-          <p className="text-[11px] text-slate-400 mt-1 line-clamp-1 leading-normal">
+          <p className="text-[11px] text-slate-400 mt-1 line-clamp-2 leading-normal">
             {act.description}
           </p>
         </div>
