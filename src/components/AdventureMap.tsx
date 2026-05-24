@@ -19,7 +19,18 @@ export const AdventureMap: React.FC = () => {
   } = useAdventure();
 
   const logEndRef = useRef<HTMLDivElement>(null);
+  const impactShakeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const impactParticleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [healTargetSelect, setHealTargetSelect] = useState<boolean>(false);
+  const [impactClass, setImpactClass] = useState('');
+  const [impactParticles, setImpactParticles] = useState<Array<{
+    id: string;
+    type: 'slash' | 'ice';
+    x: number;
+    y: number;
+    dx: number;
+    dy: number;
+  }>>([]);
 
   // Auto-scroll combat log to bottom
   useEffect(() => {
@@ -47,6 +58,33 @@ export const AdventureMap: React.FC = () => {
       return () => clearTimeout(timer);
     }
   }, [combatState.isActive, combatState.turn, daughter]);
+
+  const triggerImpactEffect = (type: 'slash' | 'ice') => {
+    setImpactClass(type === 'ice' ? 'dq-impact-shake-ice' : 'dq-impact-shake');
+    const idPrefix = `${Date.now()}-${Math.random()}`;
+    const particles = Array.from({ length: 10 }, (_, idx) => ({
+      id: `${idPrefix}-${idx}`,
+      type,
+      x: 60 + Math.random() * 24,
+      y: 38 + Math.random() * 24,
+      dx: (Math.random() - 0.5) * 130,
+      dy: -25 - Math.random() * 90
+    }));
+    setImpactParticles(particles);
+
+    if (impactShakeTimerRef.current) clearTimeout(impactShakeTimerRef.current);
+    if (impactParticleTimerRef.current) clearTimeout(impactParticleTimerRef.current);
+
+    impactShakeTimerRef.current = setTimeout(() => setImpactClass(''), 320);
+    impactParticleTimerRef.current = setTimeout(() => setImpactParticles([]), 720);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (impactShakeTimerRef.current) clearTimeout(impactShakeTimerRef.current);
+      if (impactParticleTimerRef.current) clearTimeout(impactParticleTimerRef.current);
+    };
+  }, []);
 
   if (!adventure) return null;
 
@@ -394,8 +432,24 @@ export const AdventureMap: React.FC = () => {
           <div className="lg:col-span-2 flex flex-col gap-6">
             
             {/* Arena board: Monster vs Party */}
-            <div className="glass-panel p-3 sm:p-6 flex flex-col md:flex-row items-center justify-around gap-4 sm:gap-6 bg-slate-950/20 border-2 border-[#d4af37]/35 min-h-[240px] sm:min-h-[300px] relative overflow-hidden dq-battle-stage">
+            <div className={`glass-panel p-3 sm:p-6 flex flex-col md:flex-row items-center justify-around gap-4 sm:gap-6 bg-slate-950/20 border-2 border-[#d4af37]/35 min-h-[240px] sm:min-h-[300px] relative overflow-hidden dq-battle-stage ${impactClass}`}>
               <div className="absolute inset-0 bg-radial-gradient opacity-10 pointer-events-none dq-battle-stage-glow" />
+              {impactParticles.length > 0 && (
+                <div className="dq-impact-particles-layer">
+                  {impactParticles.map((particle) => (
+                    <span
+                      key={particle.id}
+                      className={`dq-impact-particle ${particle.type === 'ice' ? 'is-ice' : 'is-slash'}`}
+                      style={{
+                        left: `${particle.x}%`,
+                        top: `${particle.y}%`,
+                        '--dx': `${particle.dx}px`,
+                        '--dy': `${particle.dy}px`,
+                      } as React.CSSProperties}
+                    />
+                  ))}
+                </div>
+              )}
               
               {/* Team Party Members */}
               <div className="flex flex-col gap-4 w-full md:w-auto dq-party-roster">
@@ -652,7 +706,10 @@ export const AdventureMap: React.FC = () => {
                         ⚔️ 普通攻擊
                       </button>
                       <button 
-                        onClick={() => executePlayerAction('solo', 'skill_slash')}
+                        onClick={() => {
+                          triggerImpactEffect('slash');
+                          executePlayerAction('solo', 'skill_slash');
+                        }}
                         disabled={combatState.party.solo.mp < 10}
                         className="btn-fantasy-sec py-3 text-xs disabled:opacity-40 dq-command-button"
                       >
@@ -660,7 +717,10 @@ export const AdventureMap: React.FC = () => {
                       </button>
                       {inventory.includes('temple_ice_juice') && (
                         <button
-                          onClick={() => executePlayerAction('solo', 'skill_ice_juice')}
+                          onClick={() => {
+                            triggerImpactEffect('ice');
+                            executePlayerAction('solo', 'skill_ice_juice');
+                          }}
                           disabled={combatState.party.solo.mp < 12}
                           className="btn-fantasy py-3 text-xs border-cyan-500/50 text-cyan-300 hover:bg-cyan-950/15 disabled:opacity-40 dq-command-button"
                         >
@@ -700,7 +760,10 @@ export const AdventureMap: React.FC = () => {
                               ⚔️ 普攻
                             </button>
                             <button 
-                              onClick={() => executePlayerAction('emilia', 'skill_slash')}
+                              onClick={() => {
+                                triggerImpactEffect('slash');
+                                executePlayerAction('emilia', 'skill_slash');
+                              }}
                               disabled={combatState.party.emilia.mp < 10}
                               className="btn-fantasy-sec text-[10px] py-2 disabled:opacity-40 dq-command-button"
                             >
@@ -872,6 +935,7 @@ export const AdventureMap: React.FC = () => {
                         <button
                           onClick={() => {
                             const actor = daughter.characterId === 'emilia' ? 'emilia' : 'solo';
+                            triggerImpactEffect('ice');
                             executePlayerAction(actor, 'item_binlang_ice');
                             consumeItem('binlang_ice');
                           }}
