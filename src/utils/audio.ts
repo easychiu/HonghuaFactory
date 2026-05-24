@@ -25,23 +25,6 @@ class AudioManager {
       if (this.currentBgm && this.currentBgm.paused && !this.isMuted) {
         this.currentBgm.play().catch(() => {});
       }
-
-      public playSfx(trackName: string, volume: number = 0.6) {
-        if (this.isMuted) return;
-
-        const base = import.meta.env.BASE_URL || '/';
-        const prefix = base.endsWith('/') ? base : `${base}/`;
-        const trackUrl = `${prefix}${trackName}`;
-        if (this.unavailableSfxTracks.has(trackUrl)) return;
-
-        const sfx = new Audio(trackUrl);
-        sfx.loop = false;
-        sfx.volume = Math.max(0, Math.min(1, volume));
-        sfx.muted = this.isMuted;
-        sfx.play().catch(() => {
-          this.unavailableSfxTracks.add(trackUrl);
-        });
-      }
       return;
     }
 
@@ -69,6 +52,23 @@ class AudioManager {
         window.addEventListener('keydown', playOnGesture);
       });
     }
+  }
+
+  public playSfx(trackName: string, volume: number = 0.6) {
+    if (this.isMuted) return;
+
+    const base = import.meta.env.BASE_URL || '/';
+    const prefix = base.endsWith('/') ? base : `${base}/`;
+    const trackUrl = `${prefix}${trackName}`;
+    if (this.unavailableSfxTracks.has(trackUrl)) return;
+
+    const sfx = new Audio(trackUrl);
+    sfx.loop = false;
+    sfx.volume = Math.max(0, Math.min(1, volume));
+    sfx.muted = this.isMuted;
+    sfx.play().catch(() => {
+      this.unavailableSfxTracks.add(trackUrl);
+    });
   }
 
   public stopBgm() {
