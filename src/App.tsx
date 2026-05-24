@@ -36,6 +36,19 @@ const GameContent: React.FC = () => {
   const { state } = useGame();
 
   React.useEffect(() => {
+    const handleGlobalButtonClick = (event: MouseEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (!target) return;
+      if (target.closest('button')) {
+        audioManager.playSfx('sfx_click.mp3', 0.35);
+      }
+    };
+
+    window.addEventListener('click', handleGlobalButtonClick, true);
+    return () => window.removeEventListener('click', handleGlobalButtonClick, true);
+  }, []);
+
+  React.useEffect(() => {
     if (state.logs.length === 0) {
       audioManager.playBgm('BGM_Title.mp3');
     } else if (state.activeScreen === 'main' || state.activeScreen === 'scheduler') {

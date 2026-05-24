@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useGame, ITEMS } from '../contexts/GameContext';
 import type { Item } from '../types';
 import { ShoppingCart, Coins, Heart, Shield, Brain, Sparkles, Trophy, HelpCircle, ArrowLeft } from 'lucide-react';
+import { audioManager } from '../utils/audio';
 
 const STAT_ICONS: Record<string, any> = {
   stamina: Heart,
@@ -38,6 +39,7 @@ export const StoreScreen: React.FC = () => {
     const res = buyItem(item.id);
     if (res.success) {
       setMessage({ text: res.message, isError: false });
+      audioManager.playSfx('sfx_coin.mp3', 0.55);
     } else {
       setMessage({ text: res.message, isError: true });
     }

@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState } from 'react';
 import type { Monster, PartyMember, Daughter } from '../types';
+import { audioManager } from '../utils/audio';
 
 export interface CombatState {
   isActive: boolean;
@@ -131,6 +132,9 @@ export const CombatProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     const monster = nextState.monster!;
     const logEntries: string[] = [];
     let damage = 0;
+    let shouldPlayHitSfx = false;
+    let shouldPlayCritSfx = false;
+    let shouldPlayHealSfx = false;
     
     // 獲取施法者資訊
     let actorObj: any;
@@ -227,6 +231,8 @@ export const CombatProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       // 暴擊判定
       const isCrit = Math.random() < critRate;
       damage = Math.max(5, Math.round(baseDmg * (isCrit ? 1.5 : 1) - monster.defense * 0.5));
+      shouldPlayHitSfx = true;
+      shouldPlayCritSfx = isCrit;
       
       // 連擊 Buff 判定
       if (actor === 'solo' && nextState.doubleAttackTurns > 0) {
@@ -264,6 +270,7 @@ export const CombatProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         logEntries.push(`🔥 ${actorObj.name} 消耗 10 MP 施展皇家斬擊！造成 ${damage} 點傷害！`);
       }
       nextState.monsterHp = Math.max(0, nextState.monsterHp - damage);
+      shouldPlayHitSfx = true;
     } 
     
     else if (action === 'skill_combo') {
@@ -307,6 +314,7 @@ export const CombatProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         logEntries.push(`✨ ${actorObj.name} 施展單人突刺連擊！對 ${monster.name} 造成 ${damage} 點傷害。`);
       }
       nextState.monsterHp = Math.max(0, nextState.monsterHp - damage);
+      shouldPlayHitSfx = true;
     }
 
     else if (action === 'skill_heal') {
@@ -332,6 +340,7 @@ export const CombatProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         } else {
           logEntries.push(`💚 yv 施展「聖光治癒」，回復 ${target.name} ${healAmt} 點生命值！`);
         }
+        shouldPlayHealSfx = true;
       }
     }
 
@@ -350,6 +359,7 @@ export const CombatProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         logEntries.push(`💥 yv 吟唱法術，噴射烈焰火球！對 ${monster.name} 造成 ${damage} 點魔法傷害！`);
       }
       nextState.monsterHp = Math.max(0, nextState.monsterHp - damage);
+      shouldPlayHitSfx = true;
     }
 
     else if (action === 'skill_taunt') {
@@ -384,6 +394,7 @@ export const CombatProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         logEntries.push(`🔨 jumbo 重擊地面，碎石橫飛！對 ${monster.name} 造成 ${damage} 點碎甲傷害！`);
       }
       nextState.monsterHp = Math.max(0, nextState.monsterHp - damage);
+      shouldPlayHitSfx = true;
     }
 
     else if (action === 'skill_ice_juice') {
@@ -398,6 +409,7 @@ export const CombatProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       nextState.frozenTurns = 2;
       logEntries.push(`❄️ ${actorObj.name} 施展主動大招【極凍檳榔汁】！對 ${monster.name} 造成 ${damage} 點冰霜傷害，並將其定身冰凍 2 回合！`);
       nextState.monsterHp = Math.max(0, nextState.monsterHp - damage);
+      shouldPlayHitSfx = true;
     }
 
     // --- 檳榔道具邏輯 ---
@@ -414,6 +426,7 @@ export const CombatProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     else if (action === 'item_binlang_normal') {
       actorObj.hp = Math.min(actorObj.maxHp, actorObj.hp + 40);
       logEntries.push(`💚 女兒嚼了【包葉檳榔】，回復 40 點生命值，並感到神清氣爽！`);
+      shouldPlayHealSfx = true;
     }
 
     else if (action === 'item_rice_cake') {
@@ -427,6 +440,7 @@ export const CombatProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       }
       const actualRecover = actorObj.hp - beforeHp;
       logEntries.push(`🍱 女兒在戰鬥中吃下【特級桶仔米糕】，回復 ${actualRecover} 點生命值，並進入飽腹狀態（防禦 +10）！`);
+      shouldPlayHealSfx = true;
     }
 
     // --- 檢查怪物死亡 ---
@@ -459,6 +473,14 @@ export const CombatProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     if (nextState.doubleAttackTurns > 0) nextState.doubleAttackTurns--;
 
     setCombatState({ ...nextState, combatLog: [...nextState.combatLog, ...logEntries] });
+    if (shouldPlayCritSfx) {
+      audioManager.playSfx('sfx_crit.mp3', 0.65);
+    } else if (shouldPlayHitSfx) {
+      audioManager.playSfx('sfx_hit.mp3', 0.55);
+    }
+    if (shouldPlayHealSfx) {
+      audioManager.playSfx('sfx_heal.mp3', 0.6);
+    }
   };
 
   const resolveEnemyTurn = (daughter: Daughter) => {
@@ -468,6 +490,7 @@ export const CombatProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     const nextState = { ...combatState };
     const monster = nextState.monster!;
     const logEntries: string[] = [];
+    let shouldPlayHitSfx = false;
     
     // 怪物隨機攻擊一個活著的隊員
     let targetKey: 'solo' | 'emilia' | 'yv' | 'jumbo' = 'solo';
@@ -524,6 +547,7 @@ export const CombatProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         
         const finalDmg = Math.max(3, monsterDmg - def);
         targetObj.hp = Math.max(0, targetObj.hp - finalDmg);
+        shouldPlayHitSfx = true;
         logEntries.push(`👿 ${monster.name} 發動反擊，對 ${targetObj.name} 造成了 ${finalDmg} 點傷害！`);
         
         let defDetail = `🛡️ 女兒防禦護甲發揮作用（基礎防禦減免: ${def - satiatedReduction} 點傷害）`;
@@ -539,12 +563,14 @@ export const CombatProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         logEntries.push(defDetail);
       } else {
         targetObj.hp = Math.max(0, targetObj.hp - monsterDmg);
+        shouldPlayHitSfx = true;
         logEntries.push(`👿 ${monster.name} 發動反擊，對 ${targetObj.name} 造成了 ${monsterDmg} 點傷害！`);
       }
 
       if (monster.behaviorPattern === 'aggressive' && targetObj.hp > 0 && Math.random() < 0.25) {
         const extraDmg = Math.max(2, Math.round(monster.attack * 0.35));
         targetObj.hp = Math.max(0, targetObj.hp - extraDmg);
+        shouldPlayHitSfx = true;
         logEntries.push(`💢 ${monster.name} 進入狂暴節奏，追加追擊造成 ${extraDmg} 點傷害！`);
       }
       
@@ -577,6 +603,9 @@ export const CombatProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
 
     setCombatState({ ...nextState, combatLog: [...nextState.combatLog, ...logEntries] });
+    if (shouldPlayHitSfx) {
+      audioManager.playSfx('sfx_hit.mp3', 0.5);
+    }
   };
 
   const failFleeAttempt = () => {
