@@ -1,6 +1,7 @@
 import React from 'react';
 import { useGame } from '../contexts/GameContext';
 import { Sparkles, MessageCircle } from 'lucide-react';
+import { audioManager } from '../utils/audio';
 
 export const AVGDialog: React.FC = () => {
   const { state, executeAVGChoice } = useGame();
@@ -14,11 +15,13 @@ export const AVGDialog: React.FC = () => {
   if (!currentNode) return null;
 
   const handleNext = () => {
+    audioManager.playSfx('sfx_click.mp3');
     // Calling executeAVGChoice(0) will handle nodes with no choices and close/advance
     executeAVGChoice(0);
   };
 
   const handleChoice = (index: number) => {
+    audioManager.playSfx('sfx_click.mp3');
     executeAVGChoice(index);
   };
 

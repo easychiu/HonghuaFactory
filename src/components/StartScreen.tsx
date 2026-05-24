@@ -2,8 +2,11 @@ import React, { useState } from 'react';
 import { useGame } from '../contexts/GameContext';
 import { EndingGallery } from './EndingGallery';
 import { AchievementPanel } from './AchievementPanel';
-import { Sparkles, Calendar, User, Shield, BookOpen, Coins, Music, Lock, Trophy } from 'lucide-react';
+import { ItemCodexPanel } from './ItemCodexPanel';
+import { HeritageShopPanel } from './HeritageShopPanel';
+import { Sparkles, Calendar, User, Shield, BookOpen, Coins, Music, Lock, Trophy, Book } from 'lucide-react';
 import type { CharacterId, FatherBackground } from '../types';
+import { audioManager } from '../utils/audio';
 
 type StartStep = 'prologue' | 'father' | 'daughter';
 
@@ -14,6 +17,8 @@ export const StartScreen: React.FC = () => {
   const [name, setName] = useState('');
   const [showGallery, setShowGallery] = useState(false);
   const [showAchievements, setShowAchievements] = useState(false);
+  const [showCodex, setShowCodex] = useState(false);
+  const [showHeritageShop, setShowHeritageShop] = useState(false);
   const [birthMonth, setBirthMonth] = useState(5);
   const [birthDay, setBirthDay] = useState(20);
   const [selectedChar, setSelectedChar] = useState<CharacterId>('honghua');
@@ -32,6 +37,7 @@ export const StartScreen: React.FC = () => {
   const handleCharSelect = (charId: CharacterId) => {
     if (isFirstPlaythrough && charId !== 'honghua') return;
     if (!unlockedCharacters.includes(charId)) return;
+    audioManager.playSfx('sfx_click.mp3');
     setSelectedChar(charId);
     if (charId === 'honghua') setName('紅花');
     else if (charId === 'erica') setName('艾莉卡');
@@ -40,6 +46,7 @@ export const StartScreen: React.FC = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    audioManager.playSfx('sfx_click.mp3');
     const finalCharacterId: CharacterId = isFirstPlaythrough ? 'honghua' : selectedChar;
     const finalName = name || (finalCharacterId === 'honghua' ? '紅花' : finalCharacterId === 'erica' ? '艾莉卡' : '艾蜜莉亞');
     initGame(finalName, birthMonth, birthDay, finalCharacterId, selectedFather);
@@ -52,12 +59,15 @@ export const StartScreen: React.FC = () => {
         {/* Game Title & Top Buttons Bar */}
         <div className="flex flex-col items-center justify-center gap-4 mb-8 pb-6 border-b border-slate-900/60 relative">
           <div className="flex flex-col md:flex-row items-center justify-between w-full gap-4">
-            {/* Left Button Group (Gallery & Achievements) */}
+            {/* Left Button Group (Gallery & Achievements & Codex & HeritageShop) */}
             <div className="flex flex-wrap items-center justify-center gap-2 order-2 md:order-1">
               {completedEndings.length > 0 && (
                 <button
                   type="button"
-                  onClick={() => setShowGallery(true)}
+                  onClick={() => {
+                    audioManager.playSfx('sfx_click.mp3');
+                    setShowGallery(true);
+                  }}
                   className="text-[10px] text-[#ffd700] hover:text-[#ffe566] border border-[#d4af37]/30 hover:border-[#ffd700]/50 bg-[#d4af37]/5 hover:bg-[#d4af37]/10 px-2.5 py-1.5 rounded transition-all flex items-center gap-1.5 uppercase font-semibold"
                 >
                   <Trophy size={12} /> 結局圖鑑 ({completedEndings.length})
@@ -66,10 +76,35 @@ export const StartScreen: React.FC = () => {
 
               <button
                 type="button"
-                onClick={() => setShowAchievements(true)}
+                onClick={() => {
+                  audioManager.playSfx('sfx_click.mp3');
+                  setShowAchievements(true);
+                }}
                 className="text-[10px] text-purple-400 hover:text-purple-300 border border-purple-500/30 hover:border-purple-400/50 bg-purple-500/5 hover:bg-purple-500/10 px-2.5 py-1.5 rounded transition-all flex items-center gap-1.5 uppercase font-semibold"
               >
                 <Trophy size={12} /> 榮譽成就 ({state.unlockedAchievements?.length || 0})
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  audioManager.playSfx('sfx_click.mp3');
+                  setShowCodex(true);
+                }}
+                className="text-[10px] text-blue-400 hover:text-blue-300 border border-blue-500/30 hover:border-blue-400/50 bg-blue-500/5 hover:bg-blue-500/10 px-2.5 py-1.5 rounded transition-all flex items-center gap-1.5 uppercase font-semibold"
+              >
+                <Book size={12} /> 道具百科 ({state.unlockedItems?.length || 0}/16)
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  audioManager.playSfx('sfx_click.mp3');
+                  setShowHeritageShop(true);
+                }}
+                className="text-[10px] text-teal-400 hover:text-teal-300 border border-teal-500/30 hover:border-teal-400/50 bg-teal-500/5 hover:bg-teal-500/10 px-2.5 py-1.5 rounded transition-all flex items-center gap-1.5 uppercase font-semibold"
+              >
+                <Sparkles size={12} /> 星塵商店 ({state.stardust || 0} 🔮)
               </button>
             </div>
 
@@ -88,6 +123,7 @@ export const StartScreen: React.FC = () => {
               <button
                 type="button"
                 onClick={() => {
+                  audioManager.playSfx('sfx_click.mp3');
                   unlockAllProtagonists();
                   alert('已解鎖全部王女！現在可以點選艾莉卡或艾蜜莉亞進行遊戲！');
                 }}
@@ -125,7 +161,10 @@ export const StartScreen: React.FC = () => {
               <div className="pt-2 text-center">
                 <button
                   type="button"
-                  onClick={() => setStep('father')}
+                  onClick={() => {
+                    audioManager.playSfx('sfx_click.mp3');
+                    setStep('father');
+                  }}
                   className="w-full max-w-sm btn-fantasy py-4 text-base font-bold flex items-center justify-center gap-2 shadow-lg mx-auto"
                 >
                   <Shield size={20} /> 下一步：選擇父親身份
@@ -143,7 +182,10 @@ export const StartScreen: React.FC = () => {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <div
-                  onClick={() => setSelectedFather('knight')}
+                  onClick={() => {
+                    audioManager.playSfx('sfx_click.mp3');
+                    setSelectedFather('knight');
+                  }}
                   className={`p-4 rounded-xl border text-left cursor-pointer transition-all flex flex-col justify-between ${
                     selectedFather === 'knight'
                       ? 'bg-[rgba(212,175,55,0.06)] border-[#ffd700] shadow-[0_0_12px_rgba(212,175,55,0.08)]'
@@ -153,7 +195,7 @@ export const StartScreen: React.FC = () => {
                   <div>
                     <div className="flex justify-between items-center mb-2">
                       <h3 className="font-bold text-sm text-white flex items-center gap-1">
-                        <Shield size={14} className="text-slate-300" /> 失落的騎士
+                        <Shield size={14} className="text-slate-300" /> 🛡️ 失落的騎士
                       </h3>
                       <span className="text-[9px] text-slate-400">小康開局</span>
                     </div>
@@ -167,7 +209,10 @@ export const StartScreen: React.FC = () => {
                 </div>
 
                 <div
-                  onClick={() => setSelectedFather('scholar')}
+                  onClick={() => {
+                    audioManager.playSfx('sfx_click.mp3');
+                    setSelectedFather('scholar');
+                  }}
                   className={`p-4 rounded-xl border text-left cursor-pointer transition-all flex flex-col justify-between ${
                     selectedFather === 'scholar'
                       ? 'bg-[rgba(212,175,55,0.06)] border-[#ffd700] shadow-[0_0_12px_rgba(212,175,55,0.08)]'
@@ -191,7 +236,10 @@ export const StartScreen: React.FC = () => {
                 </div>
 
                 <div
-                  onClick={() => setSelectedFather('merchant')}
+                  onClick={() => {
+                    audioManager.playSfx('sfx_click.mp3');
+                    setSelectedFather('merchant');
+                  }}
                   className={`p-4 rounded-xl border text-left cursor-pointer transition-all flex flex-col justify-between ${
                     selectedFather === 'merchant'
                       ? 'bg-[rgba(212,175,55,0.06)] border-[#ffd700] shadow-[0_0_12px_rgba(212,175,55,0.08)]'
@@ -215,7 +263,10 @@ export const StartScreen: React.FC = () => {
                 </div>
 
                 <div
-                  onClick={() => setSelectedFather('bard')}
+                  onClick={() => {
+                    audioManager.playSfx('sfx_click.mp3');
+                    setSelectedFather('bard');
+                  }}
                   className={`p-4 rounded-xl border text-left cursor-pointer transition-all flex flex-col justify-between ${
                     selectedFather === 'bard'
                       ? 'bg-[rgba(212,175,55,0.06)] border-[#ffd700] shadow-[0_0_12px_rgba(212,175,55,0.08)]'
@@ -242,14 +293,20 @@ export const StartScreen: React.FC = () => {
               <div className="pt-2 flex flex-col sm:flex-row gap-3 justify-center">
                 <button
                   type="button"
-                  onClick={() => setStep('prologue')}
+                  onClick={() => {
+                    audioManager.playSfx('sfx_click.mp3');
+                    setStep('prologue');
+                  }}
                   className="w-full sm:w-auto btn-fantasy-sec text-sm px-6 py-3"
                 >
                   返回序章
                 </button>
                 <button
                   type="button"
-                  onClick={() => setStep('daughter')}
+                  onClick={() => {
+                    audioManager.playSfx('sfx_click.mp3');
+                    setStep('daughter');
+                  }}
                   className="w-full sm:w-auto btn-fantasy text-sm px-6 py-3"
                 >
                   下一步：選擇女兒
@@ -414,7 +471,10 @@ export const StartScreen: React.FC = () => {
               <div className="pt-4 flex flex-col sm:flex-row gap-3 justify-center">
                 <button
                   type="button"
-                  onClick={() => setStep('father')}
+                  onClick={() => {
+                    audioManager.playSfx('sfx_click.mp3');
+                    setStep('father');
+                  }}
                   className="w-full sm:w-auto btn-fantasy-sec text-sm px-6 py-3"
                 >
                   返回父親選擇
@@ -433,6 +493,8 @@ export const StartScreen: React.FC = () => {
 
       {showGallery && <EndingGallery onClose={() => setShowGallery(false)} />}
       {showAchievements && <AchievementPanel onClose={() => setShowAchievements(false)} />}
+      {showCodex && <ItemCodexPanel onClose={() => setShowCodex(false)} />}
+      {showHeritageShop && <HeritageShopPanel onClose={() => setShowHeritageShop(false)} />}
     </div>
   );
 };

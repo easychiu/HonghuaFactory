@@ -100,6 +100,42 @@ export const AdventureMap: React.FC = () => {
   // Filter for Emilia's Coffee Hair
   const emiliaFilterStyle = daughter.characterId === 'emilia' ? { filter: 'hue-rotate(330deg) saturate(0.8) sepia(0.5)' } : {};
 
+  const getMonsterImagePath = (monsterName: string) => {
+    if (monsterName.includes('史萊姆')) return `${prefix}monsters/slime.png`;
+    if (monsterName.includes('幽靈')) return `${prefix}monsters/ghost.png`;
+    if (monsterName.includes('巨蛛') || monsterName.includes('蜘蛛')) return `${prefix}monsters/spider.png`;
+    if (monsterName.includes('掠食獸')) return `${prefix}monsters/default_monster.png`;
+    if (monsterName.includes('保鏢') || monsterName.includes('刀手') || monsterName.includes('突擊隊')) return `${prefix}monsters/soldier.png`;
+    if (monsterName.includes('巡邏兵') || monsterName.includes('少校') || monsterName.includes('傑克斯') || monsterName.includes('兵')) return `${prefix}monsters/jaks.png`;
+    if (monsterName.includes('魔像')) return `${prefix}monsters/golem.png`;
+    if (monsterName.includes('學徒') || monsterName.includes('咒')) return `${prefix}monsters/default_monster.png`;
+    if (monsterName.includes('親衛') || monsterName.includes('禁衛')) return `${prefix}monsters/soldier.png`;
+    
+    // 姊妹 Boss
+    if (monsterName.includes('艾莉卡')) return `${prefix}sprites/daughter_16_dress.png`;
+    if (monsterName.includes('艾蜜莉亞')) return `${prefix}sprites/daughter_16_summer.png`;
+    if (monsterName.includes('紅花')) return `${prefix}sprites/daughter_16_default.png`;
+    
+    return `${prefix}monsters/default_monster.png`;
+  };
+
+  const getBattleBgStyle = () => {
+    if (!adventure) return {};
+    let bgImg = '';
+    if (adventure.areaId === 'betel_forest') bgImg = 'bg_battle_forest.jpg';
+    else if (adventure.areaId === 'naval_border') bgImg = 'bg_battle_naval.jpg';
+    else if (adventure.areaId === 'royal_ruins') bgImg = 'bg_battle_ruins.jpg';
+
+    if (bgImg) {
+      return {
+        backgroundImage: `linear-gradient(rgba(9, 21, 55, 0.65), rgba(6, 14, 40, 0.82)), url("${prefix}${bgImg}")`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+      };
+    }
+    return {};
+  };
+
   // Handlers for victory / defeat
   const handleVictoryConfirm = () => {
     if (combatState.isReunionTriggered && combatState.reunitedSisterId) {
@@ -394,7 +430,10 @@ export const AdventureMap: React.FC = () => {
           <div className="lg:col-span-2 flex flex-col gap-6">
             
             {/* Arena board: Monster vs Party */}
-            <div className="glass-panel p-3 sm:p-6 flex flex-col md:flex-row items-center justify-around gap-4 sm:gap-6 bg-slate-950/20 border-2 border-[#d4af37]/35 min-h-[240px] sm:min-h-[300px] relative overflow-hidden dq-battle-stage">
+            <div 
+              style={getBattleBgStyle()}
+              className="glass-panel p-3 sm:p-6 flex flex-col md:flex-row items-center justify-around gap-4 sm:gap-6 bg-slate-950/20 border-2 border-[#d4af37]/35 min-h-[240px] sm:min-h-[300px] relative overflow-hidden dq-battle-stage"
+            >
               <div className="absolute inset-0 bg-radial-gradient opacity-10 pointer-events-none dq-battle-stage-glow" />
               
               {/* Team Party Members */}
@@ -412,7 +451,13 @@ export const AdventureMap: React.FC = () => {
                         style={emiliaFilterStyle}
                       />
                       <div className="flex-1 text-xs">
-                        <div className="font-bold text-white mb-1">{combatState.party.solo.name}</div>
+                        <div className="font-bold text-white mb-1 flex items-center gap-1.5 flex-wrap">
+                          {combatState.party.solo.name}
+                          {combatState.playerPoisonTurns.solo > 0 && <span className="text-[9px] bg-emerald-950/60 text-emerald-300 border border-emerald-600/30 px-1 rounded animate-pulse">🧪毒({combatState.playerPoisonTurns.solo})</span>}
+                          {combatState.playerBurnTurns.solo > 0 && <span className="text-[9px] bg-red-950/60 text-red-300 border border-red-600/30 px-1 rounded animate-pulse">🔥燒({combatState.playerBurnTurns.solo})</span>}
+                          {combatState.playerSilenceTurns.solo > 0 && <span className="text-[9px] bg-slate-900/60 text-slate-300 border border-slate-600/30 px-1 rounded animate-pulse">🔇默({combatState.playerSilenceTurns.solo})</span>}
+                          {combatState.playerStunTurns.solo > 0 && <span className="text-[9px] bg-purple-950/60 text-purple-300 border border-purple-600/30 px-1 rounded animate-pulse">🌀暈({combatState.playerStunTurns.solo})</span>}
+                        </div>
                         <div className="flex flex-col gap-1">
                           {/* HP Bar */}
                           <div className="flex justify-between text-[9px] text-slate-400">
@@ -454,7 +499,13 @@ export const AdventureMap: React.FC = () => {
                             style={emiliaFilterStyle}
                           />
                           <div className="flex-1 text-xs">
-                            <div className="font-bold text-white mb-1">{combatState.party.emilia.name} (王女)</div>
+                            <div className="font-bold text-white mb-1 flex items-center gap-1.5 flex-wrap">
+                              {combatState.party.emilia.name} (王女)
+                              {combatState.playerPoisonTurns.emilia > 0 && <span className="text-[9px] bg-emerald-950/60 text-emerald-300 border border-emerald-600/30 px-1 rounded animate-pulse">🧪毒({combatState.playerPoisonTurns.emilia})</span>}
+                              {combatState.playerBurnTurns.emilia > 0 && <span className="text-[9px] bg-red-950/60 text-red-300 border border-red-600/30 px-1 rounded animate-pulse">🔥燒({combatState.playerBurnTurns.emilia})</span>}
+                              {combatState.playerSilenceTurns.emilia > 0 && <span className="text-[9px] bg-slate-900/60 text-slate-300 border border-slate-600/30 px-1 rounded animate-pulse">🔇默({combatState.playerSilenceTurns.emilia})</span>}
+                              {combatState.playerStunTurns.emilia > 0 && <span className="text-[9px] bg-purple-950/60 text-purple-300 border border-purple-600/30 px-1 rounded animate-pulse">🌀暈({combatState.playerStunTurns.emilia})</span>}
+                            </div>
                             <div className="flex flex-col gap-1">
                               <div className="flex justify-between text-[9px]">
                                 <span>HP</span>
@@ -490,7 +541,13 @@ export const AdventureMap: React.FC = () => {
                             className="w-12 h-12 rounded-full border border-slate-700 bg-slate-950 object-cover"
                           />
                           <div className="flex-1 text-xs">
-                            <div className="font-bold text-white mb-1">{combatState.party.yv.name} (賢者)</div>
+                            <div className="font-bold text-white mb-1 flex items-center gap-1.5 flex-wrap">
+                              {combatState.party.yv.name} (賢者)
+                              {combatState.playerPoisonTurns.yv > 0 && <span className="text-[9px] bg-emerald-950/60 text-emerald-300 border border-emerald-600/30 px-1 rounded animate-pulse">🧪毒({combatState.playerPoisonTurns.yv})</span>}
+                              {combatState.playerBurnTurns.yv > 0 && <span className="text-[9px] bg-red-950/60 text-red-300 border border-red-600/30 px-1 rounded animate-pulse">🔥燒({combatState.playerBurnTurns.yv})</span>}
+                              {combatState.playerSilenceTurns.yv > 0 && <span className="text-[9px] bg-slate-900/60 text-slate-300 border border-slate-600/30 px-1 rounded animate-pulse">🔇默({combatState.playerSilenceTurns.yv})</span>}
+                              {combatState.playerStunTurns.yv > 0 && <span className="text-[9px] bg-purple-950/60 text-purple-300 border border-purple-600/30 px-1 rounded animate-pulse">🌀暈({combatState.playerStunTurns.yv})</span>}
+                            </div>
                             <div className="flex flex-col gap-1">
                               <div className="flex justify-between text-[9px]">
                                 <span>HP</span>
@@ -526,9 +583,13 @@ export const AdventureMap: React.FC = () => {
                             className="w-12 h-12 rounded-full border border-slate-700 bg-slate-950 object-cover"
                           />
                           <div className="flex-1 text-xs">
-                            <div className="font-bold text-white mb-1">
+                            <div className="font-bold text-white mb-1 flex items-center gap-1.5 flex-wrap">
                               {combatState.party.jumbo.name} (守護者)
-                              {combatState.jumboTauntTurns > 0 && <span className="text-yellow-500 ml-1">🛡️ 嘲諷</span>}
+                              {combatState.jumboTauntTurns > 0 && <span className="text-yellow-500">🛡️ 嘲諷</span>}
+                              {combatState.playerPoisonTurns.jumbo > 0 && <span className="text-[9px] bg-emerald-950/60 text-emerald-300 border border-emerald-600/30 px-1 rounded animate-pulse">🧪毒({combatState.playerPoisonTurns.jumbo})</span>}
+                              {combatState.playerBurnTurns.jumbo > 0 && <span className="text-[9px] bg-red-950/60 text-red-300 border border-red-600/30 px-1 rounded animate-pulse">🔥燒({combatState.playerBurnTurns.jumbo})</span>}
+                              {combatState.playerSilenceTurns.jumbo > 0 && <span className="text-[9px] bg-slate-900/60 text-slate-300 border border-slate-600/30 px-1 rounded animate-pulse">🔇默({combatState.playerSilenceTurns.jumbo})</span>}
+                              {combatState.playerStunTurns.jumbo > 0 && <span className="text-[9px] bg-purple-950/60 text-purple-300 border border-purple-600/30 px-1 rounded animate-pulse">🌀暈({combatState.playerStunTurns.jumbo})</span>}
                             </div>
                             <div className="flex flex-col gap-1">
                               <div className="flex justify-between text-[9px]">
@@ -570,9 +631,25 @@ export const AdventureMap: React.FC = () => {
                     ❄️ 冰凍 ({combatState.frozenTurns})
                   </div>
                 )}
-                <div className="text-4xl dq-enemy-sprite">😈</div>
+                <div className="w-24 h-24 flex items-center justify-center relative dq-enemy-sprite-container">
+                  <img 
+                    src={getMonsterImagePath(combatState.monster.name)} 
+                    alt={combatState.monster.name}
+                    className="max-w-full max-h-full object-contain dq-enemy-sprite"
+                    style={combatState.monster.name.includes('艾蜜莉亞') ? emiliaFilterStyle : undefined}
+                    onError={(e) => {
+                      (e.target as HTMLElement).style.display = 'none';
+                    }}
+                  />
+                </div>
                 <div>
-                  <h3 className="text-sm font-bold text-white">{combatState.monster.name}</h3>
+                  <h3 className="text-sm font-bold text-white flex items-center justify-center gap-1.5 flex-wrap">
+                    {combatState.monster.name}
+                    {combatState.monsterPoisonTurns > 0 && <span className="text-[10px] bg-emerald-950/60 text-emerald-300 border border-emerald-600/30 px-1 py-0.2 rounded font-semibold animate-pulse">🧪毒({combatState.monsterPoisonTurns})</span>}
+                    {combatState.monsterBurnTurns > 0 && <span className="text-[10px] bg-red-950/60 text-red-300 border border-red-600/30 px-1 py-0.2 rounded font-semibold animate-pulse">🔥燒({combatState.monsterBurnTurns})</span>}
+                    {combatState.monsterSilenceTurns > 0 && <span className="text-[10px] bg-slate-900/60 text-slate-300 border border-slate-600/30 px-1 py-0.2 rounded font-semibold animate-pulse">🔇默({combatState.monsterSilenceTurns})</span>}
+                    {combatState.monsterStunTurns > 0 && <span className="text-[10px] bg-purple-950/60 text-purple-300 border border-purple-600/30 px-1 py-0.2 rounded font-semibold animate-pulse">🌀暈({combatState.monsterStunTurns})</span>}
+                  </h3>
                   <div className="flex justify-center gap-3 text-[10px] text-slate-400 mt-1">
                     <span>⚔️ 攻 {combatState.monster.attack}</span>
                     <span>🛡️ 防 {combatState.monster.defense}</span>

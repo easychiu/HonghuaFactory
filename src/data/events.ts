@@ -1068,5 +1068,277 @@ export const AVG_EVENTS: Record<string, AVGEvent> = {
         nextId: undefined
       }
     }
+  },
+  letter_clover_1: {
+    id: 'letter_clover_1',
+    title: '四葉草的問候信（劍術修行）',
+    startNodeId: 'start',
+    nodes: {
+      start: {
+        speaker: '同窗好友 四葉草',
+        text: '親愛的紅花，最近訓練還順利嗎？我最近在荖葉林的外圍發現了一處非常適合練劍的開闊地。你有空的話，要不要一起來切磋切磋？',
+        choices: [
+          {
+            text: '✉️ 溫馨回信：好呀！我們一起加油，共同進步！',
+            effect: () => ({
+              log: '回信給四葉草，表達了溫馨的支持與共同奮鬥的決心。',
+              rewards: { cloverBond: 15, strength: 5 }
+            })
+          },
+          {
+            text: '✉️ 開玩笑回信：到時候被我打哭可別賴皮哦！',
+            effect: () => ({
+              log: '俏皮地回覆四葉草，兩人在信中開起玩笑。',
+              rewards: { cloverBond: 20 }
+            })
+          },
+          {
+            text: '✉️ 嚴肅回信：練劍不容懈怠，明天早上五點見。',
+            effect: () => ({
+              log: '嚴肅回覆四葉草，兩人約定了嚴格的訓練時間。',
+              rewards: { combatSkill: 8, stress: -10 }
+            })
+          }
+        ]
+      }
+    }
+  },
+  letter_shanshan_1: {
+    id: 'letter_shanshan_1',
+    title: '珊珊的讀書交流信（歷史典籍）',
+    startNodeId: 'start',
+    nodes: {
+      start: {
+        speaker: '同窗好友 珊珊',
+        text: '展信佳。皇家圖書館最近進了一批關於王國古歷史的文獻典籍，裡面記載了許多未曾公開的傳說。我想你或許會感興趣，需要我幫你借閱幾本嗎？',
+        choices: [
+          {
+            text: '✉️ 溫馨回信：太好了！謝謝珊珊，能跟你一起讀書最開心了！',
+            effect: () => ({
+              log: '溫馨回信給珊珊，感謝她的體貼與分享。',
+              rewards: { shanshanBond: 15, intelligence: 5 }
+            })
+          },
+          {
+            text: '✉️ 開玩笑回信：哇，歷史書聽起來就是最好的催眠藥，不過看在你的份上我會看的！',
+            effect: () => ({
+              log: '幽默地回覆珊珊，兩人分享了關於課業的玩笑。',
+              rewards: { shanshanBond: 20 }
+            })
+          },
+          {
+            text: '✉️ 嚴肅回信：這些史料或許藏有王國興衰的真相，請務必幫我借閱。',
+            effect: () => ({
+              log: '認真回信給珊珊，著眼於歷史研究與真相探尋。',
+              rewards: { elegance: 8, stress: -10 }
+            })
+          }
+        ]
+      }
+    }
+  },
+  letter_xuewu_1: {
+    id: 'letter_xuewu_1',
+    title: '雪舞的魔法信箋（星象變幻）',
+    startNodeId: 'start',
+    nodes: {
+      start: {
+        speaker: '同窗好友 雪舞',
+        text: '（這封信紙上散發著淡淡的藍色熒光）最近荖葉林深處的奧術元素有些異常活躍，星象也顯示出奇異的軌跡。你最近在使用法術時，有感覺到特別的共鳴嗎？',
+        choices: [
+          {
+            text: '✉️ 溫馨回信：有的！感覺魔法粒子都變溫暖了，謝謝雪舞提醒我注意安全！',
+            effect: () => ({
+              log: '溫馨回信給雪舞，關心並討論魔法感知。',
+              rewards: { magicSkill: 5, xuewuBond: 15 }
+            })
+          },
+          {
+            text: '✉️ 開玩笑回信：共鳴？我只感覺到冥想時差點睡著，還差點把頭髮給燒了！',
+            effect: () => ({
+              log: '以自嘲幽默回覆雪舞，讓氣氛變得輕鬆。',
+              rewards: { xuewuBond: 20 }
+            })
+          },
+          {
+            text: '✉️ 嚴肅回信：自然元素在警告著不尋常的變革，我們必須保持警惕。',
+            effect: () => ({
+              log: '嚴肅回覆雪舞，深思奧術元素的異動背後含義。',
+              rewards: { sensitivity: 8, stress: -10 }
+            })
+          }
+        ]
+      }
+    }
+  },
+  letter_father_1: {
+    id: 'letter_father_1',
+    title: '老爸的關懷信（家書抵萬金）',
+    startNodeId: 'start',
+    nodes: {
+      start: {
+        speaker: '最親愛的老爸',
+        text: '我的寶貝女兒，老爸最近工作有些忙，沒能每天陪你說話。一個人在房間裡要好好吃飯，不要太勉強自己。如果有什麼想要的，隨時跟爸爸說。',
+        choices: [
+          {
+            text: '✉️ 溫馨回信：老爸也要注意身體，別太累了！我會乖乖聽話的。',
+            effect: () => ({
+              log: '寫了封溫馨感人的回信給老爸，表達體貼。',
+              rewards: { relationship: 15, morality: 5 }
+            })
+          },
+          {
+            text: '✉️ 開玩笑回信：老爸！那我可以多要一點零用錢去買蛋糕嗎？嘿嘿～',
+            effect: () => ({
+              log: '俏皮地向老爸討要零用錢，展現女兒的淘氣與親密。',
+              rewards: { relationship: 10, stress: -15 }
+            })
+          },
+          {
+            text: '✉️ 嚴肅回信：請父親放心，我每天都在按計劃修行，絕不荒廢光陰。',
+            effect: () => ({
+              log: '認真堅定地回覆父親，展示修行進度與決心。',
+              rewards: { piety: 8, elegance: 5 }
+            })
+          }
+        ]
+      }
+    }
+  },
+  letter_clover_2: {
+    id: 'letter_clover_2',
+    title: '四葉草的二度來信（遠征的挑戰）',
+    startNodeId: 'start',
+    nodes: {
+      start: {
+        speaker: '同窗好友 四葉草',
+        text: '紅花，聽說你最近去了更危險的邊境修行？我也好想去！據說那裡的魔物非常強悍。等我們下次見面，一定要比試一下誰砍倒的魔獸更多！',
+        choices: [
+          {
+            text: '✉️ 溫馨回信：好呀，但你一定要注意安全，受傷的話我會擔心的。',
+            effect: () => ({
+              log: '溫情提醒四葉草注意安全，加深了彼此的情誼。',
+              rewards: { cloverBond: 15, strength: 5 }
+            })
+          },
+          {
+            text: '✉️ 開玩笑回信：哈哈！你肯定輸定了，到時候輸的人要請吃一整年的米糕！',
+            effect: () => ({
+              log: '豪爽地答應了比試，並開下賭注。',
+              rewards: { cloverBond: 20 }
+            })
+          },
+          {
+            text: '✉️ 嚴肅回信：邊境形勢複雜，戰力需要嚴格評估，切不可意氣用事。',
+            effect: () => ({
+              log: '理智冷靜地分析邊境戰況，提醒四葉草謹慎行事。',
+              rewards: { combatSkill: 8, stress: -10 }
+            })
+          }
+        ]
+      }
+    }
+  },
+  letter_shanshan_2: {
+    id: 'letter_shanshan_2',
+    title: '珊珊的再次問候（宮廷八卦與典章）',
+    startNodeId: 'start',
+    nodes: {
+      start: {
+        speaker: '同窗好友 珊珊',
+        text: '最近王都的貴族社交界有些流言蜚語，聽說王室在暗中尋找多年前遺落的公主。我覺得這個傳說跟我們所學的古代法典有些關聯……你怎麼看呢？',
+        choices: [
+          {
+            text: '✉️ 溫馨回信：珊珊總是懂得這麼多！有你在身邊，我感覺非常有安全感。',
+            effect: () => ({
+              log: '誠摯回信給珊珊，認同並珍惜對方的學識與陪伴。',
+              rewards: { shanshanBond: 15, intelligence: 5 }
+            })
+          },
+          {
+            text: '✉️ 開玩笑回信：公主？說不定我就是那個遺落的公主呢！哈哈，開玩笑的啦。',
+            effect: () => ({
+              log: '用開玩笑的口吻提到了公主傳說，增添了親切互動。',
+              rewards: { shanshanBond: 20 }
+            })
+          },
+          {
+            text: '✉️ 嚴肅回信：王室正統不容褻瀆，若流言屬實，天下大局將面臨巨變。',
+            effect: () => ({
+              log: '深感事態嚴重，嚴肅探討政治局勢。',
+              rewards: { elegance: 8, stress: -10 }
+            })
+          }
+        ]
+      }
+    }
+  },
+  letter_xuewu_2: {
+    id: 'letter_xuewu_2',
+    title: '雪舞的深夜魔法信（星海之秘）',
+    startNodeId: 'start',
+    nodes: {
+      start: {
+        speaker: '同窗好友 雪舞',
+        text: '（深夜中信紙飄出一束藍色的幽光）我在高塔頂端觀測星空時，看見了你命星旁圍繞著兩顆暗淡的伴星。她們似乎正在呼喚你。這可能預示著血脈的指引……',
+        choices: [
+          {
+            text: '✉️ 溫馨回信：伴星嗎？希望她們也是溫暖的存在。謝謝雪舞為我觀星。',
+            effect: () => ({
+              log: '溫馨感謝雪舞的觀星預警，心中泛起對血脈的渴望。',
+              rewards: { magicSkill: 5, xuewuBond: 15 }
+            })
+          },
+          {
+            text: '✉️ 開玩笑回信：兩顆伴星？會不會是代表我今天晚上會吃掉兩塊大蛋糕？',
+            effect: () => ({
+              log: '用幽默化解神秘預言，展現樂天的一面。',
+              rewards: { xuewuBond: 20 }
+            })
+          },
+          {
+            text: '✉️ 嚴肅回信：命運的星軌已然顯現，我必會順應指引，尋回真相。',
+            effect: () => ({
+              log: '堅定地面對星軌預示，展示了復國或尋親的嚴肅決心。',
+              rewards: { sensitivity: 8, stress: -10 }
+            })
+          }
+        ]
+      }
+    }
+  },
+  letter_father_2: {
+    id: 'letter_father_2',
+    title: '老爸的期許信（歲月如梭）',
+    startNodeId: 'start',
+    nodes: {
+      start: {
+        speaker: '最親愛的老爸',
+        text: '我的好女兒，轉眼間你已經長得這麼大了。看著你每天努力的身影，老爸既感到高興，又有些心疼。無論你將來選擇怎樣的道路，老爸都會是你最強的後盾。',
+        choices: [
+          {
+            text: '✉️ 溫馨回信：老爸是我最敬愛的人，我會一直陪著您的！',
+            effect: () => ({
+              log: '深情回覆父親，感謝多年的教養與守護之恩。',
+              rewards: { relationship: 15, morality: 5 }
+            })
+          },
+          {
+            text: '✉️ 開玩笑回信：老爸！那以後等我成了大人物，就換我來養你，讓你天天喝好酒！',
+            effect: () => ({
+              log: '俏皮地向父親許下承諾，讓父親感到無比欣慰。',
+              rewards: { relationship: 10, stress: -15 }
+            })
+          },
+          {
+            text: '✉️ 嚴肅回信：父親的囑託我時刻銘記，我必將全力以赴，不負所望。',
+            effect: () => ({
+              log: '嚴肅認真地向父親立誓，表達培育大成的決心。',
+              rewards: { piety: 8, elegance: 5 }
+            })
+          }
+        ]
+      }
+    }
   }
 };
