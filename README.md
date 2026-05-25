@@ -55,7 +55,7 @@ Princess Maker 風格的奇幻養成 + RPG 網頁模擬遊戲
 - **資料驅動**：`src/data/` 集中管理活動、事件、裝備、結局等
 - **部署**：GitHub Pages（已設定正確 base path）
 
-## 專案結構
+text## 專案結構
 HonghuaFactory/
 ├── public/                  # 場景圖片、BGM、靜態資源
 ├── src/
@@ -73,6 +73,7 @@ HonghuaFactory/
 ├── NewStory / StoryEnh1     # 劇情規劃文件
 ├── package.json
 └── vite.config.ts
+
 text## 快速開始
 
 ```bash
