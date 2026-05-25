@@ -2721,15 +2721,23 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
       } else if (targetNode.name.includes('少校')) {
         evKey = 'jaks_patrol';
       } else {
-        // 一般隨機事件節點
+        // 尋找：一般隨機事件節點
         const isHonghua = state.daughter.characterId === 'honghua';
+        const isEmilia = state.daughter.characterId === 'emilia';
         const hasBinlang = state.inventory.some(item => item.startsWith('binlang_'));
+
         if (isHonghua && hasBinlang && Math.random() < 0.5) {
           evKey = 'temple_event';
         } else {
           const sum = nodeId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-          const choices = ['noble_crest', 'mist_forest', 'tactics_test'];
-          evKey = choices[sum % 3];
+          
+          // ─── 核心修正：依據主角身分動態過濾事件池 ───
+          const choices = ['noble_crest', 'mist_forest'];
+          if (isEmilia) {
+            choices.push('tactics_test'); // 只有艾蜜莉亞可以觸發青梅竹馬巨石事件
+          }
+          
+          evKey = choices[sum % choices.length];
         }
       }
       

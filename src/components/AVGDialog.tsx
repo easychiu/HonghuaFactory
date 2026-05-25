@@ -45,23 +45,12 @@ export const AVGDialog: React.FC = () => {
   const base = import.meta.env.BASE_URL || '/';
   const prefix = base.endsWith('/') ? base : `${base}/`;
   const bgImg = getEventBackgroundImage();
-  const bgVideo = currentEvent.id === 'prologue' ? '01. 序章：蔚藍崩裂之夜.mp4' : null;
 
   return (
     <div className="fixed inset-0 bg-black/75 backdrop-blur-[2px] flex items-center justify-center z-50 p-4 animate-fade-in overflow-hidden">
-      {/* Background Video */}
-      {bgVideo && (
-        <video 
-          src={`${prefix}${bgVideo}`} 
-          autoPlay 
-          muted 
-          loop 
-          className="absolute inset-0 w-full h-full object-cover opacity-50 z-0 pointer-events-none"
-        />
-      )}
       
       {/* Background Image */}
-      {!bgVideo && bgImg && (
+      { bgImg && (
         <img 
           src={`${prefix}${bgImg}`} 
           alt="Event background" 
@@ -70,7 +59,7 @@ export const AVGDialog: React.FC = () => {
       )}
       
       {/* Dark gradient overlay */}
-      {(bgVideo || bgImg) && (
+      {( bgImg) && (
         <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-black/80 z-0 pointer-events-none" />
       )}
 

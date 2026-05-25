@@ -318,8 +318,20 @@ export const AdventureMap: React.FC = () => {
                 const isCleared = node.cleared;
 
                 return (
-                  <g key={node.id}>
-                    {/* Node Background Circle */}
+                  <g key={node.id} className="relative">
+                    
+                    {/* ─── 核心修正：放大點擊範圍的隱形 Hitbox (半徑從 20 放大到 35) ─── */}
+                    <circle
+                      cx={x}
+                      cy={y}
+                      r="35"
+                      fill="transparent"
+                      className="cursor-pointer"
+                      style={{ pointerEvents: 'auto' }}
+                      onClick={() => handleNodeClick(node.id)}
+                    />
+
+                    {/* 原有的 Node Background Circle */}
                     <circle
                       cx={x}
                       cy={y}
@@ -333,8 +345,10 @@ export const AdventureMap: React.FC = () => {
                           ? 'fill-slate-950 stroke-slate-800 opacity-60' 
                           : 'fill-slate-950 stroke-slate-900 opacity-20'
                       }`}
-                      onClick={() => handleNodeClick(node.id)}
+                      /* 這裡的 onClick 可以保留或拔掉，因為上層的 Hitbox 已經完全覆蓋並處理了 */
+                      onClick={() => handleNodeClick(node.id)} 
                     />
+                    
                     {/* Node Emoji/Symbol */}
                     <text
                       x={x}
@@ -345,6 +359,7 @@ export const AdventureMap: React.FC = () => {
                     >
                       {getNodeSymbol(node.type)}
                     </text>
+                    
                     {/* Node Name Tag */}
                     <text
                       x={x}

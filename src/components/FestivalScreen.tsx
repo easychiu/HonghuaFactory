@@ -2,13 +2,11 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useGame } from '../contexts/GameContext';
 import { 
   Award, Trophy, Shield, ChefHat, Palette, MessageSquare, 
-  ArrowRight, Coins, Sparkles 
+  ArrowRight, Coins, Sparkles, Trophy as TrophyIcon 
 } from 'lucide-react';
 import { getAvatarPath } from '../utils/avatar';
 
 type TrackId = 'martial' | 'cooking' | 'art' | 'customer';
-
-
 
 export const FestivalScreen: React.FC = () => {
   const { state, resolveFestival } = useGame();
@@ -60,8 +58,6 @@ export const FestivalScreen: React.FC = () => {
     const { score } = getTrackScore(track, applyItem);
     if (score >= 9999) return 99; // direct win
     
-    // actual score = score + randomFactor (-20 to +20)
-    // probability that score + randomFactor >= targetScore
     if (score - 20 >= targetScore) return 99;
     if (score + 20 < targetScore) return 1;
     
@@ -69,28 +65,22 @@ export const FestivalScreen: React.FC = () => {
     return Math.min(99, Math.max(1, prob));
   };
 
-  // Handle Track Selection Change
   useEffect(() => {
     setUseSpecialItem(false);
   }, [selectedTrack]);
 
-  // Scroll to bottom of logs
   useEffect(() => {
     if (logContainerRef.current) {
       logContainerRef.current.scrollTop = logContainerRef.current.scrollHeight;
     }
   }, [simulationLogs]);
 
-  // Start Simulation
   const handleStartChallenge = () => {
     const { score } = getTrackScore(selectedTrack, useSpecialItem);
-    
-    // Simulate final result
-    const randomFactor = score >= 9999 ? 0 : Math.floor(Math.random() * 41) - 20; // -20 to 20
+    const randomFactor = score >= 9999 ? 0 : Math.floor(Math.random() * 41) - 20;
     const finalCalculatedScore = score >= 9999 ? 9999 : Math.max(10, score + randomFactor);
     const winResult = finalCalculatedScore >= targetScore;
     
-    // Generate simulation logs
     const logsList: string[] = [];
     
     if (selectedTrack === 'martial') {
@@ -108,7 +98,6 @@ export const FestivalScreen: React.FC = () => {
       }
       logsList.push(`🏆 大會評審團給出最終判定：女兒獲得評分 ${finalCalculatedScore} 分！（勝出目標：${targetScore} 分）`);
     } 
-    
     else if (selectedTrack === 'cooking') {
       logsList.push("🍳 王國烹飪大賽在中央大廣場盛大舉行，香氣四溢，名廚高手齊聚一堂！");
       logsList.push(`🔥 ${daughter.name} 站在灶台前，冷靜地整理食材。評審席上的王國首席美食家神情肅穆。`);
@@ -118,17 +107,16 @@ export const FestivalScreen: React.FC = () => {
         logsList.push("😭 【特寫劇情】評審咀嚼了三秒，忽然雙手掩面，眼淚止不住地奪眶而出：『這、這是阿嬤的味道……是家的感覺啊！』");
         logsList.push("💯 評審席集體痛哭流涕，紛紛給出不可思議的滿分！");
       } else {
-        logsList.push("🔥 女兒熟練地升火、翻炒、調味，精準掌控火候，製作出香氣四溢的王國傳統創意燉菜。");
+        logsList.push("🔥 女兒熟練地升火、翻炒、調味，精準掌控火候，製作出香氣四溢的王國傳統創意燉菜.");
         logsList.push("🍽️ 料理端上評審席。美食家們緩緩品嚐，交頭接耳，露出若有所思的表情。");
         if (winResult) {
           logsList.push("😋 評審點頭大讚：『火候精妙，調味豐富多層次，實在是一道溫暖人心的神級料理！』");
         } else {
-          logsList.push("😖 評審搖頭嘆息：『調味稍微過鹹了些，配料的香氣被掩蓋了，火候稍顯不足，有些可惜。』");
+          logsList.push("😖 評審搖頭嘆息：『調味稍微過鹹了些，配料的香氣被痕蓋了，火候稍顯不足，有些可惜。』");
         }
       }
       logsList.push(`🏆 評審們合計後公布結果：女兒獲得評分 ${finalCalculatedScore} 分！（勝出目標：${targetScore} 分）`);
     } 
-    
     else if (selectedTrack === 'art') {
       logsList.push("🎵 蔚藍藝術祭大禮堂內高朋滿座，豎琴悠揚。王國名流與貴族們正襟危坐。");
       logsList.push(`✨ ${daughter.name} 身著典雅服飾，沉穩步上舞台，向台下的觀眾與評審深鞠一躬。`);
@@ -137,7 +125,7 @@ export const FestivalScreen: React.FC = () => {
       }
       logsList.push("🎻 女兒輕拂琴弦，如流水般的琴音緩緩流瀉，將眾人帶入精靈低語的夢幻森林之中。");
       if (daughter.bonds.shanshan >= 50) {
-        logsList.push(`💬 評審席上的同窗「珊珊」雙眼放光，忍不住驚呼：『如此空靈脫俗的琴聲，簡直是藝術的化身！』`);
+        logsList.push(`💬 評審席上的同窗「珊珊」雙眼放光，忍不住驚呼：『如此空靈脫俗的琴聲，簡真是藝術的化身！』`);
       }
       if (winResult) {
         logsList.push("👏 曲終，全場寂靜無聲，隨後爆發出雷鳴般的掌聲與歡呼！觀眾紛紛起立喝采！");
@@ -146,7 +134,6 @@ export const FestivalScreen: React.FC = () => {
       }
       logsList.push(`🏆 藝術祭大會宣布得分：女兒獲得評分 ${finalCalculatedScore} 分！（勝出目標：${targetScore} 分）`);
     } 
-    
     else if (selectedTrack === 'customer') {
       logsList.push("👿 傳說中的奧客挑戰賽，在熱鬧的王都市場神祕拉開序幕！台下聚滿了看熱鬧的民眾。");
       logsList.push(`🏪 ${daughter.name} 雙手抱胸，面帶標準微笑站在櫃檯前。此時，地獄級奧客「凱文 (Kerwin)」怒氣沖沖地走來！`);
@@ -161,11 +148,9 @@ export const FestivalScreen: React.FC = () => {
       logsList.push(`🏆 奧客挑戰賽裁判亮分：女兒獲得評分 ${finalCalculatedScore} 分！（勝出目標：${targetScore} 分）`);
     }
 
-    // Set simulation state
     setSimulationLogs([logsList[0]]);
     setStep('simulating');
  
-    // Roll logs one by one
     let currentIdx = 1;
     const interval = setInterval(() => {
       if (currentIdx < logsList.length) {
@@ -178,12 +163,10 @@ export const FestivalScreen: React.FC = () => {
     }, 1200);
   };
 
-  // Instantly finish simulation
   const handleSkipSimulation = () => {
     setStep('result');
   };
 
-  // Settle rewards
   const handleClaimReward = () => {
     const { score } = getTrackScore(selectedTrack, useSpecialItem);
     const randomFactor = score >= 9999 ? 0 : Math.floor(Math.random() * 41) - 20;
@@ -212,411 +195,350 @@ export const FestivalScreen: React.FC = () => {
     resolveFestival(winResult, goldPrize, repPrize, outcomeText, consumedList);
   };
 
-  // Helper values for current selection
   const { label: currentLabel } = getTrackScore(selectedTrack, useSpecialItem);
 
-  return (
-    <div className="flex-1 flex items-center justify-center p-3 sm:p-4 md:p-6 min-h-[85vh]">
-      
-      {/* Component Styles (Isolated stylesheet logic) */}
-      <style dangerouslySetInnerHTML={{__html: `
-        .festival-card {
-          width: 100%;
-          max-width: 900px;
-          border-radius: 20px;
-          overflow: hidden;
-          background: rgba(20, 16, 38, 0.75);
-          border: 1px solid rgba(212, 175, 55, 0.25);
-          box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
-        }
-        .festival-banner {
-          width: 100%;
-          height: 120px;
-          object-fit: cover;
-          border-bottom: 2px solid rgba(212, 175, 55, 0.3);
-        }
-        @media (min-width: 640px) {
-          .festival-banner {
-            height: 180px;
-          }
-        }
-        .track-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-          gap: 12px;
-          margin-top: 16px;
-        }
-        @media (min-width: 640px) {
-          .track-grid {
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 16px;
-          }
-        }
-        .track-item {
-          padding: 16px;
-          border-radius: 12px;
-          background: rgba(255, 255, 255, 0.02);
-          border: 1px solid rgba(255, 255, 255, 0.08);
-          cursor: pointer;
-          transition: all 0.25s ease;
-          position: relative;
-        }
-        .track-item.selected {
-          background: rgba(212, 175, 55, 0.08);
-          border-color: #d4af37;
-          box-shadow: 0 0 15px rgba(212, 175, 55, 0.15);
-        }
-        .track-item:hover:not(.selected) {
-          background: rgba(255, 255, 255, 0.05);
-          border-color: rgba(255, 255, 255, 0.2);
-        }
-        .prob-badge {
-          font-size: 0.75rem;
-          font-weight: 700;
-          padding: 3px 8px;
-          border-radius: 9999px;
-        }
-        .prob-high { background: rgba(6, 214, 160, 0.15); color: #06d6a0; border: 1px solid rgba(6, 214, 160, 0.3); }
-        .prob-mid { background: rgba(255, 209, 102, 0.15); color: #ffd166; border: 1px solid rgba(255, 209, 102, 0.3); }
-        .prob-low { background: rgba(239, 71, 111, 0.15); color: #ef476f; border: 1px solid rgba(239, 71, 111, 0.3); }
-        
-        .simulation-box {
-          background: #080612;
-          border: 1px solid rgba(255, 255, 255, 0.05);
-          border-radius: 12px;
-          height: 220px;
-          overflow-y: auto;
-          padding: 12px;
-          font-family: 'Outfit', sans-serif;
-          display: flex;
-          flex-direction: column;
-          gap: 10px;
-          box-shadow: inset 0 2px 10px rgba(0,0,0,0.8);
-        }
-        @media (min-width: 640px) {
-          .simulation-box {
-            height: 300px;
-            padding: 16px;
-            gap: 12px;
-          }
-        }
-        .simulation-line {
-          font-size: 0.85rem;
-          line-height: 1.5;
-          color: #e2e8f0;
-          animation: fade-in-line 0.5s ease forwards;
-        }
-        @keyframes fade-in-line {
-          from { opacity: 0; transform: translateY(5px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        .gradient-overlay {
-          background: linear-gradient(180deg, rgba(20, 16, 38, 0.8) 0%, rgba(20, 16, 38, 0.95) 100%);
-        }
-      `}} />
+  // 計算勝率的輔助樣式函數
+  const getProbClass = (track: TrackId, item: boolean) => {
+    const prob = calculateWinProbability(track, item);
+    if (prob >= 75) return 'text-emerald-400 border-emerald-900/50 bg-emerald-950/40';
+    if (prob >= 40) return 'text-amber-400 border-amber-900/50 bg-amber-950/40';
+    return 'text-red-400 border-red-900/50 bg-red-950/40';
+  };
 
-      <div className="festival-card glass-panel animate-slide-up flex flex-col">
-        {/* Banner Section */}
-        <div className="relative">
+  return (
+    <div className="flex-1 flex items-center justify-center p-3 sm:p-4 md:p-6 min-h-[85vh] w-full max-w-4xl mx-auto">
+      <div className="victorian-container w-full brass-panel flex flex-col overflow-hidden rounded-lg">
+        
+        {/* Banner Section (Victorian Banner) */}
+        <div className="relative w-full h-32 sm:h-44 md:h-48 overflow-hidden border-b-2 border-dashed border-[#c5a059]/40 bg-black-dark">
           <img 
             src="/harvest_festival_banner.png" 
             alt="Harvest Festival" 
-            className="festival-banner"
+            className="w-full h-full object-cover opacity-60"
             onError={(e) => {
-              // fallback if copy failed or not found
               (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1509099836639-18ba1795216d?q=80&w=1000";
             }}
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#141026] to-transparent" />
-          <div className="absolute bottom-3 sm:bottom-4 left-3 sm:left-6 flex items-center gap-2 sm:gap-3">
-            <Trophy className="text-[#d4af37] w-6 h-6 sm:w-8 sm:h-8 float-animation" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black-dark to-transparent" />
+          <div className="absolute bottom-4 left-4 sm:left-8 flex items-center gap-3 z-10">
+            <TrophyIcon className="text-[#c5a059] w-8 h-8 sm:w-11 sm:h-11 filter drop-shadow-[0_2px_8px_rgba(197,160,89,0.5)]" />
             <div>
-              <h1 className="text-lg sm:text-2xl md:text-3xl font-extrabold text-[#ffd700] m-0">十月年度收穫祭</h1>
-              <p className="text-xs text-slate-300 font-semibold mt-1">
-                第 {time.year} 年的王國盛會 - 展現培育成果、爭奪無上榮耀！
+              <h1 className="text-xl sm:text-3xl font-black text-[#e5c483] tracking-wide m-0" style={{ textShadow: '0 2px 4px rgba(0,0,0,0.8)' }}>
+                十月年度收穫祭
+              </h1>
+              <p className="text-xs text-slate-300 font-medium mt-1" style={{ textShadow: '0 1px 2px rgba(0,0,0,0.8)' }}>
+                第 {time.year} 年王國盛典 — 展現維多利亞仕女之跨界成果與無上榮耀！
               </p>
             </div>
           </div>
         </div>
 
-        {/* Phase 1: Track Selection */}
+        {/* ═══ Phase 1: Track Selection ═══ */}
         {step === 'select' && (
-          <div className="p-4 sm:p-6 md:p-8 flex flex-col gap-4 sm:gap-6">
+          <div className="p-4 sm:p-6 md:p-8 flex flex-col gap-6 animate-slide-up">
             
-            <div className="bg-[rgba(255,255,255,0.02)] border border-slate-800 p-4 rounded-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            {/* Character Header Mini-Bar */}
+            <div className="border border-[#c5a059]/30 bg-[#161412]/80 p-4 rounded flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
               <div className="flex items-center gap-3">
-                {/* Protagonist Mini Avatar */}
-                <div className="w-12 h-12 rounded-full overflow-hidden border border-slate-700 bg-slate-900">
+                <div className="w-12 h-12 rounded border-2 border-[#c5a059]/50 bg-black-dark overflow-hidden shadow-md">
                   <img 
                     src={getAvatarPath(daughter.age, daughter.outfit, daughter.avatarUrl)} 
                     alt={daughter.name} 
                     className="w-full h-full object-cover"
-                    onError={(e) => {
-                      (e.target as HTMLElement).style.display = 'none';
-                    }}
                   />
                 </div>
                 <div>
-                  <h3 className="text-base font-bold text-white">{daughter.name} ({daughter.age} 歲)</h3>
-                  <p className="text-xs text-slate-400">目前黃金: {daughter.gold} G | 名望: {daughter.attributes.reputation}</p>
+                  <h3 className="text-base font-bold text-[#e5c483] flex items-center gap-2">
+                    {daughter.name} <span className="text-xs text-slate-400 font-normal">({daughter.age} 歲)</span>
+                  </h3>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    🪙 持有資金: <span className="text-[#ffd700] font-semibold">{daughter.gold} G</span> | 👑 聲望值: <span className="text-purple-400 font-semibold">{daughter.attributes.reputation}</span>
+                  </p>
                 </div>
               </div>
 
-              <div className="text-right">
-                <span className="text-xs text-slate-400 font-semibold block">本年奪冠目標分數</span>
-                <span className="text-xl font-black text-[#d4af37]">{targetScore} 分</span>
+              <div className="text-left sm:text-right border-t sm:border-t-0 border-[#c5a059]/10 pt-2 sm:pt-0 w-full sm:w-auto">
+                <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block">本年奪冠評審門檻</span>
+                <span className="text-2xl font-black text-[#ffd700] tracking-wide" style={{ textShadow: '0 0 8px rgba(255,215,0,0.3)' }}>
+                  {targetScore} <span className="text-sm font-bold text-slate-400">分</span>
+                </span>
               </div>
             </div>
 
-            <div>
-              <span className="text-sm font-semibold text-slate-300">選擇你要報名的賽道：</span>
+            {/* Grid Track Cards */}
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-400 uppercase tracking-widest block mb-1">
+                📜 點選大賽報名賽道
+              </label>
               
-              <div className="track-grid">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
                 
                 {/* Track 1: Martial */}
-                <div 
-                  className={`track-item flex flex-col gap-2 ${selectedTrack === 'martial' ? 'selected' : ''}`}
+                <button
+                  type="button"
+                  className={`text-left flex flex-col justify-between p-4 rounded border transition-all duration-200 relative pointer-events-auto ${
+                    selectedTrack === 'martial' 
+                      ? 'bg-[#6b1d2f]/10 border-[#c5a059] shadow-[0_0_12px_rgba(197,160,89,0.25)]' 
+                      : 'bg-black-dark/40 border-[#c5a059]/20 hover:border-[#c5a059]/50 hover:bg-black-dark/60'
+                  }`}
                   onClick={() => setSelectedTrack('martial')}
                 >
-                  <div className="flex justify-between items-start">
-                    <span className="p-2 bg-red-950/40 rounded-lg text-[#ef476f] border border-red-500/20">
-                      <Shield size={20} />
+                  <div className="flex justify-between items-start w-full">
+                    <span className="p-1.5 bg-[#42101b] rounded text-[#ef476f] border border-red-900/30">
+                      <Shield size={18} />
                     </span>
-                    <span className={`prob-badge ${
-                      calculateWinProbability('martial', false) >= 75 ? 'prob-high' :
-                      calculateWinProbability('martial', false) >= 40 ? 'prob-mid' : 'prob-low'
-                    }`}>
+                    <span className={`text-[10px] border px-2 py-0.5 rounded font-mono font-bold ${getProbClass('martial', hasBinlangTwin && selectedTrack === 'martial' ? useSpecialItem : false)}`}>
                       勝率 {calculateWinProbability('martial', hasBinlangTwin && selectedTrack === 'martial' ? useSpecialItem : false)}%
                     </span>
                   </div>
-                  <h4 className="text-sm font-bold text-white mt-1">皇家武術大會</h4>
-                  <p className="text-[11px] text-slate-400 leading-normal">
-                    檢驗近身搏鬥與體能極限。決賽對手為四葉草。
-                  </p>
-                </div>
+                  <div className="mt-4">
+                    <h4 className="text-sm font-bold text-[#e5c483]">皇家武術大會</h4>
+                    <p className="text-[11px] text-slate-400 leading-normal mt-1">
+                      檢驗體能、格鬥與戰力。決賽對手為宿敵四葉草。
+                    </p>
+                  </div>
+                </button>
 
                 {/* Track 2: Cooking */}
-                <div 
-                  className={`track-item flex flex-col gap-2 ${selectedTrack === 'cooking' ? 'selected' : ''}`}
+                <button
+                  type="button"
+                  className={`text-left flex flex-col justify-between p-4 rounded border transition-all duration-200 relative pointer-events-auto ${
+                    selectedTrack === 'cooking' 
+                      ? 'bg-[#1b3b2b]/20 border-[#c5a059] shadow-[0_0_12px_rgba(197,160,89,0.25)]' 
+                      : 'bg-black-dark/40 border-[#c5a059]/20 hover:border-[#c5a059]/50 hover:bg-black-dark/60'
+                  }`}
                   onClick={() => setSelectedTrack('cooking')}
                 >
-                  <div className="flex justify-between items-start">
-                    <span className="p-2 bg-emerald-950/40 rounded-lg text-[#06d6a0] border border-emerald-500/20">
-                      <ChefHat size={20} />
+                  <div className="flex justify-between items-start w-full">
+                    <span className="p-1.5 bg-[#0f2419] rounded text-[#06d6a0] border border-emerald-900/30">
+                      <ChefHat size={18} />
                     </span>
-                    <span className={`prob-badge ${
-                      calculateWinProbability('cooking', hasRiceCake && selectedTrack === 'cooking' ? useSpecialItem : false) >= 75 ? 'prob-high' :
-                      calculateWinProbability('cooking', hasRiceCake && selectedTrack === 'cooking' ? useSpecialItem : false) >= 40 ? 'prob-mid' : 'prob-low'
-                    }`}>
+                    <span className={`text-[10px] border px-2 py-0.5 rounded font-mono font-bold ${getProbClass('cooking', hasRiceCake && selectedTrack === 'cooking' ? useSpecialItem : false)}`}>
                       勝率 {calculateWinProbability('cooking', hasRiceCake && selectedTrack === 'cooking' ? useSpecialItem : false)}%
                     </span>
                   </div>
-                  <h4 className="text-sm font-bold text-white mt-1">王國烹飪大賽</h4>
-                  <p className="text-[11px] text-slate-400 leading-normal">
-                    比拼家事、細心與調味。考驗感受與道德。
-                  </p>
-                </div>
+                  <div className="mt-4">
+                    <h4 className="text-sm font-bold text-[#e5c483]">王國烹飪大賽</h4>
+                    <p className="text-[11px] text-slate-400 leading-normal mt-1">
+                      比拼精細調味與廚藝家事。考驗感受與道德。
+                    </p>
+                  </div>
+                </button>
 
                 {/* Track 3: Art */}
-                <div 
-                  className={`track-item flex flex-col gap-2 ${selectedTrack === 'art' ? 'selected' : ''}`}
+                <button
+                  type="button"
+                  className={`text-left flex flex-col justify-between p-4 rounded border transition-all duration-200 relative pointer-events-auto ${
+                    selectedTrack === 'art' 
+                      ? 'bg-[#161412] border-[#c5a059] shadow-[0_0_12px_rgba(197,160,89,0.25)]' 
+                      : 'bg-black-dark/40 border-[#c5a059]/20 hover:border-[#c5a059]/50 hover:bg-black-dark/60'
+                  }`}
                   onClick={() => setSelectedTrack('art')}
                 >
-                  <div className="flex justify-between items-start">
-                    <span className="p-2 bg-purple-950/40 rounded-lg text-[#a855f7] border border-purple-500/20">
-                      <Palette size={20} />
+                  <div className="flex justify-between items-start w-full">
+                    <span className="p-1.5 bg-black-dark rounded text-purple-400 border border-purple-900/30">
+                      <Palette size={18} />
                     </span>
-                    <span className={`prob-badge ${
-                      calculateWinProbability('art', false) >= 75 ? 'prob-high' :
-                      calculateWinProbability('art', false) >= 40 ? 'prob-mid' : 'prob-low'
-                    }`}>
+                    <span className={`text-[10px] border px-2 py-0.5 rounded font-mono font-bold ${getProbClass('art', false)}`}>
                       勝率 {calculateWinProbability('art', false)}%
                     </span>
                   </div>
-                  <h4 className="text-sm font-bold text-white mt-1">蔚藍藝術祭</h4>
-                  <p className="text-[11px] text-slate-400 leading-normal">
-                    展現氣質與藝術才華。珊珊評審會進行點評。
-                  </p>
-                </div>
+                  <div className="mt-4">
+                    <h4 className="text-sm font-bold text-[#e5c483]">蔚藍藝術祭</h4>
+                    <p className="text-[11px] text-slate-400 leading-normal mt-1">
+                      比拼琴藝才華與高雅姿態。珊珊將親臨點評。
+                    </p>
+                  </div>
+                </button>
 
                 {/* Track 4: Customer (Honghua Only) */}
                 {daughter.characterId === 'honghua' && (
-                  <div 
-                    className={`track-item flex flex-col gap-2 ${selectedTrack === 'customer' ? 'selected' : ''}`}
+                  <button
+                    type="button"
+                    className={`text-left flex flex-col justify-between p-4 rounded border transition-all duration-200 relative pointer-events-auto ${
+                      selectedTrack === 'customer' 
+                        ? 'bg-amber-950/10 border-[#c5a059] shadow-[0_0_12px_rgba(197,160,89,0.25)]' 
+                        : 'bg-black-dark/40 border-[#c5a059]/20 hover:border-[#c5a059]/50 hover:bg-black-dark/60'
+                    }`}
                     onClick={() => setSelectedTrack('customer')}
                   >
-                    <div className="flex justify-between items-start">
-                      <span className="p-2 bg-amber-950/40 rounded-lg text-[#ffd166] border border-amber-500/20">
-                        <MessageSquare size={20} />
+                    <div className="flex justify-between items-start w-full">
+                      <span className="p-1.5 bg-amber-950/40 rounded text-[#ffd166] border border-amber-900/30">
+                        <MessageSquare size={18} />
                       </span>
-                      <span className={`prob-badge ${
-                        calculateWinProbability('customer', false) >= 75 ? 'prob-high' :
-                        calculateWinProbability('customer', false) >= 40 ? 'prob-mid' : 'prob-low'
-                      }`}>
+                      <span className={`text-[10px] border px-2 py-0.5 rounded font-mono font-bold ${getProbClass('customer', false)}`}>
                         勝率 {calculateWinProbability('customer', false)}%
                       </span>
                     </div>
-                    <h4 className="text-sm font-bold text-white mt-1">奧客挑戰賽</h4>
-                    <p className="text-[11px] text-slate-400 leading-normal">
-                      紅花專屬隱藏賽道。迎戰神仙級奧客「凱文」。
-                    </p>
-                  </div>
+                    <div className="mt-4">
+                      <h4 className="text-sm font-bold text-[#e5c483]">奧客挑戰賽</h4>
+                      <p className="text-[11px] text-slate-400 leading-normal mt-1">
+                        紅花限定。直面頂級刁難巨頭「奧客凱文」。
+                      </p>
+                    </div>
+                  </button>
                 )}
 
               </div>
             </div>
 
-            {/* Selected Track Details & Special Items Ingestion */}
-            <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 flex flex-col gap-3">
+            {/* Formula Row & Ingestion Inventory check */}
+            <div className="p-4 rounded border border-[#c5a059]/30 bg-black-dark/70 flex flex-col gap-3">
               <div>
-                <span className="text-xs text-slate-400 font-semibold uppercase tracking-wider block">賽道評分標準</span>
-                <span className="text-sm text-slate-200 font-bold mt-0.5 block">{currentLabel}</span>
+                <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block">賽道評審核心公式</span>
+                <span className="text-sm text-slate-200 font-semibold mt-0.5 block">{currentLabel}</span>
               </div>
 
-              {/* Special Item Options */}
+              {/* Special Item Options Checklist */}
               {selectedTrack === 'martial' && hasBinlangTwin && (
-                <div className="flex items-center gap-2 p-2.5 rounded bg-red-950/20 border border-red-500/20 mt-1 animate-pulse">
+                <div className="flex items-center gap-2.5 p-3 rounded border border-red-900/40 bg-[#42101b]/20 victorian-flash pointer-events-auto">
                   <input 
                     type="checkbox" 
                     id="useBinlang" 
-                    className="w-4 h-4 accent-[#ef476f] cursor-pointer"
+                    className="w-4 h-4 accent-red-700 cursor-pointer relative z-10"
                     checked={useSpecialItem}
                     onChange={(e) => setUseSpecialItem(e.target.checked)}
                   />
-                  <label htmlFor="useBinlang" className="text-xs text-red-200 font-semibold cursor-pointer">
-                    🔥 嚼下背包中的【雙子星檳榔】！獲得大賽狂暴 Buff，評估戰力額外提升 +150！
+                  <label htmlFor="useBinlang" className="text-xs text-red-200 font-bold cursor-pointer relative z-10 select-none">
+                    🔥 嚼下背包中的【雙子星檳榔】！引燃熱血狂暴發條，戰力公式增幅額外 +150 分！
                   </label>
                 </div>
               )}
 
               {selectedTrack === 'cooking' && hasRiceCake && (
-                <div className="flex items-center gap-2 p-2.5 rounded bg-emerald-950/20 border border-emerald-500/20 mt-1 animate-pulse">
+                <div className="flex items-center gap-2.5 p-3 rounded border border-emerald-900/40 bg-[#0f2419]/30 victorian-flash pointer-events-auto">
                   <input 
                     type="checkbox" 
                     id="useRiceCake" 
-                    className="w-4 h-4 accent-[#06d6a0] cursor-pointer"
+                    className="w-4 h-4 accent-emerald-700 cursor-pointer relative z-10"
                     checked={useSpecialItem}
                     onChange={(e) => setUseSpecialItem(e.target.checked)}
                   />
-                  <label htmlFor="useRiceCake" className="text-xs text-emerald-200 font-semibold cursor-pointer">
-                    🍱 拿出背包中的【特級桶仔米糕】參賽！直接觸發評審感動落淚特效，保送奪冠！
+                  <label htmlFor="useRiceCake" className="text-xs text-emerald-200 font-bold cursor-pointer relative z-10 select-none">
+                    🍱 拿出秘密底牌【特級桶仔米糕】參賽！直接擊穿美食家心理防線，保送滿分奪冠！
                   </label>
                 </div>
               )}
             </div>
 
-            {/* Bottom buttons */}
-            <div className="flex justify-end mt-2">
+            {/* Footer Form trigger button */}
+            <div className="flex justify-end pt-2">
               <button 
+                type="button"
                 onClick={handleStartChallenge}
-                className="btn-fantasy text-sm py-3 px-8 flex items-center gap-2"
+                className="btn-fantasy text-sm py-3.5 px-8 flex items-center gap-2 uppercase tracking-wider"
               >
-                <Sparkles size={16} />
-                報名並開始模擬
+                <Sparkles size={16} /> 簽名報名並開啟大賽
               </button>
             </div>
 
           </div>
         )}
 
-        {/* Phase 2: Live Ticker Simulation */}
+        {/* ═══ Phase 2: Live Ticker Text Simulation ═══ */}
         {step === 'simulating' && (
-          <div className="p-4 sm:p-6 md:p-8 flex flex-col gap-4 sm:gap-6">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <span className="flex items-center gap-2 text-sm text-[#ffd700] font-bold">
-                <Sparkles className="animate-spin text-amber-400" size={18} />
-                賽況激鬥模擬中...
+          <div className="p-4 sm:p-6 md:p-8 flex flex-col gap-5">
+            <div className="flex items-center justify-between border-b border-[#c5a059]/30 pb-3">
+              <span className="flex items-center gap-2 text-sm text-[#e5c483] font-bold">
+                <Sparkles className="animate-spin text-[#c5a059]" size={16} />
+                宮廷評審大會激烈進行中...
               </span>
               <button 
+                type="button"
                 onClick={handleSkipSimulation}
-                className="btn-fantasy-sec text-xs py-1 px-3"
+                className="btn-fantasy-sec text-xs py-1 px-3 relative z-50 pointer-events-auto"
               >
                 跳過過程
               </button>
             </div>
 
-            {/* Simulation Log screen */}
-            <div ref={logContainerRef} className="simulation-box">
+            {/* Custom simulation ticker container (Parchment style) */}
+            <div ref={logContainerRef} className="parchment-dialog simulation-box shadow-inner overflow-y-auto">
               {simulationLogs.map((log, idx) => (
-                <div key={idx} className="simulation-line">
+                <div key={idx} className="simulation-line font-medium text-left text-stone-900">
                   {log}
                 </div>
               ))}
             </div>
 
-            {/* Simulated Ticker loading spinner */}
-            <div className="flex items-center justify-center gap-3 py-4">
-              <div className="w-2.5 h-2.5 rounded-full bg-pink-500 animate-bounce" style={{ animationDelay: '0ms' }} />
-              <div className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-bounce" style={{ animationDelay: '200ms' }} />
-              <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-bounce" style={{ animationDelay: '400ms' }} />
+            {/* Ticker custom loading cogs */}
+            <div className="flex items-center justify-center gap-3 py-2">
+              <div className="w-2 h-2 rounded-full bg-red-700 animate-bounce" style={{ animationDelay: '0ms' }} />
+              <div className="w-2 h-2 rounded-full bg-[#c5a059] animate-bounce" style={{ animationDelay: '200ms' }} />
+              <div className="w-2 h-2 rounded-full bg-emerald-800 animate-bounce" style={{ animationDelay: '400ms' }} />
             </div>
           </div>
         )}
 
-        {/* Phase 3: Results & Rewards */}
+        {/* ═══ Phase 3: Settle Results Screen ═══ */}
         {step === 'result' && (
-          <div className="p-4 sm:p-6 md:p-8 flex flex-col gap-4 sm:gap-6 text-center animate-slide-up">
+          <div className="p-4 sm:p-6 md:p-8 flex flex-col gap-6 text-center animate-slide-up">
             
             {(() => {
               const { score } = getTrackScore(selectedTrack, useSpecialItem);
-              const finalScore = score >= 9999 ? 9999 : score; // note: actual was checked inside startChallenge but we'll show result nicely
+              const finalScore = score >= 9999 ? 9999 : score;
               const isVictor = finalScore >= targetScore;
               
               return (
-                <div className="flex flex-col items-center gap-4 py-6">
+                <div className="flex flex-col items-center gap-5 py-4">
                   
-                  {/* Crown / Trophy Overlay */}
-                  <div className={`p-3 sm:p-5 rounded-full ${isVictor ? 'bg-amber-500/10 border-2 border-amber-400 animate-pulse' : 'bg-slate-800 border-2 border-slate-700'}`}>
-                    <Trophy className={`w-10 h-10 sm:w-16 sm:h-16 ${isVictor ? 'text-[#ffd700]' : 'text-slate-400'}`} />
+                  {/* Victorian Shield/Trophy Overlay */}
+                  <div className={`p-4 sm:p-6 rounded-full border-2 ${
+                    isVictor 
+                      ? 'bg-[#6b1d2f]/10 border-[#c5a059] shadow-[0_0_20px_rgba(197,160,89,0.5)] animate-pulse' 
+                      : 'bg-black-dark border-slate-800'
+                  }`}>
+                    <TrophyIcon className={`w-12 h-12 sm:w-16 sm:h-16 ${isVictor ? 'text-[#ffd700]' : 'text-slate-500'}`} />
                   </div>
 
-                  <div>
-                    <h2 className="text-xl sm:text-3xl font-black mt-2 tracking-widest uppercase">
-                      {isVictor ? '👑 奪得冠軍 👑' : '🎗️ 榮獲優勝 🎗️'}
+                  <div className="space-y-1">
+                    <h2 className="text-2xl sm:text-4xl font-black text-[#e5c483] tracking-widest uppercase">
+                      {isVictor ? '👑 榮登收穫祭寶座 👑' : '🎗️ 榮獲優勝嘉獎 🎗️'}
                     </h2>
-                    <p className="text-sm text-slate-400 mt-1 max-w-md mx-auto">
+                    <p className="text-xs text-slate-400 max-w-md mx-auto leading-relaxed">
                       {isVictor 
-                        ? `太棒了！女兒在收穫祭中力壓群雄，成功摘得桂冠！`
-                        : `表現相當不俗！雖然與冠軍擦肩而過，但她的努力大家都看在眼裡！`}
+                        ? `精彩絕倫！女兒在大賽中展現出壓倒性的優勢，贏得全場歡呼，成功摘得桂冠！`
+                        : `表現卓越！雖然因些微運氣與最高王位擦肩而過，但她的高雅才華已名滿王都！`}
                     </p>
                   </div>
 
-                  {/* Score breakdown badge */}
-                  <div className="glass-panel py-2 sm:py-3 px-4 sm:px-8 rounded-full border border-slate-800 flex items-center gap-3 sm:gap-6 mt-4">
+                  {/* Brass Metadata Badge */}
+                  <div className="border-2 border-[#c5a059]/40 bg-[#161412]/90 py-3 px-6 sm:px-10 rounded flex items-center gap-4 sm:gap-8 mt-2">
                     <div>
-                      <span className="text-[9px] sm:text-[10px] text-slate-400 block font-semibold uppercase tracking-wider">女兒最終評分</span>
-                      <span className="text-lg sm:text-2xl font-black text-white">{finalScore} 分</span>
+                      <span className="text-[10px] text-slate-500 block font-bold uppercase tracking-wider">女兒最終得分</span>
+                      <span className="text-xl sm:text-2xl font-black text-white">{finalScore} <span className="text-xs font-bold text-slate-400">分</span></span>
                     </div>
-                    <div className="h-6 sm:h-8 w-px bg-slate-800" />
+                    <div className="h-8 w-px bg-[#c5a059]/30" />
                     <div>
-                      <span className="text-[9px] sm:text-[10px] text-slate-400 block font-semibold uppercase tracking-wider">大會勝出標準</span>
-                      <span className="text-lg sm:text-2xl font-black text-[#d4af37]">{targetScore} 分</span>
+                      <span className="text-[10px] text-slate-500 block font-bold uppercase tracking-wider">大會冠軍門檻</span>
+                      <span className="text-xl sm:text-2xl font-black text-[#e5c483]">{targetScore} <span className="text-xs font-bold text-slate-400">分</span></span>
                     </div>
                   </div>
 
-                  {/* Rewards Grid */}
-                  <div className="w-full max-w-sm grid grid-cols-2 gap-4 mt-6">
-                    <div className="p-4 rounded-xl bg-amber-950/20 border border-[#d4af37]/20 flex flex-col items-center gap-1.5">
-                      <Coins className="text-[#ffd700]" size={24} />
-                      <span className="text-xs text-slate-400 font-semibold">獲得獎金</span>
-                      <span className="text-lg font-bold text-white">+{isVictor ? 3000 : 500} G</span>
+                  {/* Settle Rewards Inventory Grid */}
+                  <div className="w-full max-w-sm grid grid-cols-2 gap-4 mt-4">
+                    <div className="p-4 rounded border border-[#c5a059]/20 bg-black-dark/60 flex flex-col items-center gap-1">
+                      <Coins className="text-[#ffd700]" size={20} />
+                      <span className="text-[10px] text-slate-400 font-bold uppercase">大賽金幣賞金</span>
+                      <span className="text-base font-bold text-white">+{isVictor ? 3000 : 500} G</span>
                     </div>
                     
-                    <div className="p-4 rounded-xl bg-purple-950/20 border border-purple-500/20 flex flex-col items-center gap-1.5">
-                      <Award className="text-purple-400" size={24} />
-                      <span className="text-xs text-slate-400 font-semibold">提升名望</span>
-                      <span className="text-lg font-bold text-white">+{isVictor ? 200 : 50}</span>
+                    <div className="p-4 rounded border border-purple-500/20 bg-black-dark/60 flex flex-col items-center gap-1">
+                      <Award className="text-purple-400" size={20} />
+                      <span className="text-[10px] text-slate-400 font-bold uppercase">王國名望增幅</span>
+                      <span className="text-base font-bold text-white">+{isVictor ? 200 : 50}</span>
                     </div>
                   </div>
 
-                  {/* Finish button */}
-                  <div className="mt-8">
+                  {/* Settle loop confirm button */}
+                  <div className="mt-4 pt-2">
                     <button 
+                      type="button"
                       onClick={handleClaimReward}
-                      className="btn-fantasy py-3 px-8 text-sm flex items-center gap-2"
+                      className="btn-fantasy py-3 px-10 text-sm flex items-center gap-2 relative z-50 pointer-events-auto"
                     >
-                      領取獎勵並回到房間
-                      <ArrowRight size={16} />
+                      領取賞金並擺道回宮
+                      <ArrowRight size={14} />
                     </button>
                   </div>
 

@@ -28,7 +28,7 @@ const ATTRIBUTE_LABELS: Record<AttributeKey, { label: string; color: string; ico
 
 export const StatPanel: React.FC<StatPanelProps> = ({ daughter }) => {
   const getCharacterName = (id: string) => {
-    if (id === 'honghua') return '紅花 (銀髮冒險特化)';
+    if (id === 'honghua') return '紅花 (銀髮檳榔流)';
     if (id === 'erica') return '艾莉卡 (銀髮雙馬尾強運)';
     if (id === 'emilia') return '艾蜜莉亞 (咖啡髮小隊流)';
     return id;

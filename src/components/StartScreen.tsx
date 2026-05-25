@@ -46,7 +46,7 @@ const FATHERS: FatherData[] = [
     badgeClass: 'text-slate-300 border-slate-500/40 bg-slate-800/60',
     bgImage: '02. 騎士老爸專屬：隱密要塞.jpg',
     description: '給予女兒傳家鐵劍、女武神胸甲。初始戰技與力量提高。武者修行解鎖【隱密要塞】節點。',
-    gold: 1500,
+    gold: 500,
   },
   {
     id: 'scholar',
@@ -56,7 +56,7 @@ const FATHERS: FatherData[] = [
     badgeClass: 'text-blue-300 border-blue-500/40 bg-blue-950/50',
     bgImage: '03. 文臣老爸專屬：地下皇家圖書館.jpg',
     description: '自帶宮廷推薦信（提早高薪打工）。提升初始智力，文科課程享 8 折。修行解鎖【地下皇家圖書館】。',
-    gold: 2500,
+    gold: 1000,
   },
   {
     id: 'merchant',
@@ -66,7 +66,7 @@ const FATHERS: FatherData[] = [
     badgeClass: 'text-yellow-300 border-yellow-500/40 bg-yellow-950/50',
     bgImage: '04. 商人老爸專屬：黑市走私營地.jpg',
     description: '自帶載具【未來摩托車 Gp125】，打工收入增加，道具店全品項 8 折。修行解鎖【黑市走私營地】。',
-    gold: 5000,
+    gold: 2000,
   },
   {
     id: 'bard',
@@ -76,7 +76,7 @@ const FATHERS: FatherData[] = [
     badgeClass: 'text-purple-300 border-purple-500/40 bg-purple-950/50',
     bgImage: '05. 詩人老爸專屬：精靈的妖精之環.jpg',
     description: '配備舊魯特琴。藝術課程效果 +20%，日常解鎖「街頭賣藝」指令。修行解鎖【精靈的妖精之環】。',
-    gold: 500,
+    gold: 250,
   },
 ];
 
@@ -88,7 +88,7 @@ const CHARS: CharData[] = [
     badge: '專屬：檳榔流',
     badgeClass: 'text-emerald-400 bg-emerald-950/20 border border-emerald-900/20',
     description: '銀色短髮。道具店販售各式檳榔 Buff，野外修行可採集檳榔原物料。',
-    getSprite: (p) => `${p}sprites/daughter_10_default.png`,
+    getSprite: (p) => `${p}sprites/honghua_10_default.png`,
     getLockText: () => '',
   },
   {
@@ -98,7 +98,7 @@ const CHARS: CharData[] = [
     badge: '專屬：機率流',
     badgeClass: 'text-amber-400 bg-amber-950/20 border border-amber-900/20',
     description: '銀色雙馬尾。天生強運，日常學習、打工極高機率觸發大成功 (雙倍收益且無疲勞)。',
-    getSprite: (p) => `${p}sprites/daughter_10_dress.png`,
+    getSprite: (p) => `${p}sprites/erica_10_default.png`,
     getLockText: (isFirst) => isFirst ? '首週目固定紅花' : '達成任意結局解鎖',
   },
   {
@@ -108,7 +108,7 @@ const CHARS: CharData[] = [
     badge: '專屬：三人小隊',
     badgeClass: 'text-indigo-400 bg-indigo-950/20 border border-indigo-900/20',
     description: '咖啡色雙馬尾。武者修行時青梅竹馬 yv、jumbo 全程陪同，解鎖三人聯擊奧義。',
-    getSprite: (p) => `${p}sprites/daughter_10_summer.png`,
+    getSprite: (p) => `${p}sprites/emilia_10_default.png`,
     spriteStyle: { filter: 'hue-rotate(330deg) saturate(0.8) sepia(0.5)' },
     getLockText: (isFirst) => isFirst ? '首週目固定紅花' : '達成認親或主線結局解鎖',
   },
@@ -278,7 +278,6 @@ export const StartScreen: React.FC = () => {
                   preload="metadata"
                   poster={prologueImage}
                 >
-                  <source src={prologueVideo} type="video/mp4" />
                 </video>
               </div>
 

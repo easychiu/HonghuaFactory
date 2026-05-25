@@ -4,6 +4,7 @@ import { StatPanel } from './StatPanel';
 import { SaveLoadPanel } from './SaveLoadPanel';
 import { getAvatarPath, getDaughterPersonality } from '../utils/avatar';
 import { audioManager } from '../utils/audio';
+import { LogHistoryPanel } from './LogHistoryPanel';
 import { 
   Sparkles, Calendar, Coins, Save, RefreshCw, 
   MessageSquare, ShoppingCart, Compass, ToggleLeft, ToggleRight, 
@@ -535,37 +536,89 @@ export const MainPanel: React.FC = () => {
       </div>
 
       {/* Log Feed Display */}
-      <div className="glass-panel p-5 flex flex-col gap-3">
-        <h3 className="text-sm font-bold flex items-center gap-2 text-slate-300">
-          <History size={16} /> 養育事件日誌
-          {logs.length > 0 && (
-            <span className="text-[10px] text-slate-500 font-normal ml-auto">共 {logs.length} 筆紀錄</span>
-          )}
-        </h3>
-        
-        <div className="h-48 overflow-y-scroll bg-slate-950/80 border border-slate-900/60 rounded-lg p-3 space-y-2 text-xs font-mono scrollbar-visible">
-          {logs.length === 0 ? (
-            <p className="text-slate-500 text-center italic mt-12">尚無養育日誌，請開始制定日程運作遊戲。</p>
-          ) : (
-            logs.slice().reverse().map((log) => {
-              let color = 'text-slate-400';
-              if (log.type === 'stat_up') color = 'text-emerald-400';
-              if (log.type === 'stat_down') color = 'text-red-400 font-semibold';
-              if (log.type === 'event') color = 'text-[#ffd700] font-bold';
-              if (log.type === 'dialogue') color = 'text-pink-400';
+      {(() => {
+        // 1. 將平鋪的 logs 按「年 — 月」進行高階聚合分組
+        const groupedLogs = logs.reduce((acc, log) => {
+          const key = `第 ${log.year} 年 — ${log.month} 月`;
+          if (!acc[key]) acc[key] = [];
+          acc[key].push(log);
+          return acc;
+        }, {} as Record<string, typeof logs>);
 
-              return (
-                <div key={log.id} className="flex items-start gap-1">
-                  <span className="text-slate-500 shrink-0">
-                    [{log.year}年{log.month}月{log.period === 'early' ? '上' : log.period === 'mid' ? '中' : '下'}旬]
-                  </span>
-                  <span className={color}>{log.text}</span>
+        // 2. 將分組改為陣列並逆序排列（讓最新的年份月份排在最上面）
+        const sortedGroupEntries = Object.entries(groupedLogs).reverse();
+
+        return (
+          <div className="brass-panel p-5 flex flex-col gap-3 rounded-lg">
+            <h3 className="text-sm font-bold flex items-center gap-2 text-[#e5c483] uppercase tracking-widest">
+              <History size={16} className="text-[#c5a059]" /> 
+              王女養育事件編年史
+              {logs.length > 0 && (
+                <span className="text-[10px] text-slate-500 font-normal ml-auto font-mono">共 {logs.length} 筆紀錄</span>
+              )}
+            </h3>
+            
+            <div className="max-h-64 overflow-y-auto space-y-2 pr-1 v-scrollbar">
+              {logs.length === 0 ? (
+                <div className="bg-slate-950/80 border border-slate-900/60 rounded-lg h-48 flex items-center justify-center">
+                  <p className="text-slate-500 text-center italic font-serif">尚無養育日誌，請開始制定日程運作遊戲。</p>
                 </div>
-              );
-            })
-          )}
-        </div>
-      </div>
+              ) : (
+                sortedGroupEntries.map(([monthKey, monthLogs], index) => {
+                  // 只有最新的一個月 (index === 0) 預設展開 open，其餘舊月份自動摺疊
+                  const isLatestMonth = index === 0;
+
+                  return (
+                    <details 
+                      key={monthKey} 
+                      className="group border border-[#c5a059]/35 bg-black-dark/40 rounded overflow-hidden transition-all"
+                      open={isLatestMonth}
+                    >
+                      {/* 手風琴摺疊大標題 */}
+                      <summary className="p-2.5 cursor-pointer text-xs font-bold text-[#e5c483] bg-[#161412] hover:bg-[#231f1b] flex justify-between items-center select-none pointer-events-auto transition-colors">
+                        <div className="flex items-center gap-1.5">
+                          <span>{monthKey}</span>
+                          {isLatestMonth && (
+                            <span className="text-[9px] bg-[#6b1d2f] text-white px-1.5 py-0.5 rounded border border-[#c5a059]/45 scale-90 origin-left">
+                              最新旬
+                            </span>
+                          )}
+                        </div>
+                        <span className="text-[10px] text-slate-500 font-mono font-normal group-open:hidden">
+                          展開 ({monthLogs.length} 條)
+                        </span>
+                        <span className="text-[10px] text-[#c5a059] font-normal hidden group-open:inline">
+                          收起
+                        </span>
+                      </summary>
+
+                      {/* 月份內部日誌細項 */}
+                      <div className="p-2.5 space-y-1.5 border-t border-[#c5a059]/20 bg-black-dark/20 text-left divide-y divide-[#c5a059]/5">
+                        {monthLogs.slice().reverse().map((log) => {
+                          let color = 'text-slate-400';
+                          if (log.type === 'stat_up') color = 'text-emerald-400';
+                          if (log.type === 'stat_down') color = 'text-red-400 font-semibold';
+                          if (log.type === 'event') color = 'text-[#ffd700] font-bold';
+                          if (log.type === 'dialogue') color = 'text-pink-400';
+
+                          return (
+                            <div key={log.id} className="flex items-start gap-2 text-xs pt-1.5 first:pt-0 leading-relaxed">
+                              <span className="text-slate-500 font-mono shrink-0 bg-black-dark/40 px-1 rounded text-[10px]">
+                                {log.period === 'early' ? '上旬' : log.period === 'mid' ? '中旬' : '下旬'}
+                              </span>
+                              <span className={color}>{log.text}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </details>
+                  );
+                })
+              )}
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Closet Modal */}
       {isClosetOpen && (

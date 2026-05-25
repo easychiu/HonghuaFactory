@@ -30,8 +30,13 @@ export const getAvatarPath = (age: number, outfit: string, customUrl?: string): 
   if (customUrl === 'honghua' || (customUrl && customUrl.includes('honghua'))) {
     return `${prefix}sprites/honghua_${ageStage}_${outfit}.png`;
   }
-  
-  return `${prefix}sprites/daughter_${ageStage}_${outfit}.png`;
+  else if (customUrl === 'emilia' || (customUrl && customUrl.includes('emilia'))) {
+    return `${prefix}sprites/emilia_${ageStage}_${outfit}.png`;
+  }
+  else if (customUrl === 'erica' || (customUrl && customUrl.includes('erica'))) {
+    return `${prefix}sprites/erica_${ageStage}_${outfit}.png`;
+  }
+  // return `${prefix}sprites/daughter_${ageStage}_${outfit}.png`;
 };
 
 export const getDaughterPersonality = (attributes: {
