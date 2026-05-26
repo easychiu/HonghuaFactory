@@ -177,6 +177,14 @@ export const ITEMS: Item[] = [
     price: 300,
     type: 'book',
     statChanges: {}
+  },
+  {
+    id: 'oak_hardwood',
+    name: '橡木硬材',
+    description: '在野外或木工作坊獲得的堅硬橡木，用於提升精煉成功率與極限。',
+    price: 500,
+    type: 'book',
+    statChanges: {}
   }
 ];
 
