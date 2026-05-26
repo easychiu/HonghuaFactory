@@ -1,73 +1,128 @@
-# React + TypeScript + Vite
+# 紅花夢工廠
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+**美少女夢工廠 | 蔚藍海岸的王女們**  
+Princess Maker 風格的奇幻養成 + RPG 網頁模擬遊戲
 
-Currently, two official plugins are available:
+一個以「老爸視角」養成女兒的網頁模擬遊戲，融合了經典 Princess Maker 的養成樂趣、奇幻世界觀、戰鬥修行、以及豐富的劇情與多週目繼承機制。
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## 遊戲簡介
 
-## React Compiler
+在蔚藍海岸的世界中，你將扮演一位擁有特殊背景的父親，親手養育女兒長大。  
+透過安排女兒的日常行程（上課、打工、修行、社交、休息），影響她的屬性、性格、好感度與命運，最終迎來多種不同結局。
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+遊戲特色：
+- 經典養成 + 奇幻 RPG 元素
+- 豐富的老爸日常互動與親情系統
+- 戰鬥、冒險、裝備、連擊與合體奧義
+- 多週目繼承（NG+）與成就系統
+- 性格傾向、狀態異常（生病、叛逆）、稱號與專屬裝扮
 
-## Expanding the ESLint configuration
+## 目前進度
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+專案已完成多數核心系統，處於「可玩 + 持續擴充」階段。
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+### 已實作功能
+- 多存檔欄位 + 存檔匯出/匯入
+- 歷史結局圖鑑
+- 獨立成就系統（含永久微幅加成）
+- 多週目繼承機制（NG+）
+- 稱號系統與成就專屬裝扮
+- 老爸日常親情互動（談話、摸頭、訓誡、給零用錢）
+- 女兒性格傾向判定系統
+- 生病與叛逆狀態實體玩法與視覺反饋
+- 戰鬥系統（物理/魔法/精神、裝備槽、小隊連擊、合體奧義）
+- 修行地圖與隨機事件節點（寶箱、恢復泉水）
+- 場景背景圖片動態切換
+- 音頻管理與多首 BGM 整合
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+### 進行中 / 待實作（優先順序由高到低）
+- 戰鬥狀態異常與元素克制系統
+- 同窗好友羈絆援護技能
+- 裝備精煉與胡村姑木工作坊升級系統
+- 同學季節來信與社交回信系統
+- 隨機季節事件與市集商旅
+- 道具百科與收藏圖鑑
+- 多週目繼承星塵商店
+- 女兒成長回憶日記系統
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+詳細待辦請參考專案內的 `TODO` 檔案。
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## 技術架構
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+- **框架**：React 19 + TypeScript + Vite
+- **UI**：自訂 CSS + lucide-react（建議後續導入 Tailwind）
+- **狀態管理**：React Context + 自訂 hooks
+- **資料驅動**：`src/data/` 集中管理活動、事件、裝備、結局等
+- **部署**：GitHub Pages（已設定正確 base path）
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+### 專案結構
+HonghuaFactory/
+├── public/                  # 場景圖片、BGM、靜態資源
+├── src/
+│   ├── assets/              # 圖片、音效等資源
+│   ├── components/          # UI 元件
+│   ├── contexts/            # 全域狀態 Context
+│   ├── data/                # 資料定義（活動、事件、結局等）
+│   ├── hooks/               # 自訂 Hooks
+│   ├── utils/               # 工具函式
+│   ├── types.ts             # TypeScript 型別定義
+│   ├── App.tsx
+│   └── main.tsx
+├── .github/workflows/       # GitHub Actions（部署用）
+├── TODO                     # 詳細開發待辦清單
+├── NewStory / StoryEnh1     # 劇情規劃文件
+├── package.json
+└── vite.config.ts
+
+### 快速開始
+
+```bash
+# 安裝依賴
+npm install
+
+# 啟動開發伺服器
+npm run dev
+
+# 建置生產版本
+npm run build
+
+# 預覽建置結果
+npm run preview
+部署
+本專案已設定 GitHub Pages 自動部署（vite.config.ts base path 已正確配置為 /HonghuaFactory/）。
+推送到 main 分支後，GitHub Actions 會自動建置並部署至：
+https://easychiu.github.io/HonghuaFactory/
+素材需求
+目前尚有部分場景背景圖片需要補齊，詳細清單請參考 TODO 檔案中的「需協助產生」區塊。
+建議圖片規格：
+
+尺寸：16:9
+格式：JPG / PNG
+風格：奇幻歐式 + 溫馨 / 神秘 / 冒險感
+
+開發注意事項
+
+強烈建議後續導入 Tailwind CSS + framer-motion 提升開發效率與動畫體驗。
+所有活動、事件、結局建議維持資料驅動，方便後續平衡與擴充。
+開發時可考慮加入隱藏的 Debug Panel，方便即時測試數值與事件。
+存檔機制已實作版本控制概念，修改 state 結構時請注意相容性。
+
+貢獻
+本專案目前以個人開發為主，歡迎提出 Issue 或直接提交 Pull Request 討論新功能與優化方向。
+
+專案目前進度已達可玩階段，接下來將持續補強戰鬥深度、劇情沉浸感與視覺表現。
+有任何建議或想一起開發特定功能，歡迎開 Issue 討論！
+text---
+
+### 使用建議
+
+1. 直接把上面內容複製到你的 `README.md` 覆蓋原本的預設內容。
+2. 如果之後有新功能完成，記得同步更新「已實作功能」與「待實作」列表。
+3. 我可以再幫你調整語氣（更活潑 / 更正式）、加入截圖區塊、或加上技術細節 badge。
+
+需要我再微調任何段落嗎？例如：
+- 加強遊戲世界觀描述
+- 調整優先順序
+- 加入「如何貢獻」的更詳細說明
+
+直接告訴我即可。
